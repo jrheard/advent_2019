@@ -10,15 +10,21 @@ pub fn one_b() -> i32 {
     masses.iter().map(|x| fuel_for_module(*x)).sum()
 }
 
-// Fuel required to launch a given module is based on its mass. Specifically, to
-// find the fuel required for a module, take its mass, divide by three, round
-// down, and subtract 2.
+/// Performs one step of the fuel calculation algorithm for a given mass.
+///
+/// "Fuel required to launch a given module is based on its mass. Specifically, to
+/// find the fuel required for a module, take its mass, divide by three, round
+/// down, and subtract 2."
 fn fuel_for_module_one_step(mass: i32) -> i32 {
     let divided = mass as f32 / 3.0;
     divided.trunc() as i32 - 2
 }
 
-// TODO docstring
+/// Calculates fuel for a given mass.
+///
+/// "Fuel itself requires fuel just like a module - take its mass, divide by
+/// three, round down, and subtract 2. However, that fuel also requires fuel, and
+/// that fuel requires fuel, and so on."
 fn fuel_for_module(mass: i32) -> i32 {
     let step_output = fuel_for_module_one_step(mass);
 
