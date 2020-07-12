@@ -9,7 +9,14 @@ pub fn three_a() -> i32 {
     let wire_1_positions = parse_wire(wire_1);
     let wire_2_positions = parse_wire(wire_2);
 
-    5
+    let intersections = wire_1_positions.intersection(&wire_2_positions);
+
+    intersections
+        .into_iter()
+        .map(|(x, y)| x.abs() + y.abs())
+        .filter(|&distance| distance > 0)
+        .min()
+        .unwrap()
 }
 
 /// Parses a wire string like "R8,U5,L5,D3" into a HashSet of (x, y) positions.
@@ -104,5 +111,10 @@ mod tests {
         }
 
         assert_eq!(parse_wire(String::from("R8,U5,L5,D3")), set);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(three_a(), 8015);
     }
 }
