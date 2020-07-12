@@ -199,3 +199,6 @@ ok cool
 4a was easy to implement
 
 kinda slow tho! nothing crazy, but not fast
+
+for fun i flipped the conditionals around, checking nondecreasing first, and that made it about twice as fast
+neat!

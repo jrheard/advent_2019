@@ -18,7 +18,7 @@ fn make_password(number: i32) -> Password {
 fn number_is_valid_password(number: i32) -> bool {
     let password = make_password(number);
 
-    has_two_same_adjacent_digits(&password) && digits_are_non_decreasing(&password)
+    digits_are_non_decreasing(&password) && has_two_same_adjacent_digits(&password)
 }
 
 fn has_two_same_adjacent_digits(password: &Password) -> bool {
