@@ -117,3 +117,28 @@ you process an instruction - a group of 4 integers on the tape - and then step f
 so! we need a tape
 
 it'll be a vec of i32s
+
+===
+
+7/12/20
+
+ok day 2 was pretty ez and also pretty fun
+
+looks like it's the setup for some future days
+
+i'll definitely be extracting this run_program() stuff out into a separate file for reuse later
+but for now let's just go right into day 3
+
+ok so 3 is interesting
+one particularly interesting thing about it is that the grid has no specified size
+
+so i could just try to make a huge 2d vector but that would be dumb and gross
+but like it would work, just be inefficient and slow
+
+is there a more efficient way to represent this?
+
+what if each wire is represented as a series of (x, y) positions?
+
+that seems better to me
+
+then we could just check to see which elements are in both vectors
