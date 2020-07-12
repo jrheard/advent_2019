@@ -51,7 +51,7 @@ fn wire_intersections(wire_1: &Wire, wire_2: &Wire) -> Vec<(i32, i32)> {
         .collect()
 }
 
-/// Parses a wire string like "R8,U5,L5,D3" into a HashSet of (x, y) positions.
+/// Parses a wire string like "R8,U5,L5,D3" into a Vec of (x, y) positions.
 fn parse_wire(wire: String) -> Wire {
     let mut ret = vec![];
 
