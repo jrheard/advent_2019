@@ -10,6 +10,17 @@ pub fn three_a() -> i32 {
 
 /// Returns the Manhattan distance of the two wires' closest intersection to 0,0.
 fn closest_intersection_by_manhattan_distance(wire_1: String, wire_2: String) -> i32 {
+    let intersections = wire_intersections(wire_1, wire_2);
+
+    intersections
+        .iter()
+        .map(|&(x, y)| x.abs() + y.abs())
+        .filter(|&distance| distance > 0)
+        .min()
+        .unwrap()
+}
+
+fn wire_intersections(wire_1: String, wire_2: String) -> Vec<(i32, i32)> {
     let wire_1_positions = parse_wire(wire_1)
         .into_iter()
         .collect::<HashSet<(i32, i32)>>();
@@ -17,14 +28,10 @@ fn closest_intersection_by_manhattan_distance(wire_1: String, wire_2: String) ->
         .into_iter()
         .collect::<HashSet<(i32, i32)>>();
 
-    let intersections = wire_1_positions.intersection(&wire_2_positions);
-
-    intersections
-        .into_iter()
-        .map(|&(x, y)| x.abs() + y.abs())
-        .filter(|&distance| distance > 0)
-        .min()
-        .unwrap()
+    wire_1_positions
+        .intersection(&wire_2_positions)
+        .cloned()
+        .collect()
 }
 
 /// Parses a wire string like "R8,U5,L5,D3" into a HashSet of (x, y) positions.
