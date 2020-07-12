@@ -67,3 +67,53 @@ pub fn parse_ints_from_file_generic<T: FromStr + Debug>(filename: &str) -> Vec<T
 }
 
 which he acknowledges is hideous
+
+smt solved it!!
+
+pub fn parse_lines_from_file<T: FromStr>(filename: &str) -> Vec<T> {
+    let contents = fs::read_to_string(filename).unwrap();
+
+    contents
+        .lines()
+        .map(|x| {
+            x.parse::<T>()
+                .map_err(|_| format!("unable to parse {:?}", x))
+                .unwrap()
+        })
+        .collect()
+}
+
+he says:
+    unwrap() expects to print the "Debug" of whatever the Error was from the Result type
+    so it requires that the error implements Debug
+    that's why mapping the error to a string fixed it, because String implements Debug
+
+neat!
+
+happened to open this article about docs
+
+https://blog.guillaume-gomez.fr/articles/2020-03-12+Guide+on+how+to+write+documentation+for+a+Rust+crate
+    this is very good!
+    no_run is interesting
+    so is the thing about putting # at the beginning of lines that you don't want to show up in the docs
+
+    rustdoc lints are neat too! v good for libraries obviously
+
+ok, so looking at day 2
+
+you have a tape
+you have instructions, groups of four ints (or one int for stop-program)
+
+opcode 1 is add
+1, idx_1, idx_2, dst
+
+opcode 2 is mul
+2, idx_1, idx_2, mul
+
+opcode 99 is stop program
+
+you process an instruction - a group of 4 integers on the tape - and then step forward 4 to the next one
+
+so! we need a tape
+
+it'll be a vec of i32s
