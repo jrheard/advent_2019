@@ -143,6 +143,29 @@ that seems better to me
 
 then we could just check to see which elements are in both vectors
 
-TODO learn more about into_iter, https://stackoverflow.com/questions/34733811/what-is-the-difference-between-iter-and-into-iter
+DONE learn more about into_iter, https://stackoverflow.com/questions/34733811/what-is-the-difference-between-iter-and-into-iter
+
+https://hermanradtke.com/2015/06/22/effectively-using-iterators-in-rust.html
+    "I tend to use .iter() most. I try to be very concious and deliberate
+    about when I move resources and default to borrowing (or referencing)
+    first. The reference created by .iter() is short-lived, so we can move or
+    use our original value afterwards. If you find yourself running into does
+    not live long enough, move errors or using the .clone() function, this is
+    a sign that you probably want to use .into_iter() instead."
 
 TODO profile 3a, i'm expecting to see huge slowdown bc of tons of tiny allocations
+    https://carol-nichols.com/2017/04/20/rust-profiling-with-dtrace-on-osx/ good tips
+
+i think that it's gonna be bc i make so many tiny strings
+i think that instead it would be a lot better to read each wire string in one pass
+eg have a function that returns a slice of the string up until the next comma, then operate on that
+
+looks like most of our time is actually spent initializing the hashset?
+
+https://stackoverflow.com/questions/44575380/is-there-any-way-to-insert-multiple-entries-into-a-hashmap-at-once-in-rust
+
+ok you know what
+this is actually all fine
+when built in release mode, the whole program so far runs in 0.04 seconds
+so 3a is fine for now
+let's see if it falls over when it comes time for 3b though!!

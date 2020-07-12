@@ -13,7 +13,7 @@ pub fn three_a() -> i32 {
 
     intersections
         .into_iter()
-        .map(|(x, y)| x.abs() + y.abs())
+        .map(|&(x, y)| x.abs() + y.abs())
         .filter(|&distance| distance > 0)
         .min()
         .unwrap()
