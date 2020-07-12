@@ -9,4 +9,5 @@ fn main() {
     println!("2a: {}", two::two_a());
     println!("2b: {}", two::two_b());
     println!("3a: {}", three::three_a());
+    println!("3b: {}", three::three_b());
 }
