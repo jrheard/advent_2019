@@ -169,3 +169,23 @@ this is actually all fine
 when built in release mode, the whole program so far runs in 0.04 seconds
 so 3a is fine for now
 let's see if it falls over when it comes time for 3b though!!
+
+it didn't :)
+
+ok, i've been reading chapters of the book here and there
+just finished structs and enums
+and made it to the modules chapter!
+but i think a lot changed after the paper book was written, re: modules, 2018 edition, etc
+so i'm going to read the online version of that chapter instead, hopefully it's more up to date
+
+https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-crates-and-modules.html
+    ya, in https://github.com/rust-lang/book/issues/1888 carol says ch 7 was "totally reworked"
+
+    struct fields are private by default, but can be made public one by one
+    by contrast, enums are also private by default, but if they're public then all of their variants are public
+    which makes sense!
+
+    oh, i figured out why i couldn't use `use` in this new project
+    it was because i didn't have a `src/lib.rs` like i do in advent_2018
+
+oooh https://doc.rust-lang.org/stable/edition-guide/ should be a good reread

@@ -1,7 +1,6 @@
-mod one;
-mod three;
-mod two;
-mod util;
+use advent_2019::one;
+use advent_2019::three;
+use advent_2019::two;
 
 fn main() {
     println!("1a: {}", one::one_a());
