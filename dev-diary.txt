@@ -188,4 +188,14 @@ https://doc.rust-lang.org/book/ch07-00-managing-growing-projects-with-packages-c
     oh, i figured out why i couldn't use `use` in this new project
     it was because i didn't have a `src/lib.rs` like i do in advent_2018
 
+    "Using a semicolon after mod front_of_house rather than using a block
+    tells Rust to load the contents of the module from another file with the
+    same name as the module."
+
 oooh https://doc.rust-lang.org/stable/edition-guide/ should be a good reread
+
+ok cool
+
+4a was easy to implement
+
+kinda slow tho! nothing crazy, but not fast
