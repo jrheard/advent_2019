@@ -1,11 +1,15 @@
 use std::fs;
+use std::str::FromStr;
 
-// TODO make this generic?
-pub fn parse_ints_from_file(filename: &str) -> Vec<i32> {
+pub fn parse_lines_from_file<T: FromStr>(filename: &str) -> Vec<T> {
     let contents = fs::read_to_string(filename).unwrap();
 
     contents
         .lines()
-        .map(|x| x.parse::<i32>().unwrap())
+        .map(|x| {
+            x.parse::<T>()
+                .map_err(|_| format!("unable to parse {:?}", x))
+                .unwrap()
+        })
         .collect()
 }

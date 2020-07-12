@@ -1,12 +1,12 @@
 use crate::util;
 
 pub fn one_a() -> i32 {
-    let masses = util::parse_ints_from_file("src/inputs/1.txt");
+    let masses = util::parse_lines_from_file("src/inputs/1.txt");
     masses.iter().map(|x| fuel_for_module_one_step(*x)).sum()
 }
 
 pub fn one_b() -> i32 {
-    let masses = util::parse_ints_from_file("src/inputs/1.txt");
+    let masses = util::parse_lines_from_file("src/inputs/1.txt");
     masses.iter().map(|x| fuel_for_module(*x)).sum()
 }
 
