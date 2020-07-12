@@ -12,6 +12,29 @@ pub fn two_a() -> i32 {
     run_program(memory)[0]
 }
 
+pub fn two_b() -> i32 {
+    let baseline_memory = load_program("src/inputs/2.txt");
+
+    let mut noun = 0;
+    let mut verb = 0;
+
+    for i in 0..100 {
+        for j in 0..100 {
+            let mut memory = baseline_memory.clone();
+            memory[1] = i;
+            memory[2] = j;
+
+            if run_program(memory)[0] == 19690720 {
+                noun = i;
+                verb = j;
+                break;
+            }
+        }
+    }
+
+    100 * noun + verb
+}
+
 fn load_program(filename: &str) -> Vec<i32> {
     let contents = fs::read_to_string(filename).unwrap();
 
@@ -48,12 +71,12 @@ fn run_program(memory: Vec<i32>) -> Vec<i32> {
     result
 }
 
-fn add(memory: &mut Vec<i32>, address_1: usize, address_2: usize, destination: usize) {
-    memory[destination] = memory[address_1] + memory[address_2];
+fn add(memory: &mut Vec<i32>, index_1: usize, index_2: usize, destination: usize) {
+    memory[destination] = memory[index_1] + memory[index_2];
 }
 
-fn mul(memory: &mut Vec<i32>, address_1: usize, address_2: usize, destination: usize) {
-    memory[destination] = memory[address_1] * memory[address_2];
+fn mul(memory: &mut Vec<i32>, index_1: usize, index_2: usize, destination: usize) {
+    memory[destination] = memory[index_1] * memory[index_2];
 }
 
 #[cfg(test)]
@@ -92,5 +115,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(two_a(), 4714701);
+        assert_eq!(two_b(), 5121);
     }
 }
