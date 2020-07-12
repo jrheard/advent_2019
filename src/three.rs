@@ -17,7 +17,7 @@ pub fn three_b() -> i32 {
 
 /// Returns the Manhattan distance of the two wires' closest intersection to 0,0.
 fn closest_intersection_by_manhattan_distance(wire_1: Wire, wire_2: Wire) -> i32 {
-    let intersections = wire_intersections(wire_1, wire_2);
+    let intersections = wire_intersections(&wire_1, &wire_2);
 
     intersections
         .iter()
@@ -28,15 +28,21 @@ fn closest_intersection_by_manhattan_distance(wire_1: Wire, wire_2: Wire) -> i32
 
 /// Returns the combined number of steps taken by each wire between 0,0 and their closest intersection by number of steps.
 fn closest_intersection_by_steps(wire_1: Wire, wire_2: Wire) -> i32 {
-    let intersections = wire_intersections(wire_1, wire_2);
+    let intersections = wire_intersections(&wire_1, &wire_2);
 
-    //intersections.iter().map(|&(x, y)|).min().unwrap()
-    3
+    intersections
+        .iter()
+        .map(|intersection| {
+            wire_1.iter().position(|elem| elem == intersection).unwrap() as i32
+                + wire_2.iter().position(|elem| elem == intersection).unwrap() as i32
+        })
+        .min()
+        .unwrap()
 }
 
-fn wire_intersections(wire_1: Wire, wire_2: Wire) -> Vec<(i32, i32)> {
-    let wire_1_positions = wire_1.into_iter().collect::<HashSet<(i32, i32)>>();
-    let wire_2_positions = wire_2.into_iter().collect::<HashSet<(i32, i32)>>();
+fn wire_intersections(wire_1: &Wire, wire_2: &Wire) -> Vec<(i32, i32)> {
+    let wire_1_positions = wire_1.into_iter().cloned().collect::<HashSet<(i32, i32)>>();
+    let wire_2_positions = wire_2.into_iter().cloned().collect::<HashSet<(i32, i32)>>();
 
     wire_1_positions
         .intersection(&wire_2_positions)
@@ -131,7 +137,7 @@ mod tests {
     }
 
     #[test]
-    fn test_closest_intersection() {
+    fn test_closest_intersection_by_manhattan() {
         assert_eq!(
             closest_intersection_by_manhattan_distance(
                 parse_wire(String::from("R75,D30,R83,U83,L12,D49,R71,U7,L72")),
@@ -149,7 +155,26 @@ mod tests {
     }
 
     #[test]
+    fn test_closest_intersection_by_steps() {
+        assert_eq!(
+            closest_intersection_by_steps(
+                parse_wire(String::from("R75,D30,R83,U83,L12,D49,R71,U7,L72")),
+                parse_wire(String::from("U62,R66,U55,R34,D71,R55,D58,R83"))
+            ),
+            610
+        );
+        assert_eq!(
+            closest_intersection_by_steps(
+                parse_wire(String::from("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51")),
+                parse_wire(String::from("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7"))
+            ),
+            410
+        );
+    }
+
+    #[test]
     fn test_solutions() {
         assert_eq!(three_a(), 8015);
+        assert_eq!(three_b(), 163676);
     }
 }
