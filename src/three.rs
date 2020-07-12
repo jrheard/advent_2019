@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 use std::io::BufReader;
@@ -5,11 +6,15 @@ use std::io::BufReader;
 pub fn three_a() -> i32 {
     let (wire_1, wire_2) = load_wires();
 
+    let wire_1_positions = parse_wire(wire_1);
+    let wire_2_positions = parse_wire(wire_2);
+
     5
 }
 
-fn parse_wire(wire: String) -> Vec<(i32, i32)> {
-    let mut ret: Vec<(i32, i32)> = vec![];
+/// Parses a wire string like "R8,U5,L5,D3" into a HashSet of (x, y) positions.
+fn parse_wire(wire: String) -> HashSet<(i32, i32)> {
+    let mut ret = HashSet::new();
 
     let mut x = 0;
     let mut y = 0;
@@ -20,7 +25,7 @@ fn parse_wire(wire: String) -> Vec<(i32, i32)> {
         let amount = chars.collect::<String>().parse::<i32>().unwrap();
 
         for _ in 0..amount {
-            ret.push((x, y));
+            ret.insert((x, y));
 
             match direction {
                 'U' => {
@@ -40,7 +45,7 @@ fn parse_wire(wire: String) -> Vec<(i32, i32)> {
         }
     }
 
-    ret.push((x, y));
+    ret.insert((x, y));
 
     ret
 }
@@ -68,32 +73,36 @@ mod tests {
 
     #[test]
     fn test_parse_wire() {
-        assert_eq!(
-            parse_wire(String::from("R8,U5,L5,D3")),
-            vec![
-                (0, 0),
-                (1, 0),
-                (2, 0),
-                (3, 0),
-                (4, 0),
-                (5, 0),
-                (6, 0),
-                (7, 0),
-                (8, 0),
-                (8, 1),
-                (8, 2),
-                (8, 3),
-                (8, 4),
-                (8, 5),
-                (7, 5),
-                (6, 5),
-                (5, 5),
-                (4, 5),
-                (3, 5),
-                (3, 4),
-                (3, 3),
-                (3, 2)
-            ]
-        );
+        let mut set: HashSet<(i32, i32)> = HashSet::new();
+        for (x, y) in [
+            (0, 0),
+            (1, 0),
+            (2, 0),
+            (3, 0),
+            (4, 0),
+            (5, 0),
+            (6, 0),
+            (7, 0),
+            (8, 0),
+            (8, 1),
+            (8, 2),
+            (8, 3),
+            (8, 4),
+            (8, 5),
+            (7, 5),
+            (6, 5),
+            (5, 5),
+            (4, 5),
+            (3, 5),
+            (3, 4),
+            (3, 3),
+            (3, 2),
+        ]
+        .iter()
+        {
+            set.insert((*x, *y));
+        }
+
+        assert_eq!(parse_wire(String::from("R8,U5,L5,D3")), set);
     }
 }
