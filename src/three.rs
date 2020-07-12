@@ -5,13 +5,17 @@ use std::io::BufReader;
 
 pub fn three_a() -> i32 {
     let (wire_1, wire_2) = load_wires();
-    closest_intersection(wire_1, wire_2)
+    closest_intersection_by_manhattan_distance(wire_1, wire_2)
 }
 
-/// Returns the manhattan distance of the two wires' closest intersection to 0,0.
-fn closest_intersection(wire_1: String, wire_2: String) -> i32 {
-    let wire_1_positions = parse_wire(wire_1);
-    let wire_2_positions = parse_wire(wire_2);
+/// Returns the Manhattan distance of the two wires' closest intersection to 0,0.
+fn closest_intersection_by_manhattan_distance(wire_1: String, wire_2: String) -> i32 {
+    let wire_1_positions = parse_wire(wire_1)
+        .into_iter()
+        .collect::<HashSet<(i32, i32)>>();
+    let wire_2_positions = parse_wire(wire_2)
+        .into_iter()
+        .collect::<HashSet<(i32, i32)>>();
 
     let intersections = wire_1_positions.intersection(&wire_2_positions);
 
@@ -24,8 +28,8 @@ fn closest_intersection(wire_1: String, wire_2: String) -> i32 {
 }
 
 /// Parses a wire string like "R8,U5,L5,D3" into a HashSet of (x, y) positions.
-fn parse_wire(wire: String) -> HashSet<(i32, i32)> {
-    let mut ret = HashSet::new();
+fn parse_wire(wire: String) -> Vec<(i32, i32)> {
+    let mut ret = vec![];
 
     let mut x = 0;
     let mut y = 0;
@@ -36,7 +40,7 @@ fn parse_wire(wire: String) -> HashSet<(i32, i32)> {
         let amount = chars.collect::<String>().parse::<i32>().unwrap();
 
         for _ in 0..amount {
-            ret.insert((x, y));
+            ret.push((x, y));
 
             match direction {
                 'U' => {
@@ -56,7 +60,7 @@ fn parse_wire(wire: String) -> HashSet<(i32, i32)> {
         }
     }
 
-    ret.insert((x, y));
+    ret.push((x, y));
 
     ret
 }
@@ -84,50 +88,46 @@ mod tests {
 
     #[test]
     fn test_parse_wire() {
-        let mut set: HashSet<(i32, i32)> = HashSet::new();
-        for (x, y) in [
-            (0, 0),
-            (1, 0),
-            (2, 0),
-            (3, 0),
-            (4, 0),
-            (5, 0),
-            (6, 0),
-            (7, 0),
-            (8, 0),
-            (8, 1),
-            (8, 2),
-            (8, 3),
-            (8, 4),
-            (8, 5),
-            (7, 5),
-            (6, 5),
-            (5, 5),
-            (4, 5),
-            (3, 5),
-            (3, 4),
-            (3, 3),
-            (3, 2),
-        ]
-        .iter()
-        {
-            set.insert((*x, *y));
-        }
-
-        assert_eq!(parse_wire(String::from("R8,U5,L5,D3")), set);
+        assert_eq!(
+            parse_wire(String::from("R8,U5,L5,D3")),
+            vec![
+                (0, 0),
+                (1, 0),
+                (2, 0),
+                (3, 0),
+                (4, 0),
+                (5, 0),
+                (6, 0),
+                (7, 0),
+                (8, 0),
+                (8, 1),
+                (8, 2),
+                (8, 3),
+                (8, 4),
+                (8, 5),
+                (7, 5),
+                (6, 5),
+                (5, 5),
+                (4, 5),
+                (3, 5),
+                (3, 4),
+                (3, 3),
+                (3, 2),
+            ]
+        );
     }
 
     #[test]
     fn test_closest_intersection() {
         assert_eq!(
-            closest_intersection(
+            closest_intersection_by_manhattan_distance(
                 String::from("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
                 String::from("U62,R66,U55,R34,D71,R55,D58,R83")
             ),
             159
         );
         assert_eq!(
-            closest_intersection(
+            closest_intersection_by_manhattan_distance(
                 String::from("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
                 String::from("U98,R91,D20,R16,D67,R40,U7,R15,U6,R7")
             ),
