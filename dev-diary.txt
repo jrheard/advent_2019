@@ -208,3 +208,27 @@ instead of making a jillion tiny vectors from scratch
 we just allocate a single vector that we use as a buffer
 and that shaved the bulk of the rest of the time off :]
 not my usual way of doing things, but there's a reason it's a common pattern!
+
+ok let's look at day 5!
+
+so it looks like it's time to revisit the opcodes/memory/program stuff
+
+we're handling two more opcodes, with different lengths
+
+so i think it's time to make opcodes a more first-class concept
+
+or tbh maybe not, i think i can get away with a long match() for now
+
+i'm not sure what the appropriate tool here would be - structs? enums?
+
+i guess there could be an Opcode struct like this
+
+struct Opcode {
+    opcode: i32,
+    num_args: usize,
+}
+
+but then so where does the code live that runs the operation for a particular opcode?
+
+ugh yeah i'll just stick with a match for now
+i'll figure out something better later
