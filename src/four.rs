@@ -1,13 +1,28 @@
 type Password = Vec<u32>;
 
+const LOWER_BOUND: i32 = 272091;
+const UPPER_BOUND: i32 = 815432;
+
 pub fn four_a() -> i32 {
     let mut buffer = vec![0, 0, 0, 0, 0, 0];
 
-    (272091..(815432 + 1))
+    (LOWER_BOUND..(UPPER_BOUND + 1))
         .into_iter()
         .filter(|&x| {
             write_password_to_buffer(x, &mut buffer);
-            number_is_valid_password(&buffer)
+            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits(&buffer)
+        })
+        .count() as i32
+}
+
+pub fn four_b() -> i32 {
+    let mut buffer = vec![0, 0, 0, 0, 0, 0];
+
+    (LOWER_BOUND..(UPPER_BOUND + 1))
+        .into_iter()
+        .filter(|&x| {
+            write_password_to_buffer(x, &mut buffer);
+            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits_strict(&buffer)
         })
         .count() as i32
 }
@@ -23,13 +38,24 @@ fn write_password_to_buffer(number: i32, buffer: &mut Password) {
     }
 }
 
-fn number_is_valid_password(password: &Password) -> bool {
-    digits_are_non_decreasing(password) && has_two_same_adjacent_digits(password)
-}
-
 fn has_two_same_adjacent_digits(password: &Password) -> bool {
     for i in password.iter().zip(password.iter().skip(1)) {
         if i.0 == i.1 {
+            return true;
+        }
+    }
+    false
+}
+
+fn has_two_same_adjacent_digits_strict(password: &Password) -> bool {
+    for i in 0..password.len() - 1 {
+        if password[i] == password[i + 1] {
+            if i > 0 && password[i - 1] == password[i] {
+                continue;
+            }
+            if i < password.len() - 2 && password[i] == password[i + 2] {
+                continue;
+            }
             return true;
         }
     }
@@ -75,7 +101,24 @@ mod tests {
     }
 
     #[test]
+    fn test_has_two_same_adjacent_digits_strict() {
+        assert_eq!(
+            has_two_same_adjacent_digits_strict(&vec![1, 1, 2, 2, 3, 3]),
+            true
+        );
+        assert_eq!(
+            has_two_same_adjacent_digits_strict(&vec![1, 2, 3, 4, 4, 4]),
+            false
+        );
+        assert_eq!(
+            has_two_same_adjacent_digits_strict(&vec![1, 1, 1, 1, 2, 2]),
+            true
+        );
+    }
+
+    #[test]
     fn test_solutions() {
         assert_eq!(four_a(), 931);
+        assert_eq!(four_b(), 609);
     }
 }
