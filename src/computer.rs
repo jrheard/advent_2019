@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use std::fs;
 
 type Memory = Vec<i32>;
 
-/// Loads a "program"
+/// Reads the file at `filename` into a Memory.
 pub fn load_program(filename: &str) -> Memory {
     let contents = fs::read_to_string(filename).unwrap();
 
@@ -13,38 +14,65 @@ pub fn load_program(filename: &str) -> Memory {
         .collect()
 }
 
+struct Operation {
+    opcode: i32,
+    num_arguments: usize,
+}
+
+const ADD: Operation = Operation {
+    opcode: 1,
+    num_arguments: 3,
+};
+
+const MUL: Operation = Operation {
+    opcode: 2,
+    num_arguments: 3,
+};
+
+const END: Operation = Operation {
+    opcode: 99,
+    num_arguments: 0,
+};
+
+/// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
 pub fn run_program(memory: Memory) -> Memory {
+    let mut operations = HashMap::new();
+
+    for operation in [ADD, MUL, END].iter() {
+        operations.insert(operation.opcode, operation);
+    }
+
     let mut instruction_pointer = 0;
     let mut result = memory.clone();
 
     loop {
         let opcode = result[instruction_pointer];
+        let operation = operations[&opcode];
 
-        if opcode == 99 {
-            break;
+        let args = if operation.num_arguments > 0 {
+            &memory[(instruction_pointer + 1)..(instruction_pointer + 1 + operation.num_arguments)]
         } else {
-            let address_1 = result[instruction_pointer + 1] as usize;
-            let address_2 = result[instruction_pointer + 2] as usize;
-            let destination = result[instruction_pointer + 3] as usize;
+            &[] as &[i32]
+        };
 
-            match opcode {
-                1 => add(&mut result, address_1, address_2, destination),
-                2 => mul(&mut result, address_1, address_2, destination),
-                _ => panic!("unknown opcode {}", opcode),
-            }
+        match opcode {
+            1 => add(&mut result, args),
+            2 => mul(&mut result, args),
+            99 => break,
+            _ => panic!("unknown opcode {}", opcode),
         }
 
-        instruction_pointer += 4;
+        instruction_pointer += operation.num_arguments + 1;
     }
     result
 }
 
-fn add(memory: &mut Memory, index_1: usize, index_2: usize, destination: usize) {
-    memory[destination] = memory[index_1] + memory[index_2];
+fn add(memory: &mut Memory, args: &[i32]) {
+    memory[args[2] as usize] = memory[args[0] as usize] + memory[args[1] as usize];
 }
 
-fn mul(memory: &mut Memory, index_1: usize, index_2: usize, destination: usize) {
-    memory[destination] = memory[index_1] * memory[index_2];
+fn mul(memory: &mut Memory, args: &[i32]) {
+    memory[args[2] as usize] = memory[args[0] as usize] * memory[args[1] as usize];
 }
 
 #[cfg(test)]

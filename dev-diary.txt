@@ -232,3 +232,12 @@ but then so where does the code live that runs the operation for a particular op
 
 ugh yeah i'll just stick with a match for now
 i'll figure out something better later
+
+ok yeah so nvm i went with that struct idea
+
+struct and a match
+
+workin ok so far!
+
+it was necessary+helpful bc the number of args is important to know so that we can
+advance the instruction pointer appropriately
