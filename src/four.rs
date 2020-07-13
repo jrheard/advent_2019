@@ -1,24 +1,30 @@
 type Password = Vec<u32>;
 
 pub fn four_a() -> i32 {
+    let mut buffer = vec![0, 0, 0, 0, 0, 0];
+
     (272091..(815432 + 1))
         .into_iter()
-        .filter(|&x| number_is_valid_password(x))
+        .filter(|&x| {
+            write_password_to_buffer(x, &mut buffer);
+            number_is_valid_password(&buffer)
+        })
         .count() as i32
 }
 
-fn make_password(number: i32) -> Password {
-    number
+fn write_password_to_buffer(number: i32, buffer: &mut Password) {
+    for (i, digit) in number
         .to_string()
         .chars()
         .map(|x| x.to_digit(10).unwrap())
-        .collect()
+        .enumerate()
+    {
+        buffer[i] = digit;
+    }
 }
 
-fn number_is_valid_password(number: i32) -> bool {
-    let password = make_password(number);
-
-    digits_are_non_decreasing(&password) && has_two_same_adjacent_digits(&password)
+fn number_is_valid_password(password: &Password) -> bool {
+    digits_are_non_decreasing(password) && has_two_same_adjacent_digits(password)
 }
 
 fn has_two_same_adjacent_digits(password: &Password) -> bool {
@@ -66,5 +72,10 @@ mod tests {
         assert_eq!(digits_are_non_decreasing(&vec![1, 4, 3, 3, 5]), false);
         assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 3, 1]), false);
         assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 300, 299]), false);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(four_a(), 931);
     }
 }
