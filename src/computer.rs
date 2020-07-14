@@ -21,7 +21,9 @@ pub fn load_program(filename: &str) -> Memory {
         .collect()
 }
 
-/// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
+/// Runs the program in `memory`.
+///
+/// Returns a Memory representing the state of the computer after the program has completed.
 pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
     let mut instruction_pointer = 0;
     let mut memory = input_memory.clone();
@@ -78,6 +80,10 @@ fn push_output(output: &mut Output, args: &[i32]) {
     output.push(args[0]);
 }
 
+/// Parses an instruction like `1102`.
+///
+/// Returns an i32 opcode like `02`.
+/// Writes the instruction's encoded parameter modes to `parameter_mode_buffer`.
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
     for i in 0..parameter_mode_buffer.len() {
         parameter_mode_buffer[i] = ParameterMode::POSITION;
@@ -100,6 +106,8 @@ fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<Parameter
 
     let opcode = instruction % 100;
 
+    // Some operations use an argument as a target memory location for storing data.
+    // Handle those operations' target memory locations' modes directly.
     if opcode == 1 || opcode == 2 {
         // ADD and MUL use their third argument as a target memory location.
         parameter_mode_buffer[2] = ParameterMode::IMMEDIATE;
@@ -112,7 +120,7 @@ fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<Parameter
     opcode
 }
 
-// TODO test
+/// Writes `num_arguments` arguments to `argument_buffer`, based on `memory`, `instruction_pointer`, and `parameter_modes`.
 fn write_arguments(
     memory: &Memory,
     instruction_pointer: usize,
@@ -124,8 +132,10 @@ fn write_arguments(
         let value_in_memory_at_i = memory[instruction_pointer + 1 + i];
 
         argument_buffer[i] = if parameter_modes[i] == ParameterMode::IMMEDIATE {
+            // Immediate mode means: Directly use the value in memory at `i`.
             value_in_memory_at_i
         } else {
+            // Position mode means: Look up the value at the _address_ that's stored in memory at `i`.
             memory[value_in_memory_at_i as usize]
         };
     }
@@ -296,6 +306,7 @@ mod operations {
         num_arguments: 0,
     };
 
+    /// Returns a tuple of (operations_by_opcode, max_num_arguments_across_all_operations).
     pub fn load_operations() -> (HashMap<i32, Operation>, usize) {
         let mut operations = HashMap::new();
 
