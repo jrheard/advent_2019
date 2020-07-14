@@ -4,7 +4,7 @@ use std::io;
 
 type Memory = Vec<i32>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum ParameterMode {
     POSITION,
     IMMEDIATE,
@@ -58,18 +58,24 @@ const END: Operation = Operation {
 pub fn run_program(memory: Memory) -> Memory {
     let mut operations = HashMap::new();
 
-    for operation in [ADD, MUL, END].iter() {
+    for operation in [ADD, MUL, END, INPUT, PRINT].iter() {
         operations.insert(operation.opcode, operation);
     }
 
     let mut instruction_pointer = 0;
     let mut result = memory.clone();
 
+    let max_num_arguments = operations
+        .values()
+        .max_by_key(|op| op.num_arguments)
+        .unwrap()
+        .num_arguments;
+
+    let mut parameter_mode_buffer = vec![ParameterMode::POSITION; max_num_arguments];
+
     loop {
-        let opcode = result[instruction_pointer];
-
-        // TODO parse instruction and modes
-
+        let instruction = result[instruction_pointer];
+        let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
         let operation = operations[&opcode];
 
         // TODO function that sets up args based on memory and instruction
@@ -117,8 +123,9 @@ fn print(memory: &Memory, args: &[i32]) {
 }
 
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
-    // TODO how long should parameter_mode_buffer be?
-    // TODO document that it should be all POSITIONs
+    for i in 0..parameter_mode_buffer.len() {
+        parameter_mode_buffer[i] = ParameterMode::POSITION;
+    }
 
     let mut parameter_modes = instruction / 100;
     let mut index = 0;
@@ -188,6 +195,20 @@ mod tests {
             ]
         );
 
+        let mut buffer = vec![
+            ParameterMode::IMMEDIATE,
+            ParameterMode::IMMEDIATE,
+            ParameterMode::IMMEDIATE,
+        ];
+        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::POSITION,
+                ParameterMode::IMMEDIATE,
+                ParameterMode::POSITION
+            ]
+        );
         let mut buffer = vec![
             ParameterMode::POSITION,
             ParameterMode::POSITION,
