@@ -100,12 +100,12 @@ fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<Parameter
 
     let opcode = instruction % 100;
 
-    // TODO refactor this, it is gross
-    // maybe add a field to Operation and/or modify this function's input signature
     if opcode == 1 || opcode == 2 {
+        // ADD and MUL use their third argument as a target memory location.
         parameter_mode_buffer[2] = ParameterMode::IMMEDIATE;
     }
     if opcode == 3 {
+        // TAKE_INPUT uses its first argument as a target memory location.
         parameter_mode_buffer[0] = ParameterMode::IMMEDIATE;
     }
 
@@ -244,6 +244,21 @@ mod tests {
             run_program(vec![1002, 4, 3, 4, 33], vec![]),
             (vec![1002, 4, 3, 4, 99], vec![])
         );
+    }
+
+    #[test]
+    fn test_write_arguments() {
+        let mut argument_buffer = vec![0; 5];
+
+        write_arguments(
+            &vec![5, 4, 3, 2, 1],
+            1,
+            2,
+            &vec![ParameterMode::POSITION, ParameterMode::IMMEDIATE][..],
+            &mut argument_buffer,
+        );
+
+        assert_eq!(argument_buffer, vec![2, 2, 0, 0, 0]);
     }
 }
 
