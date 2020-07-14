@@ -56,6 +56,7 @@ const END: Operation = Operation {
 /// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
 // TODO rename `memory` to `input_memory`
 pub fn run_program(memory: Memory) -> Memory {
+    // TODO break this out into a fn, have it return max_num_arguments too
     let mut operations = HashMap::new();
 
     for operation in [ADD, MUL, END, INPUT, PRINT].iter() {
@@ -72,20 +73,22 @@ pub fn run_program(memory: Memory) -> Memory {
         .num_arguments;
 
     let mut parameter_mode_buffer = vec![ParameterMode::POSITION; max_num_arguments];
+    let mut argument_buffer = vec![0; max_num_arguments];
 
     loop {
         let instruction = result[instruction_pointer];
         let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
         let operation = operations[&opcode];
 
-        // TODO function that sets up args based on memory and instruction
+        write_arguments(
+            &result,
+            instruction_pointer,
+            operation.num_arguments,
+            &parameter_mode_buffer[0..operation.num_arguments],
+            &mut argument_buffer,
+        );
 
-        let args = if operation.num_arguments > 0 {
-            // XXX this should be using `result` instead of `memory`
-            &memory[(instruction_pointer + 1)..(instruction_pointer + 1 + operation.num_arguments)]
-        } else {
-            &[] as &[i32]
-        };
+        let args = &argument_buffer[0..operation.num_arguments];
 
         match opcode {
             // TODO how can i change this match to match on eg ADD.opcode instead of 1? initial attempts didn't work
@@ -103,23 +106,24 @@ pub fn run_program(memory: Memory) -> Memory {
 }
 
 fn add(memory: &mut Memory, args: &[i32]) {
-    memory[args[2] as usize] = memory[args[0] as usize] + memory[args[1] as usize];
+    memory[args[2] as usize] = args[0] + args[1];
 }
 
 fn mul(memory: &mut Memory, args: &[i32]) {
-    memory[args[2] as usize] = memory[args[0] as usize] * memory[args[1] as usize];
+    memory[args[2] as usize] = args[0] * args[1];
 }
 
 fn input(memory: &mut Memory, args: &[i32]) {
     let mut input = String::new();
     println!("Please input a number: ");
     io::stdin().read_line(&mut input).unwrap();
-    //TODO parse into i32
-    // TODO store in memory
+
+    let value = input.trim().parse::<i32>().unwrap();
+    memory[args[0] as usize] = value;
 }
 
 fn print(memory: &Memory, args: &[i32]) {
-    println!("{}", memory[args[0] as usize]);
+    println!(">>> {}", memory[args[0] as usize]);
 }
 
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
@@ -142,7 +146,37 @@ fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<Parameter
         index += 1;
     }
 
-    instruction % 100
+    let opcode = instruction % 100;
+
+    // TODO refactor this, it is gross
+    // maybe add a field to Operation and/or modify this function's input signature
+    if opcode == 1 || opcode == 2 {
+        parameter_mode_buffer[2] = ParameterMode::IMMEDIATE;
+    }
+    if opcode == 3 {
+        parameter_mode_buffer[0] = ParameterMode::IMMEDIATE;
+    }
+
+    opcode
+}
+
+// TODO test
+fn write_arguments(
+    memory: &Memory,
+    instruction_pointer: usize,
+    num_arguments: usize,
+    parameter_modes: &[ParameterMode],
+    argument_buffer: &mut Vec<i32>,
+) {
+    for i in 0..num_arguments {
+        let value_in_memory_at_i = memory[instruction_pointer + 1 + i];
+
+        argument_buffer[i] = if parameter_modes[i] == ParameterMode::IMMEDIATE {
+            value_in_memory_at_i
+        } else {
+            memory[value_in_memory_at_i as usize]
+        };
+    }
 }
 
 #[cfg(test)]
