@@ -3,6 +3,12 @@ use std::fs;
 
 type Memory = Vec<i32>;
 
+#[derive(Debug, PartialEq)]
+enum ParameterMode {
+    POSITION,
+    IMMEDIATE,
+}
+
 /// Reads the file at `filename` into a Memory.
 pub fn load_program(filename: &str) -> Memory {
     let contents = fs::read_to_string(filename).unwrap();
@@ -27,6 +33,18 @@ const ADD: Operation = Operation {
 const MUL: Operation = Operation {
     opcode: 2,
     num_arguments: 3,
+};
+
+// TODO - concept of "input"
+const SAV: Operation = Operation {
+    opcode: 3,
+    num_arguments: 1,
+};
+
+// TODO - concept of "output"
+const PRN: Operation = Operation {
+    opcode: 4,
+    num_arguments: 1,
 };
 
 const END: Operation = Operation {
@@ -75,6 +93,28 @@ fn mul(memory: &mut Memory, args: &[i32]) {
     memory[args[2] as usize] = memory[args[0] as usize] * memory[args[1] as usize];
 }
 
+fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
+    // TODO how long should parameter_mode_buffer be?
+    // TODO document that it should be all POSITIONs
+
+    let mut parameter_modes = instruction / 100;
+    let mut index = 0;
+    loop {
+        if parameter_modes == 0 {
+            break;
+        }
+
+        if parameter_modes % 2 == 1 {
+            parameter_mode_buffer[index] = ParameterMode::IMMEDIATE;
+        }
+
+        parameter_modes /= 10;
+        index += 1;
+    }
+
+    instruction % 100
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -104,6 +144,60 @@ mod tests {
                 1, 71, 5, 75, 1, 13, 75, 79, 1, 6, 79, 83, 2, 83, 13, 87, 1, 87, 6, 91, 1, 10, 91,
                 95, 1, 95, 9, 99, 2, 99, 13, 103, 1, 103, 6, 107, 2, 107, 6, 111, 1, 111, 2, 115,
                 1, 115, 13, 0, 99, 2, 0, 14, 0
+            ]
+        );
+    }
+
+    #[test]
+    fn test_parse_instruction() {
+        let mut buffer = vec![
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+        ];
+        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::POSITION,
+                ParameterMode::IMMEDIATE,
+                ParameterMode::POSITION
+            ]
+        );
+
+        let mut buffer = vec![
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+        ];
+        assert_eq!(parse_instruction(11004, &mut buffer), 4);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::POSITION,
+                ParameterMode::IMMEDIATE,
+                ParameterMode::IMMEDIATE
+            ]
+        );
+
+        let mut buffer = vec![
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+            ParameterMode::POSITION,
+        ];
+        assert_eq!(parse_instruction(101014, &mut buffer), 14);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::POSITION,
+                ParameterMode::IMMEDIATE,
+                ParameterMode::POSITION,
+                ParameterMode::IMMEDIATE,
+                ParameterMode::POSITION,
+                ParameterMode::POSITION,
             ]
         );
     }

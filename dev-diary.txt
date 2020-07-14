@@ -241,3 +241,44 @@ workin ok so far!
 
 it was necessary+helpful bc the number of args is important to know so that we can
 advance the instruction pointer appropriately
+
+ok five is gonna be complicated :)
+
+input+output
+and modes
+eek
+
+===
+
+7/13/20
+
+ok let's take a look at 5a again
+
+Parameter modes are stored in the same value as the instruction's opcode. The
+opcode is a two-digit number based only on the ones and tens digit of the
+value, that is, the opcode is the rightmost two digits of the first value in
+an instruction. Parameter modes are single digits, one per parameter, read
+right-to-left from the opcode: the first parameter's mode is in the hundreds
+digit, the second parameter's mode is in the thousands digit, the third
+parameter's mode is in the ten-thousands digit, and so on. Any missing modes
+are 0.
+
+maybe a parse_instruction() fn that returns (opcode: i32, mode: i32)
+
+ahhh i see
+
+took me a second to notice this:
+
+Parameter modes are single digits, *****one per parameter******, read
+right-to-left from the opcode: the first parameter's mode is in the hundreds
+digit, the second parameter's mode is in the thousands digit, the third
+parameter's mode is in the ten-thousands digit, and so on. Any missing modes
+are 0.
+
+ok wow this shit is interesting
+
+definitely need a function just for this
+
+but how to get it to not allocate a ton of tiny vecs when parsing/representing parameter modes?
+
+i guess it could take as input a buffer vec<i32> that's initialized with zeroes
