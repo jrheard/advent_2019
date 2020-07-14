@@ -21,6 +21,7 @@ pub fn load_program(filename: &str) -> Memory {
         .collect()
 }
 
+#[derive(Debug, Clone, Copy)]
 struct Operation {
     opcode: i32,
     num_arguments: usize,
@@ -36,13 +37,11 @@ const MUL: Operation = Operation {
     num_arguments: 3,
 };
 
-// TODO - concept of "input"
 const INPUT: Operation = Operation {
     opcode: 3,
     num_arguments: 1,
 };
 
-// TODO - concept of "output"
 const PRINT: Operation = Operation {
     opcode: 4,
     num_arguments: 1,
@@ -54,34 +53,21 @@ const END: Operation = Operation {
 };
 
 /// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
-// TODO rename `memory` to `input_memory`
-pub fn run_program(memory: Memory) -> Memory {
-    // TODO break this out into a fn, have it return max_num_arguments too
-    let mut operations = HashMap::new();
-
-    for operation in [ADD, MUL, END, INPUT, PRINT].iter() {
-        operations.insert(operation.opcode, operation);
-    }
-
+pub fn run_program(input_memory: Memory) -> Memory {
     let mut instruction_pointer = 0;
-    let mut result = memory.clone();
-
-    let max_num_arguments = operations
-        .values()
-        .max_by_key(|op| op.num_arguments)
-        .unwrap()
-        .num_arguments;
+    let mut memory = input_memory.clone();
+    let (operations, max_num_arguments) = load_operations();
 
     let mut parameter_mode_buffer = vec![ParameterMode::POSITION; max_num_arguments];
     let mut argument_buffer = vec![0; max_num_arguments];
 
     loop {
-        let instruction = result[instruction_pointer];
+        let instruction = memory[instruction_pointer];
         let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
         let operation = operations[&opcode];
 
         write_arguments(
-            &result,
+            &memory,
             instruction_pointer,
             operation.num_arguments,
             &parameter_mode_buffer[0..operation.num_arguments],
@@ -92,17 +78,17 @@ pub fn run_program(memory: Memory) -> Memory {
 
         match opcode {
             // TODO how can i change this match to match on eg ADD.opcode instead of 1? initial attempts didn't work
-            1 => add(&mut result, args),
-            2 => mul(&mut result, args),
-            3 => input(&mut result, args),
-            4 => print(&result, args),
+            1 => add(&mut memory, args),
+            2 => mul(&mut memory, args),
+            3 => input(&mut memory, args),
+            4 => print(&memory, args),
             99 => break,
             _ => panic!("unknown opcode {}", opcode),
         }
 
         instruction_pointer += operation.num_arguments + 1;
     }
-    result
+    memory
 }
 
 fn add(memory: &mut Memory, args: &[i32]) {
@@ -124,6 +110,22 @@ fn input(memory: &mut Memory, args: &[i32]) {
 
 fn print(memory: &Memory, args: &[i32]) {
     println!(">>> {}", memory[args[0] as usize]);
+}
+
+fn load_operations() -> (HashMap<i32, Operation>, usize) {
+    let mut operations = HashMap::new();
+
+    for &operation in [ADD, MUL, END, INPUT, PRINT].iter() {
+        operations.insert(operation.opcode, operation);
+    }
+
+    let max_num_arguments = operations
+        .values()
+        .max_by_key(|op| op.num_arguments)
+        .unwrap()
+        .num_arguments;
+
+    (operations, max_num_arguments)
 }
 
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
