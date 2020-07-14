@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::fs;
-use std::io;
 
 type Memory = Vec<i32>;
+type Input = Vec<i32>;
+type Output = Vec<i32>;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum ParameterMode {
@@ -37,25 +38,26 @@ const MUL: Operation = Operation {
     num_arguments: 3,
 };
 
-const INPUT: Operation = Operation {
+const TAKE_INPUT: Operation = Operation {
     opcode: 3,
     num_arguments: 1,
 };
 
-const PRINT: Operation = Operation {
+const PRINT_OUTPUT: Operation = Operation {
     opcode: 4,
     num_arguments: 1,
 };
 
-const END: Operation = Operation {
+const EXIT: Operation = Operation {
     opcode: 99,
     num_arguments: 0,
 };
 
 /// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
-pub fn run_program(input_memory: Memory) -> Memory {
+pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
     let mut instruction_pointer = 0;
     let mut memory = input_memory.clone();
+    let mut output = vec![];
     let (operations, max_num_arguments) = load_operations();
 
     let mut parameter_mode_buffer = vec![ParameterMode::POSITION; max_num_arguments];
@@ -80,15 +82,16 @@ pub fn run_program(input_memory: Memory) -> Memory {
             // TODO how can i change this match to match on eg ADD.opcode instead of 1? initial attempts didn't work
             1 => add(&mut memory, args),
             2 => mul(&mut memory, args),
-            3 => input(&mut memory, args),
-            4 => print(&memory, args),
+            3 => take_input(&mut memory, args, input.remove(0)),
+            4 => push_output(&mut output, args),
             99 => break,
             _ => panic!("unknown opcode {}", opcode),
         }
 
         instruction_pointer += operation.num_arguments + 1;
     }
-    memory
+
+    (memory, output)
 }
 
 fn add(memory: &mut Memory, args: &[i32]) {
@@ -99,23 +102,18 @@ fn mul(memory: &mut Memory, args: &[i32]) {
     memory[args[2] as usize] = args[0] * args[1];
 }
 
-fn input(memory: &mut Memory, args: &[i32]) {
-    let mut input = String::new();
-    println!("Please input a number: ");
-    io::stdin().read_line(&mut input).unwrap();
-
-    let value = input.trim().parse::<i32>().unwrap();
-    memory[args[0] as usize] = value;
+fn take_input(memory: &mut Memory, args: &[i32], input: i32) {
+    memory[args[0] as usize] = input;
 }
 
-fn print(memory: &Memory, args: &[i32]) {
-    println!(">>> {}", memory[args[0] as usize]);
+fn push_output(output: &mut Output, args: &[i32]) {
+    output.push(args[0]);
 }
 
 fn load_operations() -> (HashMap<i32, Operation>, usize) {
     let mut operations = HashMap::new();
 
-    for &operation in [ADD, MUL, END, INPUT, PRINT].iter() {
+    for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PRINT_OUTPUT].iter() {
         operations.insert(operation.opcode, operation);
     }
 
@@ -187,15 +185,21 @@ mod tests {
 
     #[test]
     fn test_run_program() {
-        assert_eq!(run_program(vec![1, 0, 0, 0, 99]), vec![2, 0, 0, 0, 99]);
-        assert_eq!(run_program(vec![2, 3, 0, 3, 99]), vec![2, 3, 0, 6, 99]);
         assert_eq!(
-            run_program(vec![2, 4, 4, 5, 99, 0]),
-            vec![2, 4, 4, 5, 99, 9801]
+            run_program(vec![1, 0, 0, 0, 99], vec![]),
+            (vec![2, 0, 0, 0, 99], vec![])
         );
         assert_eq!(
-            run_program(vec![1, 1, 1, 4, 99, 5, 6, 0, 99]),
-            vec![30, 1, 1, 4, 2, 5, 6, 0, 99]
+            run_program(vec![2, 3, 0, 3, 99], vec![]),
+            (vec![2, 3, 0, 6, 99], vec![])
+        );
+        assert_eq!(
+            run_program(vec![2, 4, 4, 5, 99, 0], vec![]),
+            (vec![2, 4, 4, 5, 99, 9801], vec![])
+        );
+        assert_eq!(
+            run_program(vec![1, 1, 1, 4, 99, 5, 6, 0, 99], vec![]),
+            (vec![30, 1, 1, 4, 2, 5, 6, 0, 99], vec![])
         );
     }
 
@@ -279,6 +283,14 @@ mod tests {
                 ParameterMode::POSITION,
                 ParameterMode::POSITION,
             ]
+        );
+    }
+
+    #[test]
+    fn test_first_mode_aware_program() {
+        assert_eq!(
+            run_program(vec![1002, 4, 3, 4, 33], vec![]),
+            (vec![1002, 4, 3, 4, 99], vec![])
         );
     }
 }

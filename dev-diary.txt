@@ -290,3 +290,59 @@ makes sense
     Integers can be negative: 1101,100,-1,4,0 is a valid program (find 100 + -1, store the result in position 4).
 
 interesting!
+
+ok so i hacked on 5a for a bit and i thought i had implemented it right
+but the output commands are printing out 3
+and they're supposed to be printing out 0
+and also it crashes after a while
+so clearly i've done something wrong
+
+let's work this program out by hand
+
+3,225
+
+take an int (1) as input, store it to 225
+
+1,225,6,6
+
+add the value at 255 and the value at 6, and store the result to 6
+the value at 255 is 1
+the value at 6 is 1100
+so the result is 1101, which we store to 6
+
+1101,1,238,225
+
+add 1 and 238 and store the result to 225
+the result is 239, which we store to 225
+
+104,0
+
+print out the value at 0
+
+which is 3!!!!!!
+what gives????????
+
+i must be interpreting this program incorrectly somehow
+
+oh fuck wait nvm
+
+104,0
+
+that's "print in immediate mode: 0"
+ie print the literal value 0
+so why am i printing out 3?
+
+oh, it's because i made a mistake in my print function
+
+i had this:
+
+    println!(">>> {}", memory[args[0] as usize]);
+
+but it should have been this:
+
+    println!(">>> {}", args[0]);
+
+annnd that fixes it and makes my program no longer crash
+lolll
+
+ez

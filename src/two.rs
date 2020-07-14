@@ -9,7 +9,7 @@ pub fn two_a() -> i32 {
     memory[2] = 2;
 
     // What value is left at position 0 after the program halts?
-    computer::run_program(memory)[0]
+    (computer::run_program(memory, vec![]).0)[0]
 }
 
 pub fn two_b() -> i32 {
@@ -24,7 +24,7 @@ pub fn two_b() -> i32 {
             memory[1] = i;
             memory[2] = j;
 
-            if computer::run_program(memory)[0] == 19690720 {
+            if (computer::run_program(memory, vec![]).0)[0] == 19690720 {
                 noun = i;
                 verb = j;
                 break;
