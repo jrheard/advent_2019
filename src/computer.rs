@@ -225,7 +225,7 @@ mod tests {
             vec![
                 ParameterMode::POSITION,
                 ParameterMode::IMMEDIATE,
-                ParameterMode::POSITION
+                ParameterMode::IMMEDIATE
             ]
         );
 
@@ -240,7 +240,7 @@ mod tests {
             vec![
                 ParameterMode::POSITION,
                 ParameterMode::IMMEDIATE,
-                ParameterMode::POSITION
+                ParameterMode::IMMEDIATE
             ]
         );
         let mut buffer = vec![
