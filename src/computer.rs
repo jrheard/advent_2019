@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io;
 
 type Memory = Vec<i32>;
 
@@ -36,13 +37,13 @@ const MUL: Operation = Operation {
 };
 
 // TODO - concept of "input"
-const SAV: Operation = Operation {
+const INPUT: Operation = Operation {
     opcode: 3,
     num_arguments: 1,
 };
 
 // TODO - concept of "output"
-const PRN: Operation = Operation {
+const PRINT: Operation = Operation {
     opcode: 4,
     num_arguments: 1,
 };
@@ -53,6 +54,7 @@ const END: Operation = Operation {
 };
 
 /// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
+// TODO rename `memory` to `input_memory`
 pub fn run_program(memory: Memory) -> Memory {
     let mut operations = HashMap::new();
 
@@ -65,17 +67,26 @@ pub fn run_program(memory: Memory) -> Memory {
 
     loop {
         let opcode = result[instruction_pointer];
+
+        // TODO parse instruction and modes
+
         let operation = operations[&opcode];
 
+        // TODO function that sets up args based on memory and instruction
+
         let args = if operation.num_arguments > 0 {
+            // XXX this should be using `result` instead of `memory`
             &memory[(instruction_pointer + 1)..(instruction_pointer + 1 + operation.num_arguments)]
         } else {
             &[] as &[i32]
         };
 
         match opcode {
+            // TODO how can i change this match to match on eg ADD.opcode instead of 1? initial attempts didn't work
             1 => add(&mut result, args),
             2 => mul(&mut result, args),
+            3 => input(&mut result, args),
+            4 => print(&result, args),
             99 => break,
             _ => panic!("unknown opcode {}", opcode),
         }
@@ -91,6 +102,18 @@ fn add(memory: &mut Memory, args: &[i32]) {
 
 fn mul(memory: &mut Memory, args: &[i32]) {
     memory[args[2] as usize] = memory[args[0] as usize] * memory[args[1] as usize];
+}
+
+fn input(memory: &mut Memory, args: &[i32]) {
+    let mut input = String::new();
+    println!("Please input a number: ");
+    io::stdin().read_line(&mut input).unwrap();
+    //TODO parse into i32
+    // TODO store in memory
+}
+
+fn print(memory: &Memory, args: &[i32]) {
+    println!("{}", memory[args[0] as usize]);
 }
 
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {

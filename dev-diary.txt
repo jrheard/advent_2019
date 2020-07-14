@@ -282,3 +282,11 @@ definitely need a function just for this
 but how to get it to not allocate a ton of tiny vecs when parsing/representing parameter modes?
 
 i guess it could take as input a buffer vec<i32> that's initialized with zeroes
+
+    Parameters that an instruction writes to will never be in immediate mode.
+
+makes sense
+
+    Integers can be negative: 1101,100,-1,4,0 is a valid program (find 100 + -1, store the result in position 4).
+
+interesting!
