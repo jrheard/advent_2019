@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::fs;
 
 type Memory = Vec<i32>;
@@ -22,43 +21,12 @@ pub fn load_program(filename: &str) -> Memory {
         .collect()
 }
 
-#[derive(Debug, Clone, Copy)]
-struct Operation {
-    opcode: i32,
-    num_arguments: usize,
-}
-
-const ADD: Operation = Operation {
-    opcode: 1,
-    num_arguments: 3,
-};
-
-const MUL: Operation = Operation {
-    opcode: 2,
-    num_arguments: 3,
-};
-
-const TAKE_INPUT: Operation = Operation {
-    opcode: 3,
-    num_arguments: 1,
-};
-
-const PRINT_OUTPUT: Operation = Operation {
-    opcode: 4,
-    num_arguments: 1,
-};
-
-const EXIT: Operation = Operation {
-    opcode: 99,
-    num_arguments: 0,
-};
-
 /// Runs the program in `memory`. Returns a Memory representing the state of the computer after the program has completed.
 pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
     let mut instruction_pointer = 0;
     let mut memory = input_memory.clone();
     let mut output = vec![];
-    let (operations, max_num_arguments) = load_operations();
+    let (operations, max_num_arguments) = operations::load_operations();
 
     let mut parameter_mode_buffer = vec![ParameterMode::POSITION; max_num_arguments];
     let mut argument_buffer = vec![0; max_num_arguments];
@@ -108,22 +76,6 @@ fn take_input(memory: &mut Memory, args: &[i32], input: i32) {
 
 fn push_output(output: &mut Output, args: &[i32]) {
     output.push(args[0]);
-}
-
-fn load_operations() -> (HashMap<i32, Operation>, usize) {
-    let mut operations = HashMap::new();
-
-    for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PRINT_OUTPUT].iter() {
-        operations.insert(operation.opcode, operation);
-    }
-
-    let max_num_arguments = operations
-        .values()
-        .max_by_key(|op| op.num_arguments)
-        .unwrap()
-        .num_arguments;
-
-    (operations, max_num_arguments)
 }
 
 fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
@@ -292,5 +244,56 @@ mod tests {
             run_program(vec![1002, 4, 3, 4, 33], vec![]),
             (vec![1002, 4, 3, 4, 99], vec![])
         );
+    }
+}
+
+mod operations {
+    use std::collections::HashMap;
+
+    #[derive(Debug, Clone, Copy)]
+    pub struct Operation {
+        pub opcode: i32,
+        pub num_arguments: usize,
+    }
+
+    const ADD: Operation = Operation {
+        opcode: 1,
+        num_arguments: 3,
+    };
+
+    const MUL: Operation = Operation {
+        opcode: 2,
+        num_arguments: 3,
+    };
+
+    const TAKE_INPUT: Operation = Operation {
+        opcode: 3,
+        num_arguments: 1,
+    };
+
+    const PRINT_OUTPUT: Operation = Operation {
+        opcode: 4,
+        num_arguments: 1,
+    };
+
+    const EXIT: Operation = Operation {
+        opcode: 99,
+        num_arguments: 0,
+    };
+
+    pub fn load_operations() -> (HashMap<i32, Operation>, usize) {
+        let mut operations = HashMap::new();
+
+        for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PRINT_OUTPUT].iter() {
+            operations.insert(operation.opcode, operation);
+        }
+
+        let max_num_arguments = operations
+            .values()
+            .max_by_key(|op| op.num_arguments)
+            .unwrap()
+            .num_arguments;
+
+        (operations, max_num_arguments)
     }
 }

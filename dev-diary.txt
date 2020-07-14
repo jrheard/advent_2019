@@ -345,4 +345,8 @@ but it should have been this:
 annnd that fixes it and makes my program no longer crash
 lolll
 
-ez
+ez!
+
+ok i tidied up
+
+still a few more todos to resolve
