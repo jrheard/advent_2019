@@ -14,4 +14,5 @@ fn main() {
     println!("4a: {}", four::four_a());
     println!("4b: {}", four::four_b());
     println!("5a: {}", five::five_a());
+    println!("5b: {}", five::five_b());
 }
