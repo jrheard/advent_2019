@@ -367,4 +367,43 @@ mod tests {
             (vec![3, 3, 1107, 0, 8, 3, 4, 3, 99], vec![0])
         );
     }
+
+    #[test]
+    fn test_jump() {
+        // "Here are some jump tests that take an input, then output 0 if the input was zero or 1 if the input was non-zero"
+        let jump_program_1 = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+
+        assert_eq!(
+            run_program(jump_program_1.clone(), vec![5]),
+            (
+                vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 5, 1, 1, 9],
+                vec![1]
+            )
+        );
+
+        assert_eq!(
+            run_program(jump_program_1, vec![0]),
+            (
+                vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 0, 0, 1, 9],
+                vec![0]
+            )
+        );
+
+        let jump_program_2 = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        assert_eq!(
+            run_program(jump_program_2.clone(), vec![5]),
+            (
+                vec![3, 3, 1105, 5, 9, 1101, 0, 0, 12, 4, 12, 99, 1],
+                vec![1]
+            )
+        );
+
+        assert_eq!(
+            run_program(jump_program_2, vec![0]),
+            (
+                vec![3, 3, 1105, 0, 9, 1101, 0, 0, 12, 4, 12, 99, 0],
+                vec![0]
+            )
+        );
+    }
 }
