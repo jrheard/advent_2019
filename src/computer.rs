@@ -49,12 +49,11 @@ pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
         let args = &argument_buffer[0..operation.num_arguments];
 
         match opcode {
-            // TODO how can i change this match to match on eg ADD.opcode instead of 1? initial attempts didn't work
-            1 => add(&mut memory, args),
-            2 => mul(&mut memory, args),
-            3 => take_input(&mut memory, args, input.remove(0)),
-            4 => push_output(&mut output, args),
-            99 => break,
+            operations::ADD_OPCODE => add(&mut memory, args),
+            operations::MUL_OPCODE => mul(&mut memory, args),
+            operations::TAKE_INPUT_OPCODE => take_input(&mut memory, args, input.remove(0)),
+            operations::PUSH_OUTPUT_OPCODE => push_output(&mut output, args),
+            operations::EXIT_OPCODE => break,
             _ => panic!("unknown opcode {}", opcode),
         }
 
@@ -285,32 +284,37 @@ mod operations {
         opcode: 1,
         num_arguments: 3,
     };
+    pub const ADD_OPCODE: i32 = ADD.opcode;
 
     const MUL: Operation = Operation {
         opcode: 2,
         num_arguments: 3,
     };
+    pub const MUL_OPCODE: i32 = MUL.opcode;
 
     const TAKE_INPUT: Operation = Operation {
         opcode: 3,
         num_arguments: 1,
     };
+    pub const TAKE_INPUT_OPCODE: i32 = TAKE_INPUT.opcode;
 
-    const PRINT_OUTPUT: Operation = Operation {
+    const PUSH_OUTPUT: Operation = Operation {
         opcode: 4,
         num_arguments: 1,
     };
+    pub const PUSH_OUTPUT_OPCODE: i32 = PUSH_OUTPUT.opcode;
 
     const EXIT: Operation = Operation {
         opcode: 99,
         num_arguments: 0,
     };
+    pub const EXIT_OPCODE: i32 = EXIT.opcode;
 
     /// Returns a tuple of (operations_by_opcode, max_num_arguments_across_all_operations).
     pub fn load_operations() -> (HashMap<i32, Operation>, usize) {
         let mut operations = HashMap::new();
 
-        for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PRINT_OUTPUT].iter() {
+        for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PUSH_OUTPUT].iter() {
             operations.insert(operation.opcode, operation);
         }
 
