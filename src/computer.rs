@@ -52,6 +52,9 @@ pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
 
         let args = &argument_buffer[0..operation.num_arguments];
 
+        //println!("about to perform an operation");
+        //dbg!(opcode, args);
+
         match opcode {
             operations::ADD_OPCODE => add(&mut memory, args),
             operations::MUL_OPCODE => mul(&mut memory, args),
@@ -305,5 +308,63 @@ mod tests {
         );
 
         assert_eq!(argument_buffer, vec![2, 2, 0, 0, 0]);
+    }
+
+    #[test]
+    fn test_equals() {
+        // "Using position mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
+        let position_mode_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+
+        assert_eq!(
+            run_program(position_mode_program.clone(), vec![5]),
+            (vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8], vec![0])
+        );
+
+        assert_eq!(
+            run_program(position_mode_program, vec![8]),
+            (vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8], vec![1])
+        );
+
+        // "Using immediate mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
+        let immediate_mode_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+
+        assert_eq!(
+            run_program(immediate_mode_program.clone(), vec![5]),
+            (vec![3, 3, 1108, 0, 8, 3, 4, 3, 99], vec![0])
+        );
+
+        assert_eq!(
+            run_program(immediate_mode_program, vec![8]),
+            (vec![3, 3, 1108, 1, 8, 3, 4, 3, 99], vec![1])
+        );
+    }
+
+    #[test]
+    fn test_less_than() {
+        // "Using position mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not)."
+        let position_mode_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+
+        assert_eq!(
+            run_program(position_mode_program.clone(), vec![5]),
+            (vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 1, 8], vec![1])
+        );
+
+        assert_eq!(
+            run_program(position_mode_program, vec![8]),
+            (vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 0, 8], vec![0])
+        );
+
+        // "Using immediate mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not)."
+        let immediate_mode_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+
+        assert_eq!(
+            run_program(immediate_mode_program.clone(), vec![5]),
+            (vec![3, 3, 1107, 1, 8, 3, 4, 3, 99], vec![1])
+        );
+
+        assert_eq!(
+            run_program(immediate_mode_program, vec![8]),
+            (vec![3, 3, 1107, 0, 8, 3, 4, 3, 99], vec![0])
+        );
     }
 }

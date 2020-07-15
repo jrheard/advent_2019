@@ -75,7 +75,19 @@ pub const EXIT_OPCODE: i32 = EXIT.opcode;
 pub fn load_operations() -> (HashMap<i32, Operation>, usize) {
     let mut operations = HashMap::new();
 
-    for &operation in [ADD, MUL, EXIT, TAKE_INPUT, PUSH_OUTPUT].iter() {
+    for &operation in [
+        ADD,
+        MUL,
+        EXIT,
+        TAKE_INPUT,
+        PUSH_OUTPUT,
+        JUMP_IF_TRUE,
+        JUMP_IF_FALSE,
+        LESS_THAN,
+        EQUALS,
+    ]
+    .iter()
+    {
         operations.insert(operation.opcode, operation);
     }
 
