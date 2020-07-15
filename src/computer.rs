@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::fs;
 
 type Memory = Vec<i32>;
@@ -35,8 +36,9 @@ pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
 
     loop {
         let instruction = memory[instruction_pointer];
-        let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
+        let opcode = parse_instruction(instruction, &operations, &mut parameter_mode_buffer);
         let operation = operations[&opcode];
+        let mut new_instruction_pointer = None;
 
         write_arguments(
             &memory,
@@ -53,11 +55,19 @@ pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
             operations::MUL_OPCODE => mul(&mut memory, args),
             operations::TAKE_INPUT_OPCODE => take_input(&mut memory, args, input.remove(0)),
             operations::PUSH_OUTPUT_OPCODE => push_output(&mut output, args),
+            operations::JUMP_IF_TRUE_OPCODE => new_instruction_pointer = jump_if_true(args),
+            operations::JUMP_IF_FALSE_OPCODE => new_instruction_pointer = jump_if_false(args),
+            operations::LESS_THAN_OPCODE => less_than(&mut memory, args),
+            operations::EQUALS_OPCODE => equals(&mut memory, args),
             operations::EXIT_OPCODE => break,
             _ => panic!("unknown opcode {}", opcode),
         }
 
-        instruction_pointer += operation.num_arguments + 1;
+        if let Some(new_pointer) = new_instruction_pointer {
+            instruction_pointer = new_pointer;
+        } else {
+            instruction_pointer += operation.num_arguments + 1;
+        }
     }
 
     (memory, output)
@@ -79,11 +89,39 @@ fn push_output(output: &mut Output, args: &[i32]) {
     output.push(args[0]);
 }
 
+fn jump_if_true(args: &[i32]) -> Option<usize> {
+    if args[0] != 0 {
+        Some(args[1] as usize)
+    } else {
+        None
+    }
+}
+
+fn jump_if_false(args: &[i32]) -> Option<usize> {
+    if args[0] == 0 {
+        Some(args[1] as usize)
+    } else {
+        None
+    }
+}
+
+fn less_than(memory: &mut Memory, args: &[i32]) {
+    memory[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 };
+}
+
+fn equals(memory: &mut Memory, args: &[i32]) {
+    memory[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 };
+}
+
 /// Parses an instruction like `1102`.
 ///
 /// Returns an i32 opcode like `02`.
 /// Writes the instruction's encoded parameter modes to `parameter_mode_buffer`.
-fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i32 {
+fn parse_instruction(
+    instruction: i32,
+    operations: &HashMap<i32, operations::Operation>,
+    parameter_mode_buffer: &mut Vec<ParameterMode>,
+) -> i32 {
     for i in 0..parameter_mode_buffer.len() {
         parameter_mode_buffer[i] = ParameterMode::POSITION;
     }
@@ -105,15 +143,9 @@ fn parse_instruction(instruction: i32, parameter_mode_buffer: &mut Vec<Parameter
 
     let opcode = instruction % 100;
 
-    // Some operations use an argument as a target memory location for storing data.
-    // Handle those operations' target memory locations' modes directly.
-    if opcode == 1 || opcode == 2 {
-        // ADD and MUL use their third argument as a target memory location.
-        parameter_mode_buffer[2] = ParameterMode::IMMEDIATE;
-    }
-    if opcode == 3 {
-        // TAKE_INPUT uses its first argument as a target memory location.
-        parameter_mode_buffer[0] = ParameterMode::IMMEDIATE;
+    if let Some(target_arg_index) = operations[&opcode].target_memory_location_arg {
+        // TODO document
+        parameter_mode_buffer[target_arg_index] = ParameterMode::IMMEDIATE;
     }
 
     opcode
@@ -181,12 +213,14 @@ mod tests {
 
     #[test]
     fn test_parse_instruction() {
+        let (operations, _) = operations::load_operations();
+
         let mut buffer = vec![
             ParameterMode::POSITION,
             ParameterMode::POSITION,
             ParameterMode::POSITION,
         ];
-        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(parse_instruction(1002, &operations, &mut buffer), 2);
         assert_eq!(
             buffer,
             vec![
@@ -201,7 +235,7 @@ mod tests {
             ParameterMode::IMMEDIATE,
             ParameterMode::IMMEDIATE,
         ];
-        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(parse_instruction(1002, &operations, &mut buffer), 2);
         assert_eq!(
             buffer,
             vec![
@@ -215,7 +249,7 @@ mod tests {
             ParameterMode::POSITION,
             ParameterMode::POSITION,
         ];
-        assert_eq!(parse_instruction(11004, &mut buffer), 4);
+        assert_eq!(parse_instruction(11004, &operations, &mut buffer), 4);
         assert_eq!(
             buffer,
             vec![
@@ -233,7 +267,7 @@ mod tests {
             ParameterMode::POSITION,
             ParameterMode::POSITION,
         ];
-        assert_eq!(parse_instruction(101014, &mut buffer), 14);
+        assert_eq!(parse_instruction(101099, &operations, &mut buffer), 99);
         assert_eq!(
             buffer,
             vec![
@@ -278,35 +312,70 @@ mod operations {
     pub struct Operation {
         pub opcode: i32,
         pub num_arguments: usize,
+        // TODO document/rename
+        pub target_memory_location_arg: Option<usize>,
     }
 
     const ADD: Operation = Operation {
         opcode: 1,
         num_arguments: 3,
+        target_memory_location_arg: Some(2),
     };
     pub const ADD_OPCODE: i32 = ADD.opcode;
 
     const MUL: Operation = Operation {
         opcode: 2,
         num_arguments: 3,
+        target_memory_location_arg: Some(2),
     };
     pub const MUL_OPCODE: i32 = MUL.opcode;
 
     const TAKE_INPUT: Operation = Operation {
         opcode: 3,
         num_arguments: 1,
+        target_memory_location_arg: Some(0),
     };
     pub const TAKE_INPUT_OPCODE: i32 = TAKE_INPUT.opcode;
 
     const PUSH_OUTPUT: Operation = Operation {
         opcode: 4,
         num_arguments: 1,
+        target_memory_location_arg: None,
     };
     pub const PUSH_OUTPUT_OPCODE: i32 = PUSH_OUTPUT.opcode;
+
+    const JUMP_IF_TRUE: Operation = Operation {
+        opcode: 5,
+        num_arguments: 2,
+        target_memory_location_arg: None,
+    };
+    pub const JUMP_IF_TRUE_OPCODE: i32 = JUMP_IF_TRUE.opcode;
+
+    const JUMP_IF_FALSE: Operation = Operation {
+        opcode: 6,
+        num_arguments: 2,
+        target_memory_location_arg: None,
+    };
+    pub const JUMP_IF_FALSE_OPCODE: i32 = JUMP_IF_FALSE.opcode;
+
+    const LESS_THAN: Operation = Operation {
+        opcode: 7,
+        num_arguments: 3,
+        target_memory_location_arg: Some(2),
+    };
+    pub const LESS_THAN_OPCODE: i32 = LESS_THAN.opcode;
+
+    const EQUALS: Operation = Operation {
+        opcode: 8,
+        num_arguments: 3,
+        target_memory_location_arg: Some(2),
+    };
+    pub const EQUALS_OPCODE: i32 = EQUALS.opcode;
 
     const EXIT: Operation = Operation {
         opcode: 99,
         num_arguments: 0,
+        target_memory_location_arg: None,
     };
     pub const EXIT_OPCODE: i32 = EXIT.opcode;
 
