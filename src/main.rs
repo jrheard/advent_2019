@@ -5,6 +5,8 @@ use advent_2019::three;
 use advent_2019::two;
 
 fn main() {
+    pretty_env_logger::init();
+
     println!("1a: {}", one::one_a());
     println!("1b: {}", one::one_b());
     println!("2a: {}", two::two_a());

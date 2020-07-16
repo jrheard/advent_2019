@@ -52,8 +52,12 @@ pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
 
         let args = &argument_buffer[0..operation.num_arguments];
 
-        //println!("about to perform an operation");
-        //dbg!(opcode, args);
+        log::debug!(
+            "{}: about to perform operation {:?} on args {:?}",
+            instruction_pointer,
+            opcode,
+            args
+        );
 
         match opcode {
             operations::ADD_OPCODE => add(&mut memory, args),

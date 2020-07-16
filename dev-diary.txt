@@ -153,7 +153,7 @@ https://hermanradtke.com/2015/06/22/effectively-using-iterators-in-rust.html
     not live long enough, move errors or using the .clone() function, this is
     a sign that you probably want to use .into_iter() instead."
 
-TODO profile 3a, i'm expecting to see huge slowdown bc of tons of tiny allocations
+done profile 3a, i'm expecting to see huge slowdown bc of tons of tiny allocations
     https://carol-nichols.com/2017/04/20/rust-profiling-with-dtrace-on-osx/ good tips
 
 i think that it's gonna be bc i make so many tiny strings
@@ -349,4 +349,16 @@ ez!
 
 ok i tidied up
 
-still a few more todos to resolve
+still a few more done to resolve
+
+===
+
+7/15/20
+
+finished up 5b!
+
+TODO how can we associate operations' code more closely with their structs? will traits get involved here?
+
+DONE try out a logging library
+    https://fasterthanli.me/articles/getting-in-and-out-of-trouble-with-rust-futures has an example
+    pretty_env_log it is
