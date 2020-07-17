@@ -362,3 +362,24 @@ TODO how can we associate operations' code more closely with their structs? will
 DONE try out a logging library
     https://fasterthanli.me/articles/getting-in-and-out-of-trouble-with-rust-futures has an example
     pretty_env_log it is
+
+===
+
+7/16/20
+
+took a peek at 6a
+
+idea so far:
+
+* construct a tree from the input
+* each node in the tree has a `depth` u32
+* walk the tree, sum all the depths
+
+constructing the tree will be interesting though
+
+i think first we'll have to parse each line into a tuple of strings
+into a hashmap actually imo!
+yeah that's the way to go
+and then build the tree based on that hashmap of directional relationships
+
+maybe use a stack along the way while building the tree?

@@ -6,9 +6,9 @@ pub fn parse_lines_from_file<T: FromStr>(filename: &str) -> Vec<T> {
 
     contents
         .lines()
-        .map(|x| {
-            x.parse::<T>()
-                .map_err(|_| format!("unable to parse {:?}", x))
+        .map(|line| {
+            line.parse::<T>()
+                .map_err(|_| format!("unable to parse {:?}", line))
                 .unwrap()
         })
         .collect()

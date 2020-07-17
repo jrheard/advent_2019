@@ -1,6 +1,7 @@
 use advent_2019::five;
 use advent_2019::four;
 use advent_2019::one;
+use advent_2019::six;
 use advent_2019::three;
 use advent_2019::two;
 
@@ -17,4 +18,5 @@ fn main() {
     println!("4b: {}", four::four_b());
     println!("5a: {}", five::five_a());
     println!("5b: {}", five::five_b());
+    println!("6a: {}", six::six_a());
 }
