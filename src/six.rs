@@ -10,12 +10,11 @@ pub fn six_a() -> u32 {
 }
 
 fn num_orbits_from_body(body: &str, orbits: &Orbits, depth: u32) -> u32 {
-    let value = orbits.get(body);
-
-    match value {
+    match orbits.get(body) {
         None => 0,
         Some(satellites) => {
             let immediate_children_sum = (satellites.len() as u32) * (depth + 1);
+
             immediate_children_sum
                 + satellites
                     .iter()
