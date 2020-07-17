@@ -383,3 +383,23 @@ yeah that's the way to go
 and then build the tree based on that hashmap of directional relationships
 
 maybe use a stack along the way while building the tree?
+
+hrm hrm hrm
+so a single body can have multiple satellites
+but each body can only orbit one thing
+so there's like a directionality there in the relationship
+
+constructing a hashmap of {satellite: body} is straightforward enough
+but how do you walk through that hashmap in order to construct a tree?
+
+i think i want to make a hashmap of {body: vec_of_satellites}
+it'll involve a lot of allocations but it'll work fine
+
+ugh
+ok so that's fine
+but now making the tree is hard :)
+
+do i even need a separate tree?
+can i not just walk this hashmap?
+
+i can walk it :)
