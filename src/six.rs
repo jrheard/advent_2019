@@ -59,18 +59,16 @@ fn find_path_to(
     None
 }
 
+/// Starting from `body` at `depth`, calculates the number of "direct and indirect orbits" in `body_to_satellites`.
 fn num_orbits(body: &str, body_to_satellites: &BodyToSatellites, depth: u32) -> u32 {
-    // TODO mess around with sketchbook when it arrives and see if there's a better way to express this
-    // not super comfortable with expressing things in terms of children and depth+1
     match body_to_satellites.get(body) {
-        None => 0,
-        Some(satellites) => {
-            let immediate_children_sum = (satellites.len() as u32) * (depth + 1);
+        None => depth,
 
-            immediate_children_sum
+        Some(satellites) => {
+            depth
                 + satellites
                     .iter()
-                    .map(|satellite| num_orbits(satellite, &body_to_satellites, depth + 1))
+                    .map(|satellite| num_orbits(satellite, body_to_satellites, depth + 1))
                     .sum::<u32>()
         }
     }
