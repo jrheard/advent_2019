@@ -29,7 +29,7 @@ pub fn load_program(filename: &str) -> Memory {
 /// Returns a Memory representing the state of the computer after the program has completed.
 pub fn run_program(input_memory: Memory, mut input: Input) -> (Memory, Output) {
     let mut instruction_pointer = 0;
-    let mut memory = input_memory.clone();
+    let mut memory = input_memory;
     let mut output = vec![];
     let (operations, max_num_arguments) = operations::load_operations();
 
@@ -131,8 +131,8 @@ fn parse_instruction(
     operations: &HashMap<i32, operations::Operation>,
     parameter_mode_buffer: &mut Vec<ParameterMode>,
 ) -> i32 {
-    for i in 0..parameter_mode_buffer.len() {
-        parameter_mode_buffer[i] = ParameterMode::POSITION;
+    for item in &mut parameter_mode_buffer.iter_mut() {
+        *item = ParameterMode::POSITION;
     }
 
     let mut parameter_modes = instruction / 100;
@@ -163,7 +163,7 @@ fn parse_instruction(
 
 /// Writes `num_arguments` arguments to `argument_buffer`, based on `memory`, `instruction_pointer`, and `parameter_modes`.
 fn write_arguments(
-    memory: &Memory,
+    memory: &[i32],
     instruction_pointer: usize,
     num_arguments: usize,
     parameter_modes: &[ParameterMode],

@@ -1,3 +1,5 @@
+use std::cmp::Ordering;
+
 type Password = Vec<u32>;
 
 const LOWER_BOUND: i32 = 272091;
@@ -7,7 +9,6 @@ pub fn four_a() -> i32 {
     let mut buffer = vec![0, 0, 0, 0, 0, 0];
 
     (LOWER_BOUND..(UPPER_BOUND + 1))
-        .into_iter()
         .filter(|&x| {
             write_password_to_buffer(x, &mut buffer);
             digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits(&buffer)
@@ -19,7 +20,6 @@ pub fn four_b() -> i32 {
     let mut buffer = vec![0, 0, 0, 0, 0, 0];
 
     (LOWER_BOUND..(UPPER_BOUND + 1))
-        .into_iter()
         .filter(|&x| {
             write_password_to_buffer(x, &mut buffer);
             digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits_strict(&buffer)
@@ -38,7 +38,7 @@ fn write_password_to_buffer(number: i32, buffer: &mut Password) {
     }
 }
 
-fn has_two_same_adjacent_digits(password: &Password) -> bool {
+fn has_two_same_adjacent_digits(password: &[u32]) -> bool {
     for i in password.iter().zip(password.iter().skip(1)) {
         if i.0 == i.1 {
             return true;
@@ -47,7 +47,7 @@ fn has_two_same_adjacent_digits(password: &Password) -> bool {
     false
 }
 
-fn has_two_same_adjacent_digits_strict(password: &Password) -> bool {
+fn has_two_same_adjacent_digits_strict(password: &[u32]) -> bool {
     for i in 0..password.len() - 1 {
         if password[i] == password[i + 1] {
             if i > 0 && password[i - 1] == password[i] {
@@ -62,14 +62,14 @@ fn has_two_same_adjacent_digits_strict(password: &Password) -> bool {
     false
 }
 
-fn digits_are_non_decreasing(password: &Password) -> bool {
+fn digits_are_non_decreasing(password: &[u32]) -> bool {
     let mut largest_digit_seen = password[0];
 
     for &digit in password {
-        if digit < largest_digit_seen {
-            return false;
-        } else if digit > largest_digit_seen {
-            largest_digit_seen = digit;
+        match digit.cmp(&largest_digit_seen) {
+            Ordering::Less => return false,
+            Ordering::Greater => largest_digit_seen = digit,
+            Ordering::Equal => (),
         }
     }
 

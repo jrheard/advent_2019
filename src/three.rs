@@ -40,9 +40,9 @@ fn closest_intersection_by_steps(wire_1: Wire, wire_2: Wire) -> i32 {
         .unwrap()
 }
 
-fn wire_intersections(wire_1: &Wire, wire_2: &Wire) -> Vec<(i32, i32)> {
-    let wire_1_positions = wire_1.into_iter().cloned().collect::<HashSet<(i32, i32)>>();
-    let wire_2_positions = wire_2.into_iter().cloned().collect::<HashSet<(i32, i32)>>();
+fn wire_intersections(wire_1: &[(i32, i32)], wire_2: &[(i32, i32)]) -> Vec<(i32, i32)> {
+    let wire_1_positions = wire_1.iter().cloned().collect::<HashSet<(i32, i32)>>();
+    let wire_2_positions = wire_2.iter().cloned().collect::<HashSet<(i32, i32)>>();
 
     wire_1_positions
         .intersection(&wire_2_positions)
@@ -58,7 +58,7 @@ fn parse_wire(wire: String) -> Wire {
     let mut x = 0;
     let mut y = 0;
 
-    for movement in wire.trim().split(",").into_iter() {
+    for movement in wire.trim().split(',').into_iter() {
         let mut chars = movement.chars();
         let direction = chars.next().unwrap();
         let amount = chars.collect::<String>().parse::<i32>().unwrap();

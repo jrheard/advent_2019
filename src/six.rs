@@ -46,16 +46,12 @@ fn find_path_to(
         return Some(0);
     }
 
-    match body_to_satellites.get(origin) {
-        None => return None,
-
-        Some(children) => {
-            for child in children.iter() {
-                if let Some(distance) =
-                    find_path_to(destination, child, body_to_satellites, satellite_to_body)
-                {
-                    return Some(1 + distance);
-                }
+    if let Some(children) = body_to_satellites.get(origin) {
+        for child in children.iter() {
+            if let Some(distance) =
+                find_path_to(destination, child, body_to_satellites, satellite_to_body)
+            {
+                return Some(1 + distance);
             }
         }
     }
@@ -89,6 +85,7 @@ fn parse_orbits(path: &str) -> (BodyToSatellites, SatelliteToBody) {
     )
 }
 
+#[allow(clippy::or_fun_call)]
 fn parse_orbits_into_body_to_satellites(orbits: &str) -> BodyToSatellites {
     let mut body_to_satellites = HashMap::new();
     let tuples = split_orbits_into_tuples(orbits);
@@ -119,7 +116,7 @@ fn split_orbits_into_tuples(orbits: &str) -> Vec<(String, String)> {
     orbits
         .lines()
         .map(|line| {
-            let mut split_line = line.split(")");
+            let mut split_line = line.split(')');
             let body = split_line.next().unwrap();
             let satellite = split_line.next().unwrap();
             (body.to_string(), satellite.to_string())
