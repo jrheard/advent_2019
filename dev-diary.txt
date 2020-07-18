@@ -452,3 +452,9 @@ it's a perf optimization and kinda fiddly to get right
 can reach for it later if we need it
 
 it worked! didnt need candidates after all :)
+
+ok, looking at 7a
+to start, we need to come up with the permutations of [0, 1, 2, 3, 4]
+gonna go with itertools .permutations()
+
+ok cool that was pretty ez! just fun with iterators and .fold()

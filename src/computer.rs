@@ -3,7 +3,7 @@ use std::fs;
 
 mod operations;
 
-type Memory = Vec<i32>;
+pub type Memory = Vec<i32>;
 type Input = Vec<i32>;
 type Output = Vec<i32>;
 
