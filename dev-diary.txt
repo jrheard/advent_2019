@@ -422,3 +422,33 @@ let's come up with terms for these
 
 lol how about BodyToSatellites and SatelliteToBody?
 keep it simple
+
+ok cool, done
+so now what?
+
+we use satellite_to_body["SAN"] to figure out where he is
+and then so the idea i had the other day was
+
+you have a function that's like
+
+find_path_to(destination_body: &str, origin_body: &str, body_to_satellites: &BodyToSatellites) -> Option<u32>
+
+which returns a number like 5 if it finds a path to origin starting from destination, or none if it doesn't
+
+and so starting at san's current position, you call find_path_to("YOU")
+and if it returns Some(u32) you have your answer
+and if it doesn't, then you walk up the SatelliteToBody chain until you hit a body that has multiple satellites
+
+maybe it'd be worth having `find_path_to()` also take a, like, "candidates" arg, because we'll know that
+"YOU" _definitely isn't_ in the direction that we're _coming from_, and instead find_path_to() should only
+be checking paths that involve the _other_ satellites of "origin"
+
+anyway that's the rough idea
+
+let's try to get some of this down into code and see how it looks
+
+i'm gonna skip that "candidates" arg stuff for now
+it's a perf optimization and kinda fiddly to get right
+can reach for it later if we need it
+
+it worked! didnt need candidates after all :)
