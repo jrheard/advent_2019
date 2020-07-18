@@ -1,3 +1,5 @@
+#![warn(clippy::all, clippy::nursery)]
+
 use advent_2019::five;
 use advent_2019::four;
 use advent_2019::one;
