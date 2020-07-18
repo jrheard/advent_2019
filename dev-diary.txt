@@ -403,3 +403,22 @@ do i even need a separate tree?
 can i not just walk this hashmap?
 
 i can walk it :)
+
+===
+
+7/18/20
+
+ok, 6b
+
+so we need to figure out how many "orbit transfers" between us and santa
+my plan so far:
+
+parse another map of orbits, keep both
+
+so right now i have an outward-facing map of {body: satellites}
+i also want an inward-facing map of {satellite: body}
+
+let's come up with terms for these
+
+lol how about BodyToSatellites and SatelliteToBody?
+keep it simple
