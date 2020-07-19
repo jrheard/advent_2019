@@ -515,3 +515,10 @@ eg input and instruction_pointer
 
 and i don't think i want ComputerState to be a part of Computer
 instead i think i want `run_program()` to return a tuple of (Computer, halt_reason)
+
+ok cool so
+that was a lot of work in refactoring and fixing up preexisting callsites/tests
+kind of a pain tbh
+but i _think_ i did it right? we'll see
+
+ok i think i have an infinite loop happening

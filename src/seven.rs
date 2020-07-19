@@ -8,8 +8,9 @@ pub fn seven_a() -> i32 {
     largest_output_for_program_one_shot(memory)
 }
 
-pub const fn seven_b() -> i32 {
-    5
+pub fn seven_b() -> i32 {
+    let memory = computer::load_program("src/inputs/7.txt");
+    largest_output_for_program_feedback(memory)
 }
 
 fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
@@ -17,29 +18,69 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
 
     phase_setting_permutations
         .into_iter()
-        .map(|phase_settings| run_amplifier_controller_software(memory.clone(), phase_settings))
+        .map(|phase_settings| {
+            run_amplifier_controller_software_one_shot(memory.clone(), phase_settings)
+        })
         .max()
         .unwrap()
 }
 
-fn _largest_output_for_program_feedback(memory: Memory) -> i32 {
-    let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
-
-    let _programs = vec![memory; phase_setting_permutations.len()];
-
-    5
-}
-
-fn run_amplifier_controller_software(memory: Memory, phase_settings: Vec<i32>) -> i32 {
+fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i32>) -> i32 {
     phase_settings.iter().fold(0, |acc, &phase_setting| {
-        let computer = computer::run_program(
-            Computer::new(memory.clone(), vec![phase_setting, acc]),
-            HaltReason::Exit,
-        )
-        .0;
+        let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
+        computer::run_program(&mut computer, HaltReason::Exit);
 
         computer.output[0]
     })
+}
+
+fn largest_output_for_program_feedback(memory: Memory) -> i32 {
+    let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
+
+    phase_setting_permutations
+        .into_iter()
+        .map(|phase_settings| {
+            run_amplifier_controller_software_feedback(memory.clone(), phase_settings)
+        })
+        .max()
+        .unwrap()
+}
+
+fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i32>) -> i32 {
+    dbg!("trying settings", &phase_settings);
+    let mut computers = phase_settings
+        .iter()
+        .map(|&phase_setting| Computer::new(memory.clone(), vec![phase_setting]))
+        .collect::<Vec<_>>();
+
+    // "To start the process, a 0 signal is sent to amplifier A's input exactly once."
+    computers[0].input.push(0);
+
+    let mut computer_index = 0;
+
+    let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();
+
+    loop {
+        let computer = &mut computers[computer_index];
+        let halt_reason = computer::run_program(computer, HaltReason::Output);
+
+        let output = computer.output.pop().unwrap();
+
+        if halt_reason == HaltReason::Exit && computer_index == phase_settings.len() - 1 {
+            break output;
+        }
+
+        let next_computer_index = get_next_computer_index(computer_index);
+
+        //println!(
+        //"computer {} gave output {}, giving it to computer {} as input",
+        //computer_index, output, next_computer_index
+        //);
+
+        computers[next_computer_index].input.push(output);
+
+        computer_index = next_computer_index;
+    }
 }
 
 fn permutations(x: Vec<i32>) -> Vec<Vec<i32>> {
@@ -93,5 +134,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(seven_a(), 117312);
+        assert_eq!(seven_b(), 117312);
     }
 }

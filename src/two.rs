@@ -10,7 +10,8 @@ pub fn two_a() -> i32 {
     memory[2] = 2;
 
     // What value is left at position 0 after the program halts?
-    let computer = computer::run_program(Computer::new(memory, vec![]), HaltReason::Exit).0;
+    let mut computer = Computer::new(memory, vec![]);
+    computer::run_program(&mut computer, HaltReason::Exit);
     computer.memory[0]
 }
 
@@ -26,7 +27,8 @@ pub fn two_b() -> i32 {
             memory[1] = i;
             memory[2] = j;
 
-            let computer = computer::run_program(Computer::new(memory, vec![]), HaltReason::Exit).0;
+            let mut computer = Computer::new(memory, vec![]);
+            computer::run_program(&mut computer, HaltReason::Exit);
 
             if computer.memory[0] == 19690720 {
                 noun = i;
