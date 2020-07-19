@@ -4,7 +4,7 @@ use crate::computer::{Computer, HaltReason};
 pub fn five_a() -> i32 {
     let memory = computer::load_program("src/inputs/5.txt");
     let mut computer = Computer::new(memory, vec![1]);
-    computer::run_program(&mut computer, HaltReason::Exit);
+    computer.run(HaltReason::Exit);
 
     *computer.output.last().unwrap()
 }
@@ -12,7 +12,7 @@ pub fn five_a() -> i32 {
 pub fn five_b() -> i32 {
     let memory = computer::load_program("src/inputs/5.txt");
     let mut computer = Computer::new(memory, vec![5]);
-    computer::run_program(&mut computer, HaltReason::Exit);
+    computer.run(HaltReason::Exit);
 
     computer.output[0]
 }

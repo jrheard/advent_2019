@@ -37,7 +37,7 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
 fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i32>) -> i32 {
     phase_settings.iter().fold(0, |acc, &phase_setting| {
         let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
-        computer::run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         computer.output[0]
     })
@@ -77,7 +77,7 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
 
     loop {
         let computer = &mut computers[computer_index];
-        let halt_reason = computer::run_program(computer, HaltReason::Output);
+        let halt_reason = computer.run(HaltReason::Output);
 
         if halt_reason == HaltReason::Exit {
             // "Eventually, the software on the amplifiers will halt after

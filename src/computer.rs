@@ -13,7 +13,7 @@ enum ParameterMode {
     Immediate,
 }
 
-/// Used for configuring the behavior of `run_program()`.
+/// Used for configuring the behavior of `Computer::run()`.
 /// HaltReason::Exit means: run the program until it reaches an EXIT instruction.
 /// HaltReason::Output means: run the program until it reaches a PUSH_OUTPUT instruction.
 #[derive(Debug, PartialEq, Clone, Copy)]
@@ -39,6 +39,66 @@ impl Computer {
             instruction_pointer: 0,
         }
     }
+
+    /// Runs the program in `self` until the event specified by `halt_level`.
+    /// Returns a HaltReason indicating the event that caused the program to halt.
+    pub fn run(&mut self, halt_level: HaltReason) -> HaltReason {
+        let (operations, max_num_arguments) = operations::load_operations();
+
+        let mut parameter_mode_buffer = vec![ParameterMode::Position; max_num_arguments];
+        let mut argument_buffer = vec![0; max_num_arguments];
+
+        loop {
+            let instruction = self.memory[self.instruction_pointer];
+            let opcode = parse_instruction(instruction, &operations, &mut parameter_mode_buffer);
+            let operation = operations[&opcode];
+            let mut new_instruction_pointer = None;
+
+            write_arguments(
+                &self.memory,
+                self.instruction_pointer,
+                operation.num_arguments,
+                &parameter_mode_buffer[0..operation.num_arguments],
+                &mut argument_buffer,
+            );
+
+            let args = &argument_buffer[0..operation.num_arguments];
+
+            log::debug!(
+                "{}: about to perform operation {:?} on args {:?}",
+                self.instruction_pointer,
+                opcode,
+                args
+            );
+
+            match opcode {
+                operations::ADD_OPCODE => add(&mut self.memory, args),
+                operations::MUL_OPCODE => mul(&mut self.memory, args),
+                operations::TAKE_INPUT_OPCODE => {
+                    take_input(&mut self.memory, args, self.input.remove(0))
+                }
+                operations::PUSH_OUTPUT_OPCODE => {
+                    push_output(&mut self.output, args);
+                    if halt_level == HaltReason::Output {
+                        self.instruction_pointer += operation.num_arguments + 1;
+                        break HaltReason::Output;
+                    }
+                }
+                operations::JUMP_IF_TRUE_OPCODE => new_instruction_pointer = jump_if_true(args),
+                operations::JUMP_IF_FALSE_OPCODE => new_instruction_pointer = jump_if_false(args),
+                operations::LESS_THAN_OPCODE => less_than(&mut self.memory, args),
+                operations::EQUALS_OPCODE => equals(&mut self.memory, args),
+                operations::EXIT_OPCODE => break HaltReason::Exit,
+                _ => panic!("unknown opcode {}", opcode),
+            }
+
+            if let Some(new_pointer) = new_instruction_pointer {
+                self.instruction_pointer = new_pointer;
+            } else {
+                self.instruction_pointer += operation.num_arguments + 1;
+            }
+        }
+    }
 }
 
 /// Reads the file at `filename` into a Memory.
@@ -50,67 +110,6 @@ pub fn load_program(filename: &str) -> Memory {
         .split(',')
         .map(|x| x.parse::<i32>().unwrap())
         .collect()
-}
-
-/// Runs the program in `computer` until the event specified by `halt_level`.
-///
-/// Modifies `computer` in-place, and returns a HaltReason indicating the event that caused the program to halt.
-pub fn run_program(computer: &mut Computer, halt_level: HaltReason) -> HaltReason {
-    let (operations, max_num_arguments) = operations::load_operations();
-
-    let mut parameter_mode_buffer = vec![ParameterMode::Position; max_num_arguments];
-    let mut argument_buffer = vec![0; max_num_arguments];
-
-    loop {
-        let instruction = computer.memory[computer.instruction_pointer];
-        let opcode = parse_instruction(instruction, &operations, &mut parameter_mode_buffer);
-        let operation = operations[&opcode];
-        let mut new_instruction_pointer = None;
-
-        write_arguments(
-            &computer.memory,
-            computer.instruction_pointer,
-            operation.num_arguments,
-            &parameter_mode_buffer[0..operation.num_arguments],
-            &mut argument_buffer,
-        );
-
-        let args = &argument_buffer[0..operation.num_arguments];
-
-        log::debug!(
-            "{}: about to perform operation {:?} on args {:?}",
-            computer.instruction_pointer,
-            opcode,
-            args
-        );
-
-        match opcode {
-            operations::ADD_OPCODE => add(&mut computer.memory, args),
-            operations::MUL_OPCODE => mul(&mut computer.memory, args),
-            operations::TAKE_INPUT_OPCODE => {
-                take_input(&mut computer.memory, args, computer.input.remove(0))
-            }
-            operations::PUSH_OUTPUT_OPCODE => {
-                push_output(&mut computer.output, args);
-                if halt_level == HaltReason::Output {
-                    computer.instruction_pointer += operation.num_arguments + 1;
-                    break HaltReason::Output;
-                }
-            }
-            operations::JUMP_IF_TRUE_OPCODE => new_instruction_pointer = jump_if_true(args),
-            operations::JUMP_IF_FALSE_OPCODE => new_instruction_pointer = jump_if_false(args),
-            operations::LESS_THAN_OPCODE => less_than(&mut computer.memory, args),
-            operations::EQUALS_OPCODE => equals(&mut computer.memory, args),
-            operations::EXIT_OPCODE => break HaltReason::Exit,
-            _ => panic!("unknown opcode {}", opcode),
-        }
-
-        if let Some(new_pointer) = new_instruction_pointer {
-            computer.instruction_pointer = new_pointer;
-        } else {
-            computer.instruction_pointer += operation.num_arguments + 1;
-        }
-    }
 }
 
 fn add(memory: &mut Memory, args: &[i32]) {
@@ -220,22 +219,22 @@ mod tests {
     #[test]
     fn test_run_program() {
         let mut computer = Computer::new(vec![1, 0, 0, 0, 99], vec![]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![2, 0, 0, 0, 99]);
         assert_eq!(computer.output, vec![]);
 
         let mut computer = Computer::new(vec![2, 3, 0, 3, 99], vec![]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![2, 3, 0, 6, 99]);
         assert_eq!(computer.output, vec![]);
 
         let mut computer = Computer::new(vec![2, 4, 4, 5, 99, 0], vec![]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![2, 4, 4, 5, 99, 9801]);
         assert_eq!(computer.output, vec![]);
 
         let mut computer = Computer::new(vec![1, 1, 1, 4, 99, 5, 6, 0, 99], vec![]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![30, 1, 1, 4, 2, 5, 6, 0, 99]);
         assert_eq!(computer.output, vec![]);
     }
@@ -328,7 +327,7 @@ mod tests {
     #[test]
     fn test_first_mode_aware_program() {
         let mut computer = Computer::new(vec![1002, 4, 3, 4, 33], vec![]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![1002, 4, 3, 4, 99]);
         assert_eq!(computer.output, vec![]);
     }
@@ -354,12 +353,12 @@ mod tests {
         let position_mode_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
 
         let mut computer = Computer::new(position_mode_program.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8]);
         assert_eq!(computer.output, vec![0]);
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8]);
         assert_eq!(computer.output, vec![1]);
 
@@ -367,12 +366,12 @@ mod tests {
         let immediate_mode_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
 
         let mut computer = Computer::new(immediate_mode_program.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![3, 3, 1108, 0, 8, 3, 4, 3, 99]);
         assert_eq!(computer.output, vec![0]);
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
         assert_eq!(computer.memory, vec![3, 3, 1108, 1, 8, 3, 4, 3, 99]);
         assert_eq!(computer.output, vec![1]);
     }
@@ -383,13 +382,13 @@ mod tests {
         let position_mode_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
 
         let mut computer = Computer::new(position_mode_program.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(computer.memory, vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 1, 8]);
         assert_eq!(computer.output, vec![1]);
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(computer.memory, vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 0, 8]);
         assert_eq!(computer.output, vec![0]);
@@ -398,13 +397,13 @@ mod tests {
         let immediate_mode_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
 
         let mut computer = Computer::new(immediate_mode_program.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(computer.memory, vec![3, 3, 1107, 1, 8, 3, 4, 3, 99]);
         assert_eq!(computer.output, vec![1]);
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(computer.memory, vec![3, 3, 1107, 0, 8, 3, 4, 3, 99]);
         assert_eq!(computer.output, vec![0]);
@@ -416,7 +415,7 @@ mod tests {
         let jump_program_1 = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
 
         let mut computer = Computer::new(jump_program_1.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(
             computer.memory,
@@ -425,7 +424,7 @@ mod tests {
         assert_eq!(computer.output, vec![1]);
 
         let mut computer = Computer::new(jump_program_1, vec![0]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(
             computer.memory,
@@ -436,7 +435,7 @@ mod tests {
         let jump_program_2 = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
 
         let mut computer = Computer::new(jump_program_2.clone(), vec![5]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(
             computer.memory,
@@ -445,7 +444,7 @@ mod tests {
         assert_eq!(computer.output, vec![1]);
 
         let mut computer = Computer::new(jump_program_2, vec![0]);
-        run_program(&mut computer, HaltReason::Exit);
+        computer.run(HaltReason::Exit);
 
         assert_eq!(
             computer.memory,
@@ -475,7 +474,7 @@ mod tests {
         .iter()
         {
             let mut computer = Computer::new(large_program.clone(), input.clone());
-            run_program(&mut computer, HaltReason::Exit);
+            computer.run(HaltReason::Exit);
             assert_eq!(computer.output, *expected_output);
         }
     }
