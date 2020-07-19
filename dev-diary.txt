@@ -522,3 +522,62 @@ kind of a pain tbh
 but i _think_ i did it right? we'll see
 
 ok i think i have an infinite loop happening
+yeah i definitely do
+well dang!
+
+how do i debug that??
+do i have to read the 7.txt program and figure out why it's behaving this way?
+
+it's kinda long!
+
+ohhhh
+
+ok i think i suspect what the problem is
+
+so i stopped the program a bit early and looked at what the outputs were for each computer
+and i noticed that they were repeating - computers 0, 1, 2, 3, 4  always gave the same outputs
+and then i added a println() at the start of run_program() showing what the computer's instruction pointer was
+
+and i see this
+
+run_program starting with a computer at instruction_pointer 0
+run_program starting with a computer at instruction_pointer 0
+run_program starting with a computer at instruction_pointer 0
+run_program starting with a computer at instruction_pointer 0
+run_program starting with a computer at instruction_pointer 0
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+run_program starting with a computer at instruction_pointer 16
+
+so! i think the issue here is that i'm not incrementing the instruction pointer
+before halting the program when i break early due to an output instruction being hit!!!!
+
+let's try incrementing the instruction pointer and seeing if this infinite loop goes away

@@ -92,6 +92,7 @@ pub fn run_program(computer: &mut Computer, halt_level: HaltReason) -> HaltReaso
             operations::PUSH_OUTPUT_OPCODE => {
                 push_output(&mut computer.output, args);
                 if halt_level == HaltReason::Output {
+                    computer.instruction_pointer += operation.num_arguments + 1;
                     break HaltReason::Output;
                 }
             }

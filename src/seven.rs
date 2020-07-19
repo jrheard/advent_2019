@@ -47,7 +47,6 @@ fn largest_output_for_program_feedback(memory: Memory) -> i32 {
 }
 
 fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i32>) -> i32 {
-    dbg!("trying settings", &phase_settings);
     let mut computers = phase_settings
         .iter()
         .map(|&phase_setting| Computer::new(memory.clone(), vec![phase_setting]))
@@ -60,27 +59,34 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
 
     let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();
 
+    let mut final_output = 0;
+
     loop {
         let computer = &mut computers[computer_index];
         let halt_reason = computer::run_program(computer, HaltReason::Output);
-
-        let output = computer.output.pop().unwrap();
-
-        if halt_reason == HaltReason::Exit && computer_index == phase_settings.len() - 1 {
-            break output;
-        }
-
         let next_computer_index = get_next_computer_index(computer_index);
 
-        //println!(
-        //"computer {} gave output {}, giving it to computer {} as input",
-        //computer_index, output, next_computer_index
-        //);
+        match halt_reason {
+            HaltReason::Exit => {
+                if computer_index == phase_settings.len() - 1 {
+                    break;
+                }
+            }
+            HaltReason::Output => {
+                let output = computer.output.pop().unwrap();
 
-        computers[next_computer_index].input.push(output);
+                if computer_index == phase_settings.len() - 1 {
+                    final_output = output;
+                }
+
+                computers[next_computer_index].input.push(output);
+            }
+        }
 
         computer_index = next_computer_index;
     }
+
+    final_output
 }
 
 fn permutations(x: Vec<i32>) -> Vec<Vec<i32>> {
@@ -132,8 +138,28 @@ mod tests {
     }
 
     #[test]
+    fn test_feedback_programs() {
+        assert_eq!(
+            largest_output_for_program_feedback(vec![
+                3, 26, 1001, 26, -4, 26, 3, 27, 1002, 27, 2, 27, 1, 27, 26, 27, 4, 27, 1001, 28,
+                -1, 28, 1005, 28, 6, 99, 0, 0, 5
+            ]),
+            139629729
+        );
+
+        assert_eq!(
+            largest_output_for_program_feedback(vec![
+                3, 52, 1001, 52, -5, 52, 3, 53, 1, 52, 56, 54, 1007, 54, 5, 55, 1005, 55, 26, 1001,
+                54, -5, 54, 1105, 1, 12, 1, 53, 54, 53, 1008, 54, 0, 55, 1001, 55, 1, 55, 2, 53,
+                55, 53, 4, 53, 1001, 56, -1, 56, 1005, 56, 6, 99, 0, 0, 0, 0, 10
+            ]),
+            18216
+        );
+    }
+
+    #[test]
     fn test_solutions() {
         assert_eq!(seven_a(), 117312);
-        assert_eq!(seven_b(), 117312);
+        assert_eq!(seven_b(), 1336480);
     }
 }
