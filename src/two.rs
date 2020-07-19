@@ -1,4 +1,5 @@
 use crate::computer;
+use crate::computer::{Computer, HaltReason};
 
 pub fn two_a() -> i32 {
     let mut memory = computer::load_program("src/inputs/2.txt");
@@ -9,7 +10,8 @@ pub fn two_a() -> i32 {
     memory[2] = 2;
 
     // What value is left at position 0 after the program halts?
-    (computer::run_program(memory, vec![]).0)[0]
+    let computer = computer::run_program(Computer::new(memory, vec![]), HaltReason::Exit).0;
+    computer.memory[0]
 }
 
 pub fn two_b() -> i32 {
@@ -24,7 +26,9 @@ pub fn two_b() -> i32 {
             memory[1] = i;
             memory[2] = j;
 
-            if (computer::run_program(memory, vec![]).0)[0] == 19690720 {
+            let computer = computer::run_program(Computer::new(memory, vec![]), HaltReason::Exit).0;
+
+            if computer.memory[0] == 19690720 {
                 noun = i;
                 verb = j;
                 break;

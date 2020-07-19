@@ -461,3 +461,57 @@ ok cool that was pretty ez! just fun with iterators and .fold()
 
 ok 7b is gonna be a lot more involved
 looks fun!
+
+===
+
+7/19/20
+
+ok let's get into 7b
+
+i've been a bit nervous about it
+i'm worried that these little computers are going to need to run in parallel and like have interconnected dependencies
+on each other's inputs/outputs
+but we'll see!!
+
+"Eventually, the software on the amplifiers will halt after they have
+processed the final loop. When this happens, the last output signal from
+amplifier E is sent to the thrusters."
+
+having trouble figuring out how to make sense of that
+
+do i need to change the `computer` system so that each program halts temporarily whenever it produces output?
+maybe i could have `run_program()` return an enum as part of its return value
+
+right now it returns
+
+(Memory, Output)
+
+but maybe i could change it to return
+
+enum ComputerState {
+    Running,
+    Halted
+}
+
+struct Computer {
+    memory: Memory,
+    output: Output,
+    state: ComputerState
+    // XXX ALSO INSTRUCTION POINTER
+}
+
+i think that would work.
+
+let me reread the prompt a few more times to make sure i'm interpreting it correctly before i go through all this work
+
+TODO also have `run_program` take some sort of, like, `halt_level` input
+that defaults to `EXIT`
+but that can also be set to `OUTPUT`
+
+except rust doesn't have default values, o well
+
+ok run_program() is going to need to take a Computer, and computer is going to have a few more fields
+eg input and instruction_pointer
+
+and i don't think i want ComputerState to be a part of Computer
+instead i think i want `run_program()` to return a tuple of (Computer, halt_reason)

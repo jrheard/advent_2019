@@ -1,13 +1,18 @@
 use itertools::Itertools;
 
 use crate::computer;
+use crate::computer::{Computer, HaltReason, Memory};
 
 pub fn seven_a() -> i32 {
     let memory = computer::load_program("src/inputs/7.txt");
-    largest_output_for_program(memory)
+    largest_output_for_program_one_shot(memory)
 }
 
-fn largest_output_for_program(memory: computer::Memory) -> i32 {
+pub const fn seven_b() -> i32 {
+    5
+}
+
+fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
     let phase_setting_permutations = permutations(vec![0, 1, 2, 3, 4]);
 
     phase_setting_permutations
@@ -17,11 +22,23 @@ fn largest_output_for_program(memory: computer::Memory) -> i32 {
         .unwrap()
 }
 
-fn run_amplifier_controller_software(memory: computer::Memory, phase_settings: Vec<i32>) -> i32 {
-    phase_settings.iter().fold(0, |acc, &phase_setting| {
-        let (_, output) = computer::run_program(memory.clone(), vec![phase_setting, acc]);
+fn _largest_output_for_program_feedback(memory: Memory) -> i32 {
+    let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
 
-        output[0]
+    let _programs = vec![memory; phase_setting_permutations.len()];
+
+    5
+}
+
+fn run_amplifier_controller_software(memory: Memory, phase_settings: Vec<i32>) -> i32 {
+    phase_settings.iter().fold(0, |acc, &phase_setting| {
+        let computer = computer::run_program(
+            Computer::new(memory.clone(), vec![phase_setting, acc]),
+            HaltReason::Exit,
+        )
+        .0;
+
+        computer.output[0]
     })
 }
 
@@ -50,22 +67,22 @@ mod tests {
     }
 
     #[test]
-    fn test_largest_output_for_program() {
+    fn test_largest_output_for_program_one_shot() {
         assert_eq!(
-            largest_output_for_program(vec![
+            largest_output_for_program_one_shot(vec![
                 3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0
             ]),
             43210
         );
         assert_eq!(
-            largest_output_for_program(vec![
+            largest_output_for_program_one_shot(vec![
                 3, 23, 3, 24, 1002, 24, 10, 24, 1002, 23, -1, 23, 101, 5, 23, 23, 1, 24, 23, 23, 4,
                 23, 99, 0, 0
             ]),
             54321
         );
         assert_eq!(
-            largest_output_for_program(vec![
+            largest_output_for_program_one_shot(vec![
                 3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33, 1002, 33, 7, 33,
                 1, 33, 31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0
             ]),
