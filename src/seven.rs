@@ -60,10 +60,7 @@ fn largest_output_for_program_feedback(memory: Memory) -> i32 {
 /// "Most of the amplifiers are connected as they were before; amplifier A's
 /// output is connected to amplifier B's input, and so on. However, the output
 /// from amplifier E is now connected into amplifier A's input. This creates the
-/// feedback loop: the signal will be sent through the amplifiers many times.
-/// Eventually, the software on the amplifiers will halt after they have
-/// processed the final loop. When this happens, the last output signal from
-/// amplifier E is sent to the thrusters."
+/// feedback loop: the signal will be sent through the amplifiers many times."
 fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i32>) -> i32 {
     let mut computers = phase_settings
         .iter()
@@ -81,7 +78,6 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
     loop {
         let computer = &mut computers[computer_index];
         let halt_reason = computer::run_program(computer, HaltReason::Output);
-        let next_computer_index = get_next_computer_index(computer_index);
 
         if halt_reason == HaltReason::Exit {
             // "Eventually, the software on the amplifiers will halt after
@@ -90,6 +86,7 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
             break final_output;
         }
 
+        let next_computer_index = get_next_computer_index(computer_index);
         let output = computer.output.pop().unwrap();
         computers[next_computer_index].input.push(output);
 
