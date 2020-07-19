@@ -22,6 +22,7 @@ pub enum HaltReason {
     Output,
 }
 
+/// A Computer.
 pub struct Computer {
     pub memory: Memory,
     pub input: Input,
@@ -51,9 +52,9 @@ pub fn load_program(filename: &str) -> Memory {
         .collect()
 }
 
-/// Runs the program in `memory`.
+/// Runs the program in `computer` until the event specified by `halt_level`.
 ///
-/// Returns a Memory representing the state of the computer after the program has completed.
+/// Modifies `computer` in-place, and returns a HaltReason indicating the event that caused the program to halt.
 pub fn run_program(computer: &mut Computer, halt_level: HaltReason) -> HaltReason {
     let (operations, max_num_arguments) = operations::load_operations();
 
