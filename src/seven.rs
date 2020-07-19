@@ -13,6 +13,9 @@ pub fn seven_b() -> i32 {
     largest_output_for_program_feedback(memory)
 }
 
+/// "Your job is to find the largest output signal that can be sent to the
+/// thrusters by trying every possible combination of phase settings on the
+/// amplifiers."
 fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
     let phase_setting_permutations = permutations(vec![0, 1, 2, 3, 4]);
 
@@ -25,6 +28,12 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
         .unwrap()
 }
 
+/// "There are five amplifiers connected in series; each one receives an input
+/// signal and produces an output signal. They are connected such that the first
+/// amplifier's output leads to the second amplifier's input, the second
+/// amplifier's output leads to the third amplifier's input, and so on. The first
+/// amplifier's input value is 0, and the last amplifier's output leads to your
+/// ship's thrusters."
 fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i32>) -> i32 {
     phase_settings.iter().fold(0, |acc, &phase_setting| {
         let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
@@ -34,6 +43,8 @@ fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Ve
     })
 }
 
+/// "Your job is to find the largest output signal that can be sent to the
+/// thrusters using the new phase settings and feedback loop arrangement."
 fn largest_output_for_program_feedback(memory: Memory) -> i32 {
     let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
 
@@ -46,19 +57,25 @@ fn largest_output_for_program_feedback(memory: Memory) -> i32 {
         .unwrap()
 }
 
+/// "Most of the amplifiers are connected as they were before; amplifier A's
+/// output is connected to amplifier B's input, and so on. However, the output
+/// from amplifier E is now connected into amplifier A's input. This creates the
+/// feedback loop: the signal will be sent through the amplifiers many times.
+/// Eventually, the software on the amplifiers will halt after they have
+/// processed the final loop. When this happens, the last output signal from
+/// amplifier E is sent to the thrusters."
 fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i32>) -> i32 {
     let mut computers = phase_settings
         .iter()
         .map(|&phase_setting| Computer::new(memory.clone(), vec![phase_setting]))
         .collect::<Vec<_>>();
 
+    let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();
+
     // "To start the process, a 0 signal is sent to amplifier A's input exactly once."
     computers[0].input.push(0);
 
     let mut computer_index = 0;
-
-    let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();
-
     let mut final_output = 0;
 
     loop {
@@ -66,27 +83,22 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
         let halt_reason = computer::run_program(computer, HaltReason::Output);
         let next_computer_index = get_next_computer_index(computer_index);
 
-        match halt_reason {
-            HaltReason::Exit => {
-                if computer_index == phase_settings.len() - 1 {
-                    break;
-                }
-            }
-            HaltReason::Output => {
-                let output = computer.output.pop().unwrap();
+        if halt_reason == HaltReason::Exit {
+            // "Eventually, the software on the amplifiers will halt after
+            // they have processed the final loop. When this happens, the
+            // last output signal from amplifier E is sent to the thrusters."
+            break final_output;
+        }
 
-                if computer_index == phase_settings.len() - 1 {
-                    final_output = output;
-                }
+        let output = computer.output.pop().unwrap();
+        computers[next_computer_index].input.push(output);
 
-                computers[next_computer_index].input.push(output);
-            }
+        if computer_index == phase_settings.len() - 1 {
+            final_output = output;
         }
 
         computer_index = next_computer_index;
     }
-
-    final_output
 }
 
 fn permutations(x: Vec<i32>) -> Vec<Vec<i32>> {
