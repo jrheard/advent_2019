@@ -458,3 +458,6 @@ to start, we need to come up with the permutations of [0, 1, 2, 3, 4]
 gonna go with itertools .permutations()
 
 ok cool that was pretty ez! just fun with iterators and .fold()
+
+ok 7b is gonna be a lot more involved
+looks fun!
