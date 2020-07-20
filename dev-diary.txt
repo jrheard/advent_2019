@@ -687,3 +687,21 @@ so let's try rayon!
 
 here's what 3 looks like on the rayon branch
 individual              time:   [18.340 ms 18.598 ms 18.885 ms]
+
+and here's master
+
+three                   time:   [14.308 ms 14.395 ms 14.500 ms]
+
+so, rayon didn't help for 3
+because i'm a dummy and didn't look at the flame graph closely enough
+the stuff i .par_iter()'d wasn't the stuff that was slow
+it's wire_intersections() that's slow
+
+so, i'm gonna back out my rayon change from 3
+
+individual              time:   [14.029 ms 14.111 ms 14.215 ms]
+                        change: [-25.383% -24.125% -22.950%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+yup!
+ok cool
