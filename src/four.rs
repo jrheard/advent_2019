@@ -2,40 +2,46 @@ use std::cmp::Ordering;
 
 type Password = Vec<u32>;
 
-const LOWER_BOUND: i32 = 272091;
-const UPPER_BOUND: i32 = 815432;
+const LOWER_BOUND: u32 = 272091;
+const UPPER_BOUND: u32 = 815432;
+const PASSWORD_LENGTH: usize = 6;
 
-pub fn four_a() -> i32 {
-    let mut buffer = vec![0, 0, 0, 0, 0, 0];
+fn write_number_to_buffer(mut number: u32, buffer: &mut Password) {
+    let mut digit = 0;
 
-    (LOWER_BOUND..(UPPER_BOUND + 1))
-        .filter(|&x| {
-            write_password_to_buffer(x, &mut buffer);
-            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits(&buffer)
-        })
-        .count() as i32
-}
+    loop {
+        if number == 0 {
+            break;
+        }
 
-pub fn four_b() -> i32 {
-    let mut buffer = vec![0, 0, 0, 0, 0, 0];
+        buffer[PASSWORD_LENGTH - 1 - digit] = number % 10;
 
-    (LOWER_BOUND..(UPPER_BOUND + 1))
-        .filter(|&x| {
-            write_password_to_buffer(x, &mut buffer);
-            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits_strict(&buffer)
-        })
-        .count() as i32
-}
-
-fn write_password_to_buffer(number: i32, buffer: &mut Password) {
-    for (i, digit) in number
-        .to_string()
-        .chars()
-        .map(|x| x.to_digit(10).unwrap())
-        .enumerate()
-    {
-        buffer[i] = digit;
+        number /= 10;
+        digit += 1;
     }
+}
+
+pub fn four_a() -> u32 {
+    let mut buffer = vec![0; PASSWORD_LENGTH];
+
+    (LOWER_BOUND..UPPER_BOUND + 1)
+        .filter(|&password| {
+            write_number_to_buffer(password, &mut buffer);
+            digits_are_non_decreasing(&buffer[..]) && has_two_same_adjacent_digits(&buffer[..])
+        })
+        .count() as u32
+}
+
+pub fn four_b() -> u32 {
+    let mut buffer = vec![0; PASSWORD_LENGTH];
+
+    (LOWER_BOUND..UPPER_BOUND + 1)
+        .filter(|&password| {
+            write_number_to_buffer(password, &mut buffer);
+            digits_are_non_decreasing(&buffer[..])
+                && has_two_same_adjacent_digits_strict(&buffer[..])
+        })
+        .count() as u32
 }
 
 fn has_two_same_adjacent_digits(password: &[u32]) -> bool {

@@ -581,6 +581,90 @@ so! i think the issue here is that i'm not incrementing the instruction pointer
 before halting the program when i break early due to an output instruction being hit!!!!
 
 let's try incrementing the instruction pointer and seeing if this infinite loop goes away
+it did :)
+
+ok cool so
+i messed around with rayon a bit
+and then i was like: hey, i wonder if this made a difference?
+i had added rayon to days 3 and 7
+and it looked initially like maybe there was some difference
+but then i set up criterion
+and it turned out that it made no difference!!!
+
+so i was like, ok nvm let's look at a flamegraph
+and according to the flamegraph, we actually spend the bulk of our time in day 4
+specifically, four::write_password_to_buffer()
+which, what gives?!
+
+time to reread that function
+
+ok it looks like this
+
+fn write_password_to_buffer(number: i32, buffer: &mut Password) {
+    for (i, digit) in number
+        .to_string()
+        .chars()
+        .map(|x| x.to_digit(10).unwrap())
+        .enumerate()
+    {
+        buffer[i] = digit;
+    }
+}
+
+i'm sure that it's the `.to_string()` part that's the bad part
+so, rather than generating numbers in a range, then converting them into strings, then parsing each char as a digit,
+then writing that back into a buffer digit by digit
+
+let's do something more direct!
 
 ok so here's the measurements from benchmarking four by itself
 [75.454 ms 76.239 ms 77.121 ms]
+
+ok and i finally got my reimplementation working
+
+four                    time:   [5.1523 ms 5.2919 ms 5.4431 ms]
+                        change: [-93.248% -93.059% -92.848%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+:)))))))
+
+ninety three percent improvement!!!
+
+sick
+
+so that was interesting
+for a while there i was fighting the borrow checker
+i originally had
+
+struct PasswordRange<'a> {
+    buffer: &'a mut Password,
+    upper_bound: u32,
+    current_number: u32,
+}
+
+and then i was trying to impl Iterator on it
+and have .next() return a &Password
+
+but that wasn't working and i couldn't figure it out
+but then https://stackoverflow.com/questions/25702909/can-i-write-an-iterator-that-mutates-itself-and-then-yields-a-reference-into-its
+was really helpful
+basically the idea is that: if i'm returning references to this buffer,
+but my calls to .next() are continuing to mutate the buffer,
+then that's invalid behavior; .collect() is an interesting example to think about, for instance
+
+so i changed it to
+
+struct PasswordRange {
+    upper_bound: u32,
+    current_number: u32,
+}
+
+and wrote a separte, standalone function that takes a number and writes it to a buffer
+so i pulled these two behaviors apart - starting at one number and counting up, vs writing a number to a buffer -
+and i ended up with a system that works
+
+incidentally
+
+starting at one number and counting up is what ranges do already
+i don't need to implement a separate standalone range struct from scratch
+so let's delete that!!!!
