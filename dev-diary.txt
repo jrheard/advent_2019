@@ -781,3 +781,14 @@ but i'm 99% positive that earlier i spent some time benchmarking all_solutions a
 that were hovering right around 240ms
 
 so this is a big improvement!
+
+let's take a look at seven
+time:   [8.3632 ms 8.4799 ms 8.6138 ms]
+
+and now let's see it with rayon
+
+individual              time:   [4.7613 ms 5.0371 ms 5.4016 ms]
+                        change: [-43.492% -40.600% -35.971%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+3ms isn't much in the grand scheme of things, but 40% is nice!!!!!
