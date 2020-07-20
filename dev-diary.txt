@@ -581,3 +581,6 @@ so! i think the issue here is that i'm not incrementing the instruction pointer
 before halting the program when i break early due to an output instruction being hit!!!!
 
 let's try incrementing the instruction pointer and seeing if this infinite loop goes away
+
+ok so here's the measurements from benchmarking four by itself
+[75.454 ms 76.239 ms 77.121 ms]

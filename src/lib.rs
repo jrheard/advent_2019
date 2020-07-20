@@ -1,6 +1,6 @@
 mod computer;
 mod five;
-mod four;
+pub mod four;
 mod one;
 mod seven;
 mod six;
