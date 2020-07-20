@@ -668,3 +668,19 @@ incidentally
 starting at one number and counting up is what ranges do already
 i don't need to implement a separate standalone range struct from scratch
 so let's delete that!!!!
+
+okay awesome
+
+all-solutions/all solutions
+                        time:   [118.47 ms 122.96 ms 131.50 ms]
+                        change: [-51.712% -45.625% -37.691%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+forty five percent of the all-solutions runtime has gone away!!!
+
+super neat
+
+let's play around with what's left
+
+flamegraph shows me that the bulk of what's left is 3a, 3b, and 2b
+so let's try rayon!
