@@ -1,5 +1,6 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
+use rayon::prelude::*;
 
 pub fn two_a() -> i32 {
     let mut memory = computer::load_program("src/inputs/2.txt");
@@ -18,25 +19,23 @@ pub fn two_a() -> i32 {
 pub fn two_b() -> i32 {
     let baseline_memory = computer::load_program("src/inputs/2.txt");
 
-    let mut noun = 0;
-    let mut verb = 0;
+    let nouns_and_verbs: Vec<_> = (0..100)
+        .flat_map(|noun| (0..100).map(move |verb| (noun, verb)))
+        .collect();
 
-    for i in 0..100 {
-        for j in 0..100 {
+    let (noun, verb) = nouns_and_verbs
+        .par_iter()
+        .find_any(|(noun, verb)| {
             let mut memory = baseline_memory.clone();
-            memory[1] = i;
-            memory[2] = j;
+            memory[1] = *noun;
+            memory[2] = *verb;
 
             let mut computer = Computer::new(memory, vec![]);
             computer.run(HaltReason::Exit);
 
-            if computer.memory[0] == 19690720 {
-                noun = i;
-                verb = j;
-                break;
-            }
-        }
-    }
+            computer.memory[0] == 19690720
+        })
+        .unwrap();
 
     100 * noun + verb
 }
