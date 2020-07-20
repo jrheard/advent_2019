@@ -1,5 +1,4 @@
 use itertools::Itertools;
-use rayon::prelude::*;
 
 use crate::computer;
 use crate::computer::{Computer, HaltReason, Memory};
@@ -21,7 +20,7 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
     let phase_setting_permutations = permutations(vec![0, 1, 2, 3, 4]);
 
     phase_setting_permutations
-        .into_par_iter()
+        .into_iter()
         .map(|phase_settings| {
             run_amplifier_controller_software_one_shot(memory.clone(), phase_settings)
         })
@@ -50,7 +49,7 @@ fn largest_output_for_program_feedback(memory: Memory) -> i32 {
     let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
 
     phase_setting_permutations
-        .into_par_iter()
+        .into_iter()
         .map(|phase_settings| {
             run_amplifier_controller_software_feedback(memory.clone(), phase_settings)
         })
