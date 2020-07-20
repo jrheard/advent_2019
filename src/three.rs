@@ -1,3 +1,5 @@
+use rayon::prelude::*;
+
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
@@ -31,10 +33,16 @@ fn closest_intersection_by_steps(wire_1: Wire, wire_2: Wire) -> i32 {
     let intersections = wire_intersections(&wire_1, &wire_2);
 
     intersections
-        .iter()
+        .par_iter()
         .map(|intersection| {
-            wire_1.iter().position(|elem| elem == intersection).unwrap() as i32
-                + wire_2.iter().position(|elem| elem == intersection).unwrap() as i32
+            wire_1
+                .par_iter()
+                .position_first(|elem| elem == intersection)
+                .unwrap() as i32
+                + wire_2
+                    .par_iter()
+                    .position_first(|elem| elem == intersection)
+                    .unwrap() as i32
         })
         .min()
         .unwrap()
