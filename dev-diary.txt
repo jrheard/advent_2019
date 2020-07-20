@@ -739,3 +739,45 @@ individual              time:   [696.42 us 718.97 us 745.37 us]
 
 ok cool sweet
 let's merge
+
+ok rad
+now let's look at six
+maybe make it a bit less recursive
+here's six's measurements rn
+
+individual              time:   [14.123 ms 14.231 ms 14.356 ms]
+
+ok, i unrolled the recursion of the outer function, let's see what that did
+
+individual              time:   [16.066 ms 16.829 ms 17.677 ms]
+                        change: [+12.401% +18.257% +23.997%] (p = 0.00 < 0.05)
+                        Performance has regressed.
+
+hm, not helpful!
+let's try unrolling the inner recursion
+
+oh right, this is the problem where i was thinking about marking certain paths as not worth visiting
+i think i could probably keep the recursion and just do that marking
+bc the recursion is actually a good fit for the algorithm
+
+so, let's do that
+
+it helped a lot! :)
+
+individual              time:   [1.6026 ms 1.6383 ms 1.6801 ms]
+                        change: [-90.219% -89.601% -88.953%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+so where are we at on all_solutions rn?
+
+all-solutions/all solutions
+                        time:   [84.659 ms 89.329 ms 98.045 ms]
+                        change: [-41.600% -29.692% -14.464%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+sick
+it looks like i lost some lines in my dev diary from earlier
+but i'm 99% positive that earlier i spent some time benchmarking all_solutions and got times
+that were hovering right around 240ms
+
+so this is a big improvement!

@@ -3,9 +3,9 @@ mod five;
 mod four;
 mod one;
 mod seven;
-mod six;
+pub mod six;
 mod three;
-pub mod two;
+mod two;
 mod util;
 
 pub fn run_all_solutions() {

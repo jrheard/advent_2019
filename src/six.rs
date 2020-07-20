@@ -11,24 +11,31 @@ pub fn six_a() -> u32 {
 
 pub fn six_b() -> u32 {
     let (body_to_satellites, satellite_to_body) = parse_orbits("src/inputs/6.txt");
-    find_minimum_orbital_transfers("SAN", "YOU", &body_to_satellites, &satellite_to_body) - 2
+    find_minimum_orbital_transfers("SAN", "YOU", "YOU", &body_to_satellites, &satellite_to_body) - 2
 }
 
 /// Returns the minimum number of orbital transfers needed to get from `origin` to `destination`.
 fn find_minimum_orbital_transfers(
     destination: &str,
     origin: &str,
+    previous_origin: &str,
     body_to_satellites: &BodyToSatellites,
     satellite_to_body: &SatelliteToBody,
 ) -> u32 {
-    if let Some(distance) = find_path_to(destination, origin, body_to_satellites, satellite_to_body)
-    {
+    if let Some(distance) = find_path_to(
+        destination,
+        origin,
+        previous_origin,
+        body_to_satellites,
+        satellite_to_body,
+    ) {
         distance
     } else {
         // Head one step closer to the COM and try again.
         1 + find_minimum_orbital_transfers(
             destination,
             &satellite_to_body[origin],
+            origin,
             body_to_satellites,
             satellite_to_body,
         )
@@ -39,6 +46,7 @@ fn find_minimum_orbital_transfers(
 fn find_path_to(
     destination: &str,
     origin: &str,
+    previous_origin: &str,
     body_to_satellites: &BodyToSatellites,
     satellite_to_body: &SatelliteToBody,
 ) -> Option<u32> {
@@ -47,10 +55,14 @@ fn find_path_to(
     }
 
     if let Some(children) = body_to_satellites.get(origin) {
-        for child in children.iter() {
-            if let Some(distance) =
-                find_path_to(destination, child, body_to_satellites, satellite_to_body)
-            {
+        for child in children.iter().filter(|&x| x != previous_origin) {
+            if let Some(distance) = find_path_to(
+                destination,
+                child,
+                previous_origin,
+                body_to_satellites,
+                satellite_to_body,
+            ) {
                 return Some(1 + distance);
             }
         }
@@ -151,8 +163,13 @@ mod tests {
         let (body_to_satellites, satellite_to_body) = parse_orbits("src/inputs/6_sample_2.txt");
 
         assert_eq!(
-            find_minimum_orbital_transfers("SAN", "YOU", &body_to_satellites, &satellite_to_body)
-                - 2,
+            find_minimum_orbital_transfers(
+                "SAN",
+                "YOU",
+                "YOU",
+                &body_to_satellites,
+                &satellite_to_body
+            ) - 2,
             4
         );
     }
