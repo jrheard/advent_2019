@@ -792,3 +792,29 @@ individual              time:   [4.7613 ms 5.0371 ms 5.4016 ms]
                         Performance has improved.
 
 3ms isn't much in the grand scheme of things, but 40% is nice!!!!!
+
+===
+
+7/20/20
+
+ok cool
+
+so i was poking around to see if people had suggestions for how to improve 3
+and there aren't really any
+except - instead of building two hashsets and intersecting them
+you can just build one and do lookups on it while walking the other vector
+interesting!
+let's bench
+
+before:
+individual              time:   [15.972 ms 16.531 ms 17.253 ms]
+
+after:
+individual              time:   [9.4935 ms 9.8182 ms 10.174 ms]
+                        change: [-43.695% -40.607% -37.473%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+all right, not bad!!!
+
+cool, i think that's about as optimized as days 1-7 are gonna get for now
+fun times!

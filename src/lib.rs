@@ -2,9 +2,9 @@ mod computer;
 mod five;
 mod four;
 mod one;
-pub mod seven;
+mod seven;
 mod six;
-mod three;
+pub mod three;
 mod two;
 mod util;
 

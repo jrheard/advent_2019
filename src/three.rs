@@ -42,11 +42,10 @@ fn closest_intersection_by_steps(wire_1: Wire, wire_2: Wire) -> i32 {
 
 fn wire_intersections(wire_1: &[(i32, i32)], wire_2: &[(i32, i32)]) -> Vec<(i32, i32)> {
     let wire_1_positions = wire_1.iter().cloned().collect::<HashSet<(i32, i32)>>();
-    let wire_2_positions = wire_2.iter().cloned().collect::<HashSet<(i32, i32)>>();
 
-    wire_1_positions
-        .intersection(&wire_2_positions)
-        .filter(|&&(x, y)| x != 0 && y != 0)
+    wire_2
+        .iter()
+        .filter(|&position| wire_1_positions.contains(position) && *position != (0, 0))
         .cloned()
         .collect()
 }
