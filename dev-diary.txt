@@ -684,3 +684,6 @@ let's play around with what's left
 
 flamegraph shows me that the bulk of what's left is 3a, 3b, and 2b
 so let's try rayon!
+
+here's what 3 looks like on the rayon branch
+individual              time:   [18.340 ms 18.598 ms 18.885 ms]
