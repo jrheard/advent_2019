@@ -9,11 +9,7 @@ const PASSWORD_LENGTH: usize = 6;
 fn write_number_to_buffer(mut number: u32, buffer: &mut Password) {
     let mut digit = 0;
 
-    loop {
-        if number == 0 {
-            break;
-        }
-
+    while number != 0 {
         buffer[PASSWORD_LENGTH - 1 - digit] = number % 10;
 
         number /= 10;

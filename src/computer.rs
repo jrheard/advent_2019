@@ -167,11 +167,8 @@ fn parse_instruction(
 
     let mut parameter_modes = instruction / 100;
     let mut index = 0;
-    loop {
-        if parameter_modes == 0 {
-            break;
-        }
 
+    while parameter_modes != 0 {
         if parameter_modes % 2 == 1 {
             parameter_mode_buffer[index] = ParameterMode::Immediate;
         }
