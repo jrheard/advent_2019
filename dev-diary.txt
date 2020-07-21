@@ -818,3 +818,5 @@ all right, not bad!!!
 
 cool, i think that's about as optimized as days 1-7 are gonna get for now
 fun times!
+
+https://bheisler.github.io/criterion.rs/book/user_guide/profiling.html

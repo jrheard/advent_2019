@@ -27,7 +27,7 @@ pub fn four_a() -> u32 {
     (LOWER_BOUND..UPPER_BOUND + 1)
         .filter(|&password| {
             write_number_to_buffer(password, &mut buffer);
-            digits_are_non_decreasing(&buffer[..]) && has_two_same_adjacent_digits(&buffer[..])
+            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits(&buffer)
         })
         .count() as u32
 }
@@ -38,8 +38,7 @@ pub fn four_b() -> u32 {
     (LOWER_BOUND..UPPER_BOUND + 1)
         .filter(|&password| {
             write_number_to_buffer(password, &mut buffer);
-            digits_are_non_decreasing(&buffer[..])
-                && has_two_same_adjacent_digits_strict(&buffer[..])
+            digits_are_non_decreasing(&buffer) && has_two_same_adjacent_digits_strict(&buffer)
         })
         .count() as u32
 }
@@ -65,6 +64,7 @@ fn has_two_same_adjacent_digits_strict(password: &[u32]) -> bool {
             return true;
         }
     }
+
     false
 }
 
@@ -88,36 +88,36 @@ mod tests {
 
     #[test]
     fn test_has_two_same_adjacent_digits() {
-        assert_eq!(has_two_same_adjacent_digits(&vec![1, 2, 3, 4, 5, 6]), false);
-        assert_eq!(has_two_same_adjacent_digits(&vec![5, 4, 3, 2, 1]), false);
-        assert_eq!(has_two_same_adjacent_digits(&vec![5, 4, 4, 2, 1]), true);
-        assert_eq!(has_two_same_adjacent_digits(&vec![4, 4, 4, 2, 1]), true);
-        assert_eq!(has_two_same_adjacent_digits(&vec![2, 2, 4, 2, 1]), true);
-        assert_eq!(has_two_same_adjacent_digits(&vec![1, 2, 3, 4, 5, 5]), true);
+        assert_eq!(has_two_same_adjacent_digits(&[1, 2, 3, 4, 5, 6]), false);
+        assert_eq!(has_two_same_adjacent_digits(&[5, 4, 3, 2, 1]), false);
+        assert_eq!(has_two_same_adjacent_digits(&[5, 4, 4, 2, 1]), true);
+        assert_eq!(has_two_same_adjacent_digits(&[4, 4, 4, 2, 1]), true);
+        assert_eq!(has_two_same_adjacent_digits(&[2, 2, 4, 2, 1]), true);
+        assert_eq!(has_two_same_adjacent_digits(&[1, 2, 3, 4, 5, 5]), true);
     }
 
     #[test]
     fn test_digits_are_non_decreasing() {
-        assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 4, 5]), true);
-        assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 3, 5]), true);
-        assert_eq!(digits_are_non_decreasing(&vec![5, 5, 5, 5, 5]), true);
-        assert_eq!(digits_are_non_decreasing(&vec![1, 4, 3, 3, 5]), false);
-        assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 3, 1]), false);
-        assert_eq!(digits_are_non_decreasing(&vec![1, 2, 3, 300, 299]), false);
+        assert_eq!(digits_are_non_decreasing(&[1, 2, 3, 4, 5]), true);
+        assert_eq!(digits_are_non_decreasing(&[1, 2, 3, 3, 5]), true);
+        assert_eq!(digits_are_non_decreasing(&[5, 5, 5, 5, 5]), true);
+        assert_eq!(digits_are_non_decreasing(&[1, 4, 3, 3, 5]), false);
+        assert_eq!(digits_are_non_decreasing(&[1, 2, 3, 3, 1]), false);
+        assert_eq!(digits_are_non_decreasing(&[1, 2, 3, 300, 299]), false);
     }
 
     #[test]
     fn test_has_two_same_adjacent_digits_strict() {
         assert_eq!(
-            has_two_same_adjacent_digits_strict(&vec![1, 1, 2, 2, 3, 3]),
+            has_two_same_adjacent_digits_strict(&[1, 1, 2, 2, 3, 3]),
             true
         );
         assert_eq!(
-            has_two_same_adjacent_digits_strict(&vec![1, 2, 3, 4, 4, 4]),
+            has_two_same_adjacent_digits_strict(&[1, 2, 3, 4, 4, 4]),
             false
         );
         assert_eq!(
-            has_two_same_adjacent_digits_strict(&vec![1, 1, 1, 1, 2, 2]),
+            has_two_same_adjacent_digits_strict(&[1, 1, 1, 1, 2, 2]),
             true
         );
     }

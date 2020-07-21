@@ -337,7 +337,7 @@ mod tests {
         let mut argument_buffer = vec![0; 5];
 
         write_arguments(
-            &vec![5, 4, 3, 2, 1],
+            &[5, 4, 3, 2, 1],
             1,
             2,
             &vec![ParameterMode::Position, ParameterMode::Immediate][..],
