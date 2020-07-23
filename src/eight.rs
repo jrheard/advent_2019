@@ -8,12 +8,10 @@ pub fn eight_a() -> usize {
     let layers = decode_image(pixels, WIDTH, HEIGHT);
     let relevant_layer = layers
         .iter()
-        // TODO - bench this version vs bytecount version
-        .min_by_key(|&layer| layer.iter().filter(|&&pixel| pixel == 0).count())
+        .min_by_key(|&layer| bytecount::count(layer, 0))
         .unwrap();
 
-    relevant_layer.iter().filter(|&&pixel| pixel == 1).count()
-        * relevant_layer.iter().filter(|&&pixel| pixel == 2).count()
+    bytecount::count(relevant_layer, 1) * bytecount::count(relevant_layer, 2)
 }
 
 fn decode_image(pixels: Vec<u8>, width: usize, height: usize) -> Vec<Vec<u8>> {

@@ -825,3 +825,19 @@ DONE lol i don't think i realized that rust has while loops
 
 7/22/20
 
+ok cool so 8a was ez
+
+there's a clippy lint firing, telling me i'm counting bytes "the naive way"
+here's the timing from doing it the naive way
+
+individual              time:   [46.515 us 46.840 us 47.268 us]
+
+that is obviously plenty, plenty fast
+let's try the bytecount crate now
+
+and here's the bytecount version
+
+individual              time:   [39.544 us 39.837 us 40.206 us]
+
+very little difference
+i'll still keep the bytecount code for funsies tho
