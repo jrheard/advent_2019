@@ -37,6 +37,7 @@ impl Computer {
         // "The computer's available memory should be much larger than the
         // initial program. Memory beyond the initial program starts with
         // the value 0 and can be read or written like any other memory."
+
         memory.append(&mut vec![0; 10000]);
 
         Self {
@@ -59,14 +60,14 @@ impl Computer {
         loop {
             let instruction = self.memory[self.instruction_pointer];
             let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
-            let operation = operations[&opcode];
-            let mut new_instruction_pointer = None;
+            let operation = &operations[&opcode];
 
             write_arguments(
                 &self.memory,
                 self.instruction_pointer,
                 self.relative_base,
                 &operation,
+                opcode,
                 &parameter_mode_buffer[0..operation.num_arguments],
                 &mut argument_buffer,
             );
@@ -80,33 +81,17 @@ impl Computer {
                 args
             );
 
-            match opcode {
-                operations::ADD_OPCODE => add(&mut self.memory, args),
-                operations::MUL_OPCODE => mul(&mut self.memory, args),
-                operations::TAKE_INPUT_OPCODE => {
-                    take_input(&mut self.memory, args, self.input.remove(0))
+            let outcome = (operation.run)(self, args);
+
+            match outcome.halt_reason {
+                Some(HaltReason::Output) if halt_level == HaltReason::Output => {
+                    break HaltReason::Output
                 }
-                operations::PUSH_OUTPUT_OPCODE => {
-                    push_output(&mut self.output, args);
-                    if halt_level == HaltReason::Output {
-                        self.instruction_pointer += operation.num_arguments + 1;
-                        break HaltReason::Output;
-                    }
-                }
-                operations::JUMP_IF_TRUE_OPCODE => new_instruction_pointer = jump_if_true(args),
-                operations::JUMP_IF_FALSE_OPCODE => new_instruction_pointer = jump_if_false(args),
-                operations::LESS_THAN_OPCODE => less_than(&mut self.memory, args),
-                operations::EQUALS_OPCODE => equals(&mut self.memory, args),
-                operations::RELATIVE_BASE_OFFSET_OPCODE => {
-                    self.relative_base = relative_base_offset(self.relative_base, args);
-                }
-                operations::EXIT_OPCODE => break HaltReason::Exit,
-                _ => panic!("unknown opcode {}", opcode),
+                Some(HaltReason::Exit) => break HaltReason::Exit,
+                _ => (),
             }
 
-            if let Some(new_pointer) = new_instruction_pointer {
-                self.instruction_pointer = new_pointer;
-            } else {
+            if !outcome.manipulated_instruction_pointer {
                 self.instruction_pointer += operation.num_arguments + 1;
             }
         }
@@ -127,50 +112,6 @@ pub fn load_program(filename: &str) -> Memory {
         .split(',')
         .map(|x| x.parse::<i64>().unwrap())
         .collect()
-}
-
-fn add(memory: &mut Memory, args: &[i64]) {
-    memory[args[2] as usize] = args[0] + args[1];
-}
-
-fn mul(memory: &mut Memory, args: &[i64]) {
-    memory[args[2] as usize] = args[0] * args[1];
-}
-
-fn take_input(memory: &mut Memory, args: &[i64], input: i64) {
-    memory[args[0] as usize] = input;
-}
-
-fn push_output(output: &mut Output, args: &[i64]) {
-    output.push(args[0]);
-}
-
-fn jump_if_true(args: &[i64]) -> Option<usize> {
-    if args[0] != 0 {
-        Some(args[1] as usize)
-    } else {
-        None
-    }
-}
-
-fn jump_if_false(args: &[i64]) -> Option<usize> {
-    if args[0] == 0 {
-        Some(args[1] as usize)
-    } else {
-        None
-    }
-}
-
-fn less_than(memory: &mut Memory, args: &[i64]) {
-    memory[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 };
-}
-
-fn equals(memory: &mut Memory, args: &[i64]) {
-    memory[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 };
-}
-
-fn relative_base_offset(relative_base: i64, args: &[i64]) -> i64 {
-    relative_base + args[0]
 }
 
 /// Parses an instruction like `1102`.
@@ -206,6 +147,7 @@ fn write_arguments(
     instruction_pointer: usize,
     relative_base: i64,
     operation: &Operation,
+    opcode: i64,
     parameter_modes: &[ParameterMode],
     argument_buffer: &mut Vec<i64>,
 ) {
@@ -217,7 +159,7 @@ fn write_arguments(
                 ParameterMode::Position => value_in_memory_at_i,
                 ParameterMode::Immediate => panic!(
                     "Operation {} got a relative parameter mode for argument {}",
-                    operation.opcode,
+                    opcode,
                     operation.target_memory_location_arg.unwrap()
                 ),
                 ParameterMode::Relative => value_in_memory_at_i + relative_base,
@@ -359,7 +301,8 @@ mod tests {
             &[5, 4, 3, 2, 1],
             1,
             0,
-            &operations[&operations::JUMP_IF_TRUE_OPCODE],
+            &operations[&5],
+            5,
             &vec![ParameterMode::Position, ParameterMode::Immediate][..],
             &mut argument_buffer,
         );
