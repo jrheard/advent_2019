@@ -873,3 +873,9 @@ ok cool i ended up figuring out the issue - i hadn't fully implemented relative-
 TODO - still having an issue with the 9a program in test mode
 TODO i think that the issue is my messed-up if-statement at the end of write_arguments
 TODO augh revisit that
+
+===
+
+7/23/20
+
+TODO figure out a way to refactor the big match expression in Computer.run()

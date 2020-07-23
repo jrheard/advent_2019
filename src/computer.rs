@@ -1,7 +1,7 @@
-use std::collections::HashMap;
-use std::fs;
-
 mod operations;
+
+use operations::Operation;
+use std::fs;
 
 pub type Memory = Vec<i64>;
 type Input = Vec<i64>;
@@ -58,7 +58,7 @@ impl Computer {
 
         loop {
             let instruction = self.memory[self.instruction_pointer];
-            let opcode = parse_instruction(instruction, &operations, &mut parameter_mode_buffer);
+            let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
             let operation = operations[&opcode];
             let mut new_instruction_pointer = None;
 
@@ -66,7 +66,7 @@ impl Computer {
                 &self.memory,
                 self.instruction_pointer,
                 self.relative_base,
-                operation.num_arguments,
+                &operation,
                 &parameter_mode_buffer[0..operation.num_arguments],
                 &mut argument_buffer,
             );
@@ -112,6 +112,7 @@ impl Computer {
         }
     }
 
+    /// Private function, useful for testing.
     fn _memory_starts_with(&self, expected: Vec<i64>) -> bool {
         Iterator::eq(self.memory.iter().take(expected.len()), expected.iter())
     }
@@ -137,6 +138,7 @@ fn mul(memory: &mut Memory, args: &[i64]) {
 }
 
 fn take_input(memory: &mut Memory, args: &[i64], input: i64) {
+    // TODO if args[0] is in relative mode, we want to use relative base + args[0]
     memory[args[0] as usize] = input;
 }
 
@@ -176,11 +178,7 @@ fn relative_base_offset(relative_base: i64, args: &[i64]) -> i64 {
 ///
 /// Returns an i64 opcode like `02`.
 /// Writes the instruction's encoded parameter modes to `parameter_mode_buffer`.
-fn parse_instruction(
-    instruction: i64,
-    operations: &HashMap<i64, operations::Operation>,
-    parameter_mode_buffer: &mut Vec<ParameterMode>,
-) -> i64 {
+fn parse_instruction(instruction: i64, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i64 {
     for item in &mut parameter_mode_buffer.iter_mut() {
         *item = ParameterMode::Position;
     }
@@ -200,18 +198,7 @@ fn parse_instruction(
         index += 1;
     }
 
-    let opcode = instruction % 100;
-
-    if let Some(target_arg_index) = operations[&opcode].target_memory_location_arg {
-        // XXX REVISIT
-        if parameter_mode_buffer[target_arg_index] == ParameterMode::Position {
-            // If an operation uses an argument as a destination memory address to write to,
-            // that argument position is always interpreted as being in immediate mode.
-            parameter_mode_buffer[target_arg_index] = ParameterMode::Immediate;
-        }
-    }
-
-    opcode
+    instruction % 100
 }
 
 /// Writes `num_arguments` arguments to `argument_buffer`, based on `memory`, `instruction_pointer`, and `parameter_modes`.
@@ -219,17 +206,29 @@ fn write_arguments(
     memory: &[i64],
     instruction_pointer: usize,
     relative_base: i64,
-    num_arguments: usize,
+    operation: &Operation,
     parameter_modes: &[ParameterMode],
     argument_buffer: &mut Vec<i64>,
 ) {
-    for i in 0..num_arguments {
+    for i in 0..operation.num_arguments {
         let value_in_memory_at_i = memory[instruction_pointer + 1 + i];
 
-        argument_buffer[i] = match parameter_modes[i] {
-            ParameterMode::Position => memory[value_in_memory_at_i as usize],
-            ParameterMode::Immediate => value_in_memory_at_i,
-            ParameterMode::Relative => memory[(value_in_memory_at_i + relative_base) as usize],
+        if Some(i) == operation.target_memory_location_arg {
+            argument_buffer[i] = match parameter_modes[i] {
+                ParameterMode::Position => value_in_memory_at_i,
+                ParameterMode::Immediate => panic!(
+                    "Operation {} got a relative parameter mode for argument {}",
+                    operation.opcode,
+                    operation.target_memory_location_arg.unwrap()
+                ),
+                ParameterMode::Relative => value_in_memory_at_i + relative_base,
+            };
+        } else {
+            argument_buffer[i] = match parameter_modes[i] {
+                ParameterMode::Position => memory[value_in_memory_at_i as usize],
+                ParameterMode::Immediate => value_in_memory_at_i,
+                ParameterMode::Relative => memory[(value_in_memory_at_i + relative_base) as usize],
+            };
         }
     }
 }
@@ -278,14 +277,41 @@ mod tests {
 
     #[test]
     fn test_parse_instruction() {
-        let (operations, _) = operations::load_operations();
-
         let mut buffer = vec![
             ParameterMode::Position,
             ParameterMode::Position,
             ParameterMode::Position,
         ];
-        assert_eq!(parse_instruction(1002, &operations, &mut buffer), 2);
+        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::Position,
+                ParameterMode::Immediate,
+                ParameterMode::Position
+            ]
+        );
+
+        let mut buffer = vec![
+            ParameterMode::Immediate,
+            ParameterMode::Immediate,
+            ParameterMode::Immediate,
+        ];
+        assert_eq!(parse_instruction(1002, &mut buffer), 2);
+        assert_eq!(
+            buffer,
+            vec![
+                ParameterMode::Position,
+                ParameterMode::Immediate,
+                ParameterMode::Position
+            ]
+        );
+        let mut buffer = vec![
+            ParameterMode::Position,
+            ParameterMode::Position,
+            ParameterMode::Position,
+        ];
+        assert_eq!(parse_instruction(11004, &mut buffer), 4);
         assert_eq!(
             buffer,
             vec![
@@ -296,35 +322,6 @@ mod tests {
         );
 
         let mut buffer = vec![
-            ParameterMode::Immediate,
-            ParameterMode::Immediate,
-            ParameterMode::Immediate,
-        ];
-        assert_eq!(parse_instruction(1002, &operations, &mut buffer), 2);
-        assert_eq!(
-            buffer,
-            vec![
-                ParameterMode::Position,
-                ParameterMode::Immediate,
-                ParameterMode::Immediate
-            ]
-        );
-        let mut buffer = vec![
-            ParameterMode::Position,
-            ParameterMode::Position,
-            ParameterMode::Position,
-        ];
-        assert_eq!(parse_instruction(11004, &operations, &mut buffer), 4);
-        assert_eq!(
-            buffer,
-            vec![
-                ParameterMode::Position,
-                ParameterMode::Immediate,
-                ParameterMode::Immediate
-            ]
-        );
-
-        let mut buffer = vec![
             ParameterMode::Position,
             ParameterMode::Position,
             ParameterMode::Position,
@@ -332,7 +329,7 @@ mod tests {
             ParameterMode::Position,
             ParameterMode::Position,
         ];
-        assert_eq!(parse_instruction(101099, &operations, &mut buffer), 99);
+        assert_eq!(parse_instruction(101099, &mut buffer), 99);
         assert_eq!(
             buffer,
             vec![
@@ -357,12 +354,13 @@ mod tests {
     #[test]
     fn test_write_arguments() {
         let mut argument_buffer = vec![0; 5];
+        let (operations, _) = operations::load_operations();
 
         write_arguments(
             &[5, 4, 3, 2, 1],
             1,
             0,
-            2,
+            &operations[&operations::JUMP_IF_TRUE_OPCODE],
             &vec![ParameterMode::Position, ParameterMode::Immediate][..],
             &mut argument_buffer,
         );
