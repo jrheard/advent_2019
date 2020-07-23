@@ -1,10 +1,11 @@
 mod computer;
+pub mod eight;
 mod five;
 mod four;
 mod one;
 mod seven;
 mod six;
-pub mod three;
+mod three;
 mod two;
 mod util;
 
@@ -23,4 +24,5 @@ pub fn run_all_solutions() {
     println!("6b: {}", six::six_b());
     println!("7a: {}", seven::seven_a());
     println!("7b: {}", seven::seven_b());
+    println!("8a: {}", eight::eight_a());
 }

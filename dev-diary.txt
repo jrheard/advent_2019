@@ -820,3 +820,8 @@ cool, i think that's about as optimized as days 1-7 are gonna get for now
 fun times!
 
 DONE lol i don't think i realized that rust has while loops
+
+===
+
+7/22/20
+
