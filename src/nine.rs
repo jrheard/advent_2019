@@ -5,9 +5,7 @@ pub fn nine_a() -> i64 {
     let memory = computer::load_program("src/inputs/9.txt");
     let mut computer = Computer::new(memory, vec![1]);
     computer.run(HaltReason::Exit);
-    dbg!(computer.output);
-
-    5
+    computer.output[0]
 }
 
 #[cfg(test)]
@@ -16,6 +14,6 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        nine_a();
+        assert_eq!(nine_a(), 3280416268);
     }
 }
