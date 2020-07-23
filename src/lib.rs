@@ -1,5 +1,5 @@
 mod computer;
-pub mod eight;
+mod eight;
 mod five;
 mod four;
 pub mod nine;

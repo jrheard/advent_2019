@@ -138,7 +138,6 @@ fn mul(memory: &mut Memory, args: &[i64]) {
 }
 
 fn take_input(memory: &mut Memory, args: &[i64], input: i64) {
-    // TODO if args[0] is in relative mode, we want to use relative base + args[0]
     memory[args[0] as usize] = input;
 }
 
