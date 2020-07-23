@@ -25,4 +25,5 @@ pub fn run_all_solutions() {
     println!("7a: {}", seven::seven_a());
     println!("7b: {}", seven::seven_b());
     println!("8a: {}", eight::eight_a());
+    println!("8b:\n{}", eight::eight_b());
 }
