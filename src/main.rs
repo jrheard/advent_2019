@@ -2,5 +2,5 @@
 
 fn main() {
     pretty_env_logger::init();
-    advent_2019::run_all_solutions();
+    advent_2019::nine::nine_a();
 }

@@ -857,3 +857,19 @@ DONE
     The computer should have support for large numbers. Some instructions
     near the beginning of the BOOST program will verify this capability.
 
+
+let's figure this program out
+
+109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99
+
+109, 1
+increment relative base by 1
+
+204, -1
+output 109
+
+ok cool i ended up figuring out the issue - i hadn't fully implemented relative-base behavior in write_arguments()
+
+TODO - still having an issue with the 9a program in test mode
+TODO i think that the issue is my messed-up if-statement at the end of write_arguments
+TODO augh revisit that

@@ -203,9 +203,12 @@ fn parse_instruction(
     let opcode = instruction % 100;
 
     if let Some(target_arg_index) = operations[&opcode].target_memory_location_arg {
-        // If an operation uses an argument as a destination memory address to write to,
-        // that argument position is always interpreted as being in immediate mode.
-        parameter_mode_buffer[target_arg_index] = ParameterMode::Immediate;
+        // XXX REVISIT
+        if parameter_mode_buffer[target_arg_index] == ParameterMode::Position {
+            // If an operation uses an argument as a destination memory address to write to,
+            // that argument position is always interpreted as being in immediate mode.
+            parameter_mode_buffer[target_arg_index] = ParameterMode::Immediate;
+        }
     }
 
     opcode
@@ -226,7 +229,7 @@ fn write_arguments(
         argument_buffer[i] = match parameter_modes[i] {
             ParameterMode::Position => memory[value_in_memory_at_i as usize],
             ParameterMode::Immediate => value_in_memory_at_i,
-            ParameterMode::Relative => memory[relative_base as usize],
+            ParameterMode::Relative => memory[(value_in_memory_at_i + relative_base) as usize],
         }
     }
 }
@@ -487,5 +490,25 @@ mod tests {
             computer.run(HaltReason::Exit);
             assert_eq!(computer.output, *expected_output);
         }
+    }
+
+    #[test]
+    fn test_relative_base_programs() {
+        let quine_program = vec![
+            109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101, 0, 99,
+        ];
+        let mut computer = Computer::new(quine_program.clone(), vec![]);
+        computer.run(HaltReason::Exit);
+        assert_eq!(computer.output, quine_program);
+
+        let outputs_large_number_program = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+        let mut computer = Computer::new(outputs_large_number_program, vec![]);
+        computer.run(HaltReason::Exit);
+        assert_eq!(computer.output, vec![1219070632396864]);
+
+        let outputs_middle_number_program = vec![104, 1125899906842624, 99];
+        let mut computer = Computer::new(outputs_middle_number_program, vec![]);
+        computer.run(HaltReason::Exit);
+        assert_eq!(computer.output, vec![1125899906842624]);
     }
 }
