@@ -4,7 +4,7 @@ use criterion::{criterion_group, criterion_main, Criterion};
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("individual", |b| {
         b.iter(|| advent_2019::eight::eight_a());
-        b.iter(|| advent_2019::eight::eight_b());
+        //b.iter(|| advent_2019::eight::eight_b());
     });
 }
 

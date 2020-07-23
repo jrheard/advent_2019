@@ -6,15 +6,11 @@ const HEIGHT: usize = 6;
 pub fn eight_a() -> usize {
     let pixels = load_input();
     let layers = decode_image(pixels, WIDTH, HEIGHT);
-    dbg!(layers.len());
     let relevant_layer = layers
         .iter()
         // TODO - bench this version vs bytecount version
         .min_by_key(|&layer| layer.iter().filter(|&&pixel| pixel == 0).count())
         .unwrap();
-
-    dbg!(relevant_layer.len());
-    dbg!(relevant_layer);
 
     relevant_layer.iter().filter(|&&pixel| pixel == 1).count()
         * relevant_layer.iter().filter(|&&pixel| pixel == 2).count()
