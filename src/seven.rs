@@ -4,12 +4,12 @@ use rayon::prelude::*;
 use crate::computer;
 use crate::computer::{Computer, HaltReason, Memory};
 
-pub fn seven_a() -> i32 {
+pub fn seven_a() -> i64 {
     let memory = computer::load_program("src/inputs/7.txt");
     largest_output_for_program_one_shot(memory)
 }
 
-pub fn seven_b() -> i32 {
+pub fn seven_b() -> i64 {
     let memory = computer::load_program("src/inputs/7.txt");
     largest_output_for_program_feedback(memory)
 }
@@ -17,7 +17,7 @@ pub fn seven_b() -> i32 {
 /// "Your job is to find the largest output signal that can be sent to the
 /// thrusters by trying every possible combination of phase settings on the
 /// amplifiers."
-fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
+fn largest_output_for_program_one_shot(memory: Memory) -> i64 {
     let phase_setting_permutations = permutations(vec![0, 1, 2, 3, 4]);
 
     phase_setting_permutations
@@ -35,7 +35,7 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i32 {
 /// amplifier's output leads to the third amplifier's input, and so on. The first
 /// amplifier's input value is 0, and the last amplifier's output leads to your
 /// ship's thrusters."
-fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i32>) -> i32 {
+fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i64>) -> i64 {
     phase_settings.iter().fold(0, |acc, &phase_setting| {
         let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
         computer.run(HaltReason::Exit);
@@ -46,7 +46,7 @@ fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Ve
 
 /// "Your job is to find the largest output signal that can be sent to the
 /// thrusters using the new phase settings and feedback loop arrangement."
-fn largest_output_for_program_feedback(memory: Memory) -> i32 {
+fn largest_output_for_program_feedback(memory: Memory) -> i64 {
     let phase_setting_permutations = permutations(vec![5, 6, 7, 8, 9]);
 
     phase_setting_permutations
@@ -62,7 +62,7 @@ fn largest_output_for_program_feedback(memory: Memory) -> i32 {
 /// output is connected to amplifier B's input, and so on. However, the output
 /// from amplifier E is now connected into amplifier A's input. This creates the
 /// feedback loop: the signal will be sent through the amplifiers many times."
-fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i32>) -> i32 {
+fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i64>) -> i64 {
     let mut computers = phase_settings
         .iter()
         .map(|&phase_setting| Computer::new(memory.clone(), vec![phase_setting]))
@@ -99,7 +99,7 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
     }
 }
 
-fn permutations(x: Vec<i32>) -> Vec<Vec<i32>> {
+fn permutations(x: Vec<i64>) -> Vec<Vec<i64>> {
     let length = x.len();
     x.into_iter().permutations(length).collect()
 }

@@ -2,6 +2,7 @@ mod computer;
 pub mod eight;
 mod five;
 mod four;
+mod nine;
 mod one;
 mod seven;
 mod six;
@@ -26,4 +27,5 @@ pub fn run_all_solutions() {
     println!("7b: {}", seven::seven_b());
     println!("8a: {}", eight::eight_a());
     println!("8b:\n{}", eight::eight_b());
+    println!("9a: {}", nine::nine_a());
 }

@@ -841,3 +841,19 @@ individual              time:   [39.544 us 39.837 us 40.206 us]
 
 very little difference
 i'll still keep the bytecount code for funsies tho
+
+ok nine looks interesting!
+relative base is hopefully straightforward
+DONE implement the write_arguments() portion of it
+
+TODO:
+    The computer's available memory should be much larger than the initial
+    program. Memory beyond the initial program starts with the value 0 and can be
+    read or written like any other memory.
+
+DONE: (It is invalid to try to access memory at a negative address, though.)
+
+DONE
+    The computer should have support for large numbers. Some instructions
+    near the beginning of the BOOST program will verify this capability.
+

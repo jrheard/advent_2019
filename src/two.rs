@@ -2,7 +2,7 @@ use crate::computer;
 use crate::computer::{Computer, HaltReason};
 use rayon::prelude::*;
 
-pub fn two_a() -> i32 {
+pub fn two_a() -> i64 {
     let mut memory = computer::load_program("src/inputs/2.txt");
 
     // Before running the program, replace position 1 with the value 12
@@ -16,7 +16,7 @@ pub fn two_a() -> i32 {
     computer.memory[0]
 }
 
-pub fn two_b() -> i32 {
+pub fn two_b() -> i64 {
     let baseline_memory = computer::load_program("src/inputs/2.txt");
 
     let nouns_and_verbs: Vec<_> = (0..100)

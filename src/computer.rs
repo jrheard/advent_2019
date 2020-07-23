@@ -3,14 +3,15 @@ use std::fs;
 
 mod operations;
 
-pub type Memory = Vec<i32>;
-type Input = Vec<i32>;
-type Output = Vec<i32>;
+pub type Memory = Vec<i64>;
+type Input = Vec<i64>;
+type Output = Vec<i64>;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum ParameterMode {
     Position,
     Immediate,
+    Relative,
 }
 
 /// Used for configuring the behavior of `Computer::run()`.
@@ -28,15 +29,22 @@ pub struct Computer {
     pub input: Input,
     pub output: Output,
     instruction_pointer: usize,
+    relative_base: i64,
 }
 
 impl Computer {
-    pub fn new(memory: Memory, input: Input) -> Self {
+    pub fn new(mut memory: Memory, input: Input) -> Self {
+        // "The computer's available memory should be much larger than the
+        // initial program. Memory beyond the initial program starts with
+        // the value 0 and can be read or written like any other memory."
+        memory.append(&mut vec![0; 10000]);
+
         Self {
             memory,
             input,
             output: vec![],
             instruction_pointer: 0,
+            relative_base: 0,
         }
     }
 
@@ -57,6 +65,7 @@ impl Computer {
             write_arguments(
                 &self.memory,
                 self.instruction_pointer,
+                self.relative_base,
                 operation.num_arguments,
                 &parameter_mode_buffer[0..operation.num_arguments],
                 &mut argument_buffer,
@@ -88,6 +97,9 @@ impl Computer {
                 operations::JUMP_IF_FALSE_OPCODE => new_instruction_pointer = jump_if_false(args),
                 operations::LESS_THAN_OPCODE => less_than(&mut self.memory, args),
                 operations::EQUALS_OPCODE => equals(&mut self.memory, args),
+                operations::RELATIVE_BASE_OFFSET_OPCODE => {
+                    self.relative_base = relative_base_offset(self.relative_base, args);
+                }
                 operations::EXIT_OPCODE => break HaltReason::Exit,
                 _ => panic!("unknown opcode {}", opcode),
             }
@@ -108,27 +120,27 @@ pub fn load_program(filename: &str) -> Memory {
     contents
         .trim()
         .split(',')
-        .map(|x| x.parse::<i32>().unwrap())
+        .map(|x| x.parse::<i64>().unwrap())
         .collect()
 }
 
-fn add(memory: &mut Memory, args: &[i32]) {
+fn add(memory: &mut Memory, args: &[i64]) {
     memory[args[2] as usize] = args[0] + args[1];
 }
 
-fn mul(memory: &mut Memory, args: &[i32]) {
+fn mul(memory: &mut Memory, args: &[i64]) {
     memory[args[2] as usize] = args[0] * args[1];
 }
 
-fn take_input(memory: &mut Memory, args: &[i32], input: i32) {
+fn take_input(memory: &mut Memory, args: &[i64], input: i64) {
     memory[args[0] as usize] = input;
 }
 
-fn push_output(output: &mut Output, args: &[i32]) {
+fn push_output(output: &mut Output, args: &[i64]) {
     output.push(args[0]);
 }
 
-fn jump_if_true(args: &[i32]) -> Option<usize> {
+fn jump_if_true(args: &[i64]) -> Option<usize> {
     if args[0] != 0 {
         Some(args[1] as usize)
     } else {
@@ -136,7 +148,7 @@ fn jump_if_true(args: &[i32]) -> Option<usize> {
     }
 }
 
-fn jump_if_false(args: &[i32]) -> Option<usize> {
+fn jump_if_false(args: &[i64]) -> Option<usize> {
     if args[0] == 0 {
         Some(args[1] as usize)
     } else {
@@ -144,23 +156,27 @@ fn jump_if_false(args: &[i32]) -> Option<usize> {
     }
 }
 
-fn less_than(memory: &mut Memory, args: &[i32]) {
+fn less_than(memory: &mut Memory, args: &[i64]) {
     memory[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 };
 }
 
-fn equals(memory: &mut Memory, args: &[i32]) {
+fn equals(memory: &mut Memory, args: &[i64]) {
     memory[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 };
+}
+
+fn relative_base_offset(relative_base: i64, args: &[i64]) -> i64 {
+    relative_base + args[0]
 }
 
 /// Parses an instruction like `1102`.
 ///
-/// Returns an i32 opcode like `02`.
+/// Returns an i64 opcode like `02`.
 /// Writes the instruction's encoded parameter modes to `parameter_mode_buffer`.
 fn parse_instruction(
-    instruction: i32,
-    operations: &HashMap<i32, operations::Operation>,
+    instruction: i64,
+    operations: &HashMap<i64, operations::Operation>,
     parameter_mode_buffer: &mut Vec<ParameterMode>,
-) -> i32 {
+) -> i64 {
     for item in &mut parameter_mode_buffer.iter_mut() {
         *item = ParameterMode::Position;
     }
@@ -169,9 +185,12 @@ fn parse_instruction(
     let mut index = 0;
 
     while parameter_modes != 0 {
-        if parameter_modes % 2 == 1 {
-            parameter_mode_buffer[index] = ParameterMode::Immediate;
-        }
+        parameter_mode_buffer[index] = match parameter_modes % 10 {
+            0 => ParameterMode::Position,
+            1 => ParameterMode::Immediate,
+            2 => ParameterMode::Relative,
+            _ => panic!("unexpected parameter mode {}", parameter_modes % 10),
+        };
 
         parameter_modes /= 10;
         index += 1;
@@ -190,22 +209,21 @@ fn parse_instruction(
 
 /// Writes `num_arguments` arguments to `argument_buffer`, based on `memory`, `instruction_pointer`, and `parameter_modes`.
 fn write_arguments(
-    memory: &[i32],
+    memory: &[i64],
     instruction_pointer: usize,
+    relative_base: i64,
     num_arguments: usize,
     parameter_modes: &[ParameterMode],
-    argument_buffer: &mut Vec<i32>,
+    argument_buffer: &mut Vec<i64>,
 ) {
     for i in 0..num_arguments {
         let value_in_memory_at_i = memory[instruction_pointer + 1 + i];
 
-        argument_buffer[i] = if parameter_modes[i] == ParameterMode::Immediate {
-            // Immediate mode means: Directly use the value in memory at `i`.
-            value_in_memory_at_i
-        } else {
-            // Position mode means: Look up the value at the _address_ that's stored in memory at `i`.
-            memory[value_in_memory_at_i as usize]
-        };
+        argument_buffer[i] = match parameter_modes[i] {
+            ParameterMode::Position => memory[value_in_memory_at_i as usize],
+            ParameterMode::Immediate => value_in_memory_at_i,
+            ParameterMode::Relative => memory[relative_base as usize],
+        }
     }
 }
 
@@ -336,6 +354,7 @@ mod tests {
         write_arguments(
             &[5, 4, 3, 2, 1],
             1,
+            0,
             2,
             &vec![ParameterMode::Position, ParameterMode::Immediate][..],
             &mut argument_buffer,
@@ -348,15 +367,22 @@ mod tests {
     fn test_equals() {
         // "Using position mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
         let position_mode_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let program_length = position_mode_program.len();
 
         let mut computer = Computer::new(position_mode_program.clone(), vec![5]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.memory, vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8]);
+        assert_eq!(
+            &computer.memory[..program_length],
+            &vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8][..]
+        );
         assert_eq!(computer.output, vec![0]);
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.memory, vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8]);
+        assert_eq!(
+            &computer.memory[..program_length],
+            &vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8][..]
+        );
         assert_eq!(computer.output, vec![1]);
 
         // "Using immediate mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
