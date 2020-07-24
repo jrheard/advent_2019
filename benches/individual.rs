@@ -3,8 +3,8 @@ use criterion::{criterion_group, criterion_main, Criterion};
 #[allow(clippy::redundant_closure)]
 pub fn criterion_benchmark(c: &mut Criterion) {
     c.bench_function("individual", |b| {
-        b.iter(|| advent_2019::nine::nine_a());
-        b.iter(|| advent_2019::nine::nine_b());
+        b.iter(|| advent_2019::ten::ten_a());
+        //b.iter(|| advent_2019::ten::ten_b());
     });
 }
 

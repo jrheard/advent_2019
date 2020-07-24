@@ -1,11 +1,12 @@
-use itertools::Itertools;
 use std::fs;
 
-pub fn ten_a() -> i32 {
-    5
+pub fn ten_a() -> u32 {
+    let grid = Grid::new("src/inputs/10.txt");
+    let (x, y) = best_location_for_monitoring_station(grid.clone());
+    grid.num_asteroids_visible_from_location(x, y)
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum Spot {
     Asteroid,
     Empty,
@@ -15,7 +16,7 @@ fn manhattan_distance(x: i32, y: i32, xx: i32, yy: i32) -> i32 {
     (x - xx).abs() + (y - yy).abs()
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Grid {
     width: usize,
     height: usize,
@@ -129,9 +130,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_solutions() {
+    fn test_sample_1() {
         let grid = Grid::new("src/inputs/10_sample_1.txt");
         assert_eq!(grid.num_asteroids_visible_from_location(5, 8), 33);
+        assert_eq!(best_location_for_monitoring_station(grid), (5, 8));
     }
 
     #[test]
@@ -139,5 +141,10 @@ mod tests {
         let grid = Grid::new("src/inputs/10_sample_small.txt");
         assert_eq!(grid.num_asteroids_visible_from_location(3, 4), 8);
         assert_eq!(best_location_for_monitoring_station(grid), (3, 4));
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(ten_a(), 282)
     }
 }
