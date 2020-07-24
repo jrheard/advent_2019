@@ -61,11 +61,7 @@ impl Grid {
         }
     }
 
-    pub fn get(&self, x: usize, y: usize) -> &Spot {
-        &self.map[(y * self.width) + x]
-    }
-
-    fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
+    pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
         let x = x as i32;
         let y = y as i32;
         let mut asteroid_positions = self.asteroid_positions.clone();
@@ -108,6 +104,14 @@ impl Grid {
     }
 }
 
+fn best_location_for_monitoring_station(grid: Grid) -> (usize, usize) {
+    *grid
+        .asteroid_positions
+        .iter()
+        .max_by_key(|(x, y)| grid.num_asteroids_visible_from_location(*x, *y))
+        .unwrap()
+}
+
 // Taken from https://docs.rs/num/0.1.27/src/num/.cargo/registry/src/github.com-1ecc6299db9ec823/num-0.1.27/src/integer.rs.html#173
 fn gcd(a: i32, b: i32) -> i32 {
     let mut m = a;
@@ -133,17 +137,7 @@ mod tests {
     #[test]
     fn test_small_map() {
         let grid = Grid::new("src/inputs/10_sample_small.txt");
-        //dbg!(&grid.asteroid_positions);
-        for y in 0..grid.height {
-            for x in 0..grid.width {
-                if grid.get(x, y) == &Spot::Asteroid {
-                    print!("{}", grid.num_asteroids_visible_from_location(x, y));
-                } else {
-                    print!(".");
-                }
-            }
-
-            println!();
-        }
+        assert_eq!(grid.num_asteroids_visible_from_location(3, 4), 8);
+        assert_eq!(best_location_for_monitoring_station(grid), (3, 4));
     }
 }
