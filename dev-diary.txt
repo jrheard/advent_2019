@@ -949,3 +949,41 @@ and for each slope,
                 asteroids_seen += 1
 
 we could probably turn the above into iterators by using takewhile or something
+
+ok cool so i've made some progress
+not quite there yet, but progress
+
+so right now i'm running into this issue
+on this map
+
+.#..#
+.....
+#####
+....#
+...##
+
+the top right asteroid, at (4, 0)
+is only reporting 6 asteroids
+
+it's reporting these:
+
+found asteroid at 1, 0
+found asteroid at 2, 2
+found asteroid at 3, 2
+found asteroid at 3, 4
+found asteroid at 4, 2
+found asteroid at 0, 2
+
+so now, by hand, let's figure out which ones it should see
+
+.#..X
+.....
+#####
+.....
+...#.
+
+shit dude, fuck me
+i don't think that my slope idea is actually going to work
+
+how would i describe the algorithm that seems to be necessary here?
+how do i implement this in less than n^n time???

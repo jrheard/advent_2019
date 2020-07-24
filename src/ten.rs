@@ -20,6 +20,7 @@ struct Grid {
 }
 
 fn num_asteroids_visible_from_location(grid: &Grid, x: usize, y: usize) -> u32 {
+    dbg!(x, y);
     let x = x as i32;
     let y = y as i32;
     let slopes = grid
@@ -51,7 +52,7 @@ fn num_asteroids_visible_from_location(grid: &Grid, x: usize, y: usize) -> u32 {
 
         for (xx, yy) in ray_positions {
             if grid.get(xx as usize, yy as usize) == &Spot::Asteroid {
-                //println!("found asteroid at {}, {}", xx, yy);
+                println!("found asteroid at {}, {}", xx, yy);
                 num_asteroids += 1;
                 break;
             }
