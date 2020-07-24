@@ -1,6 +1,7 @@
 use itertools::Itertools;
 use rayon::prelude::*;
 
+use std::collections::VecDeque;
 use std::f64::consts::PI;
 use std::fs;
 
@@ -10,7 +11,7 @@ pub fn ten_a() -> u32 {
     grid.num_asteroids_visible_from_location(x, y)
 }
 
-pub fn ten_b() -> u32 {
+pub fn ten_b() -> usize {
     let x = 20;
     let y = 20;
 
@@ -25,15 +26,25 @@ pub fn ten_b() -> u32 {
     positions_and_angles
         .sort_by(|(_, angle_1), (_, angle_2)| (angle_1).partial_cmp(angle_2).unwrap());
 
-    let mut grouped_positions: Vec<Vec<(usize, usize)>> = vec![];
+    let mut grouped_positions: Vec<VecDeque<(usize, usize)>> = vec![];
 
     for (_, group) in &positions_and_angles.iter().group_by(|(_, angle)| *angle) {
         grouped_positions.push(group.map(|(position, _)| *position).collect());
     }
 
-    dbg!(&grouped_positions[0..5]);
+    let mut zap_order = vec![];
 
-    5
+    while !grouped_positions.is_empty() {
+        for group in &mut grouped_positions {
+            zap_order.push(group.pop_front().unwrap());
+        }
+
+        grouped_positions.retain(|x| !x.is_empty());
+    }
+
+    let two_hundredth_zapped = zap_order[199];
+
+    two_hundredth_zapped.0 * 100 + two_hundredth_zapped.1
 }
 
 fn angle(x: i32, y: i32) -> f64 {
