@@ -1109,3 +1109,83 @@ done!
 and original running time was ~65ms
 added rayon, running time is now ~35ms
 nice! :)
+
+ok
+so part 2 looks interesting
+going to be a bit tricky i think
+maybe
+maybe not?
+maybe
+
+so, we place a monitoring station at 20, 20, bc that's the location from part a
+
+and then we assemble the list of asteroids
+and then we... what?
+we're definitely going to be doing rounds of sorting and iteration
+
+and we're definitely going to be finding angles between two points
+it looks like atan2 is what i want for that
+
+here's some code from messing around on rust playground
+
+    let y: f32 = 3.0;
+    let x: f32 = 3.0;
+
+    dbg!(y.atan2(x));
+    dbg!(y.atan2(x).to_degrees());
+
+[src/main.rs:5] y.atan2(x) = 0.7853982
+[src/main.rs:6] y.atan2(x).to_degrees() = 45.0
+
+"The laser starts by pointing up and always rotates clockwise"
+
+    let y: f32 = 3.0;
+    let x: f32 = 0.0;
+
+[src/main.rs:5] y.atan2(x) = 1.5707964
+[src/main.rs:6] y.atan2(x).to_degrees() = 90.0
+
+    let y: f32 = 3.0;
+    let x: f32 = 0.0;
+
+[src/main.rs:5] y.atan2(x) = 1.8925469
+[src/main.rs:6] y.atan2(x).to_degrees() = 108.43495
+
+    let y: f32 = 0.0;
+    let x: f32 = -1.0;
+
+[src/main.rs:5] y.atan2(x) = 3.1415927
+[src/main.rs:6] y.atan2(x).to_degrees() = 180.0
+
+ok cool so
+i messed around on my notepad
+and with rust playground
+and have found that this formula is what we want:
+
+fn rotate(x: f64) -> f64 {
+    PI / 2.0 - x
+}
+
+rotate(y.atan2(x)).to_degrees()
+
+which we should be able to turn into a nice `angle()` fn very easily
+
+ok here's what i came up with
+
+fn angle(x: i32, y: i32) -> f64 {
+    let base_angle = ((PI / 2.0) - (y as f64).atan2(x as f64)).to_degrees();
+
+    if base_angle < 0.0 {
+        base_angle + 360.0
+    } else {
+        base_angle
+    }
+}
+
+had to transform negative angles
+anywayyyyyy
+
+now we can make a nice ordered vec of buckets (TODO vecdeques for buckets?)
+and just visit them in order, popping off the first item from each bucket if it still exists
+
+ok i think the way to do this is to first transform the vec of asteroids into a vec of ((x, y), angle) tuples

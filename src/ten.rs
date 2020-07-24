@@ -1,10 +1,53 @@
+use itertools::Itertools;
 use rayon::prelude::*;
+
+use std::f64::consts::PI;
 use std::fs;
 
 pub fn ten_a() -> u32 {
     let grid = Grid::new("src/inputs/10.txt");
     let (x, y) = best_location_for_monitoring_station(grid.clone());
     grid.num_asteroids_visible_from_location(x, y)
+}
+
+pub fn ten_b() -> u32 {
+    let x = 20;
+    let y = 20;
+
+    let grid = Grid::new("src/inputs/10.txt");
+    let mut positions_and_angles: Vec<_> = grid
+        .asteroid_positions
+        .iter()
+        .filter(|&&(xx, yy)| x != xx as i32 || y != yy as i32)
+        .map(|&(xx, yy)| ((xx, yy), angle_between(x, y, xx as i32, yy as i32)))
+        .collect();
+
+    positions_and_angles
+        .sort_by(|(_, angle_1), (_, angle_2)| (angle_1).partial_cmp(angle_2).unwrap());
+
+    let mut grouped_positions: Vec<Vec<(usize, usize)>> = vec![];
+
+    for (_, group) in &positions_and_angles.iter().group_by(|(_, angle)| *angle) {
+        grouped_positions.push(group.map(|(position, _)| *position).collect());
+    }
+
+    dbg!(&grouped_positions[0..5]);
+
+    5
+}
+
+fn angle(x: i32, y: i32) -> f64 {
+    let base_angle = ((PI / 2.0) - (y as f64).atan2(x as f64)).to_degrees();
+
+    if base_angle < 0.0 {
+        base_angle + 360.0
+    } else {
+        base_angle
+    }
+}
+
+fn angle_between(x: i32, y: i32, xx: i32, yy: i32) -> f64 {
+    angle(xx - x, yy - y)
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -45,14 +88,8 @@ impl Grid {
 
         let asteroid_positions = map
             .iter()
-            .enumerate()
-            .filter_map(|(i, spot)| {
-                if *spot == Spot::Asteroid {
-                    Some((i % width, i / width))
-                } else {
-                    None
-                }
-            })
+            .positions(|spot| *spot == Spot::Asteroid)
+            .map(|i| (i % width, i / width))
             .collect();
 
         Grid {
@@ -66,7 +103,7 @@ impl Grid {
     /// "A monitoring station can detect any asteroid to which it has direct line
     /// of sight - that is, there cannot be another asteroid exactly between
     /// them. This line of sight can be at any angle, not just lines aligned to
-    /// the grid or diagonally."
+    /// the grid or diagonally. "
     pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
         let x = x as i32;
         let y = y as i32;
@@ -153,6 +190,23 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        assert_eq!(ten_a(), 292)
+        assert_eq!(ten_a(), 292);
+        assert_eq!(ten_b(), 0);
+    }
+
+    #[test]
+    fn test_angle() {
+        assert!((angle(0, 5) - 0.0).abs() < f64::EPSILON);
+        assert!((angle(2, 0) - 90.0).abs() < f64::EPSILON);
+        assert!((angle(0, -4) - 180.0).abs() < f64::EPSILON);
+        assert!((angle(-100, 0) - 270.0).abs() < f64::EPSILON);
+    }
+
+    #[test]
+    fn test_angle_between() {
+        assert!((angle_between(2, 5, 2, 10) - 0.0).abs() < f64::EPSILON);
+        assert!((angle_between(2, 2, 4, 2) - 90.0).abs() < f64::EPSILON);
+        assert!((angle_between(1, -4, 1, -8) - 180.0).abs() < f64::EPSILON);
+        assert!((angle_between(-100, 5, -101, 5) - 270.0).abs() < f64::EPSILON);
     }
 }
