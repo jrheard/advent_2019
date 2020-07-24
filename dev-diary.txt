@@ -878,4 +878,17 @@ TODO augh revisit that
 
 7/23/20
 
-TODO figure out a way to refactor the big match expression in Computer.run()
+DONE figure out a way to refactor the big match expression in Computer.run()
+    sick i did it :)
+    really proud of how that worked out
+    for a while i thought that i had made it a million times slower
+    but it turned out i had forgotten to advance the instruction pointer when halting early after an output instruction
+    which is the same mistake i had made when originally implementing that instruction!
+    lol oh well anyway
+    super cool!!! aaa i'm really pleased with how this worked out
+
+i spent like an hour trying to set up codecov on travis but couldn't get it working
+it kept saying "no coverage found"
+oh well! who cares
+
+eh screw it, let's try github actions
