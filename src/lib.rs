@@ -6,6 +6,7 @@ pub mod nine;
 mod one;
 mod seven;
 mod six;
+mod ten;
 mod three;
 mod two;
 mod util;
@@ -29,4 +30,5 @@ pub fn run_all_solutions() {
     println!("8b:\n{}", eight::eight_b());
     println!("9a: {}", nine::nine_a());
     println!("9b: {}", nine::nine_b());
+    println!("10a: {}", ten::ten_a());
 }

@@ -892,3 +892,60 @@ it kept saying "no coverage found"
 oh well! who cares
 
 eh screw it, let's try github actions
+gave up on codecov there too
+too complicated to set up
+
+ok so i'm looking at 10a
+interesting setup!
+
+it looks like the idea is:
+in a grid with width W and height H
+
+for any given asteroidal point in the grid
+cast rays from that asteroid in all directions until you find an intersection
+not just along horizontal/vertical, not just on diagonal
+but instead, loop through all the possible slopes
+
+so let's say we have an 8x9 grid and we're at (4, 4)
+
+........
+........
+........
+........
+....X..a
+.......b
+.......c
+.......d
+.......e
+
+
+then we look at each outermost element in the grid, one by one
+    TODO i'll want a vec of their coordinates
+and for each one, we'll calculate its slope
+    TODO how do we reduce slopes?
+        eg we want (1, 0) instead of (3, 0)
+        there's a gcd crate
+        and the gcd of 0 and k is k
+
+so for instance, a above would have a slope of (1, 0)
+b would have a slope of (3, 1)
+c would have a slope of (3, 2)
+d woul dhave a slope of (3, 3) which gets reduced to (1, 1)
+etc
+
+and so we end up with an asteroid at position (x, y)
+and a SET of slopes
+    TODO: note - not a list!
+    TODO figure out how to use the set as a reusable buffer
+
+and for each slope,
+    for i in 0..,
+        let xx = x + (slope.0 * i);
+        let yy = y + (slope.1 * i);
+        if (xx, yy) is off the grid:
+            break
+        else:
+            if grid.get(xx, yy) == Spot::ASTEROID:
+                asteroids_seen += 1
+
+we could probably turn the above into iterators by using takewhile or something
