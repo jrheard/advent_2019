@@ -12,10 +12,12 @@ pub fn ten_a() -> u32 {
 }
 
 pub fn ten_b() -> usize {
-    let x = 20;
-    let y = 20;
-
     let grid = Grid::new("src/inputs/10.txt");
+    let two_hundredth_zapped = zap_order(grid, 20, 20)[199];
+    two_hundredth_zapped.0 * 100 + two_hundredth_zapped.1
+}
+
+fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
     let mut positions_and_angles: Vec<_> = grid
         .asteroid_positions
         .iter()
@@ -32,23 +34,21 @@ pub fn ten_b() -> usize {
         grouped_positions.push(group.map(|(position, _)| *position).collect());
     }
 
-    let mut zap_order = vec![];
+    let mut order = vec![];
 
     while !grouped_positions.is_empty() {
         for group in &mut grouped_positions {
-            zap_order.push(group.pop_front().unwrap());
+            order.push(group.pop_front().unwrap());
         }
 
         grouped_positions.retain(|x| !x.is_empty());
     }
 
-    let two_hundredth_zapped = zap_order[199];
-
-    two_hundredth_zapped.0 * 100 + two_hundredth_zapped.1
+    order
 }
 
 fn angle(x: i32, y: i32) -> f64 {
-    let base_angle = ((PI / 2.0) - (y as f64).atan2(x as f64)).to_degrees();
+    let base_angle = ((PI / 2.0) + (y as f64).atan2(x as f64)).to_degrees();
 
     if base_angle < 0.0 {
         base_angle + 360.0
@@ -185,6 +185,10 @@ fn gcd(a: i32, b: i32) -> i32 {
 mod tests {
     use super::*;
 
+    fn equal(a: f64, b: f64) -> bool {
+        (a - b).abs() < f64::EPSILON
+    }
+
     #[test]
     fn test_sample_1() {
         let grid = Grid::new("src/inputs/10_sample_1.txt");
@@ -202,22 +206,23 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(ten_a(), 292);
-        assert_eq!(ten_b(), 0);
+        assert_eq!(ten_b(), 317);
     }
 
     #[test]
     fn test_angle() {
-        assert!((angle(0, 5) - 0.0).abs() < f64::EPSILON);
-        assert!((angle(2, 0) - 90.0).abs() < f64::EPSILON);
-        assert!((angle(0, -4) - 180.0).abs() < f64::EPSILON);
-        assert!((angle(-100, 0) - 270.0).abs() < f64::EPSILON);
+        assert!(equal(angle(0, -4), 0.0));
+        assert!(equal(angle(2, 0), 90.0));
+        assert!(equal(angle(0, 5), 180.0));
+        assert!(equal(angle(-100, 0), 270.0));
     }
 
     #[test]
     fn test_angle_between() {
-        assert!((angle_between(2, 5, 2, 10) - 0.0).abs() < f64::EPSILON);
-        assert!((angle_between(2, 2, 4, 2) - 90.0).abs() < f64::EPSILON);
-        assert!((angle_between(1, -4, 1, -8) - 180.0).abs() < f64::EPSILON);
-        assert!((angle_between(-100, 5, -101, 5) - 270.0).abs() < f64::EPSILON);
+        dbg!(angle_between(8, 3, 8, 1));
+        assert!(equal(angle_between(1, -4, 1, -8), 0.0));
+        assert!(equal(angle_between(2, 2, 4, 2), 90.0));
+        assert!(equal(angle_between(2, 5, 2, 10), 180.0));
+        assert!(equal(angle_between(-100, 5, -101, 5), 270.0));
     }
 }

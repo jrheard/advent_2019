@@ -1189,3 +1189,9 @@ now we can make a nice ordered vec of buckets (TODO vecdeques for buckets?)
 and just visit them in order, popping off the first item from each bucket if it still exists
 
 ok i think the way to do this is to first transform the vec of asteroids into a vec of ((x, y), angle) tuples
+
+ok cool
+so i did that and got some stuff running
+it's not quite right though
+i think that my main logic is functional
+but that my angle functions are effed because i'm bad at unit circles
