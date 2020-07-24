@@ -17,6 +17,15 @@ pub fn ten_b() -> usize {
     two_hundredth_zapped.0 * 100 + two_hundredth_zapped.1
 }
 
+/// "The new monitoring station also comes equipped with a giant rotating laser
+/// perfect for vaporizing asteroids. The laser starts by pointing up and always
+/// rotates clockwise, vaporizing any asteroid it hits. If multiple asteroids are
+/// exactly in line with the station, the laser only has enough power to vaporize
+/// one of them before continuing its rotation. In other words, the same
+/// asteroids that can be detected can be vaporized, but if vaporizing one
+/// asteroid makes another one detectable, the newly-detected asteroid won't be
+/// vaporized until the laser has returned to the same position by rotating a
+/// full 360 degrees."
 fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
     let mut positions_and_angles: Vec<_> = grid
         .asteroid_positions
@@ -25,9 +34,11 @@ fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
         .map(|&(xx, yy)| ((xx, yy), angle_between(x, y, xx as i32, yy as i32)))
         .collect();
 
+    // Sort by angle increasing.
     positions_and_angles
         .sort_by(|(_, angle_1), (_, angle_2)| (angle_1).partial_cmp(angle_2).unwrap());
 
+    // Group the positions into buckets by angle.
     let mut grouped_positions: Vec<VecDeque<(usize, usize)>> = vec![];
 
     for (_, group) in &positions_and_angles.iter().group_by(|(_, angle)| *angle) {
@@ -37,10 +48,12 @@ fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
     let mut order = vec![];
 
     while !grouped_positions.is_empty() {
+        // Pop the first item off of each bucket.
         for group in &mut grouped_positions {
             order.push(group.pop_front().unwrap());
         }
 
+        // Discard any now-empty buckets.
         grouped_positions.retain(|x| !x.is_empty());
     }
 
