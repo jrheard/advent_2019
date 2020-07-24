@@ -1,3 +1,4 @@
+use rayon::prelude::*;
 use std::fs;
 
 pub fn ten_a() -> u32 {
@@ -108,7 +109,7 @@ impl Grid {
 fn best_location_for_monitoring_station(grid: Grid) -> (usize, usize) {
     *grid
         .asteroid_positions
-        .iter()
+        .par_iter()
         .max_by_key(|(x, y)| grid.num_asteroids_visible_from_location(*x, *y))
         .unwrap()
 }
