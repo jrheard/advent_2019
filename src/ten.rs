@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::fs;
 
 pub fn ten_a() -> i32 {
@@ -21,23 +22,36 @@ struct Grid {
 fn num_asteroids_visible_from_location(grid: &Grid, x: usize, y: usize) -> u32 {
     let x = x as i32;
     let y = y as i32;
-    let slopes = grid.border_positions.iter().map(|&(xx, yy)| {
-        let delta_x = xx as i32 - x;
-        let delta_y = yy as i32 - y;
-        let gcd = gcd(delta_x, delta_y);
-        (delta_x / gcd, delta_y / gcd)
-    });
+    let slopes = grid
+        .border_positions
+        .iter()
+        .filter_map(|&(xx, yy)| {
+            if (xx as i32, yy as i32) == (x, y) {
+                None
+            } else {
+                let delta_x = xx as i32 - x;
+                let delta_y = yy as i32 - y;
+                let gcd = gcd(delta_x, delta_y);
+                Some((delta_x / gcd, delta_y / gcd))
+            }
+        })
+        .unique();
 
     let mut num_asteroids = 0;
 
     for (slope_x, slope_y) in slopes {
-        for (xx, yy) in (0..)
+        let ray_positions = (1..)
             .map(|i| ((x + (slope_x * i)) as i32, (y + (slope_y * i)) as i32))
             .take_while(|&(xx, yy)| {
                 0 <= xx && xx < grid.width as i32 && 0 <= yy && yy < grid.height as i32
             })
-        {
+            .collect::<Vec<_>>();
+
+        //dbg!(slope_x, slope_y, &ray_positions);
+
+        for (xx, yy) in ray_positions {
             if grid.get(xx as usize, yy as usize) == &Spot::Asteroid {
+                //println!("found asteroid at {}, {}", xx, yy);
                 num_asteroids += 1;
                 break;
             }
@@ -108,5 +122,21 @@ mod tests {
     fn test_solutions() {
         let grid = Grid::new("src/inputs/10_sample_1.txt");
         assert_eq!(num_asteroids_visible_from_location(&grid, 5, 8), 33);
+    }
+
+    #[test]
+    fn test_small_map() {
+        let grid = Grid::new("src/inputs/10_sample_small.txt");
+        for y in 0..grid.height {
+            for x in 0..grid.width {
+                if grid.get(x, y) == &Spot::Asteroid {
+                    print!("{}", num_asteroids_visible_from_location(&grid, x, y));
+                } else {
+                    print!(".");
+                }
+            }
+
+            println!();
+        }
     }
 }
