@@ -63,6 +63,10 @@ impl Grid {
         }
     }
 
+    /// "A monitoring station can detect any asteroid to which it has direct line
+    /// of sight - that is, there cannot be another asteroid exactly between
+    /// them. This line of sight can be at any angle, not just lines aligned to
+    /// the grid or diagonally."
     pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
         let x = x as i32;
         let y = y as i32;
@@ -76,9 +80,11 @@ impl Grid {
         let mut num_asteroids_seen = 0;
 
         while !asteroid_positions.is_empty() {
+            // Get the closest asteroid.
             let (xx, yy) = asteroid_positions[0];
             num_asteroids_seen += 1;
 
+            // Find the slope between it and us.
             let delta_x = xx as i32 - x;
             let delta_y = yy as i32 - y;
 
@@ -86,17 +92,15 @@ impl Grid {
             let delta_x = delta_x / gcd;
             let delta_y = delta_y / gcd;
 
+            // Cast a ray from (x, y) out into the direction of (xx, yy), stopping when it reaches the end of the grid.
+            // The ray doesn't stop early if it encounters an asteroid.
             let ray_positions = (1..)
-                .map(|i| {
-                    (
-                        (x as i32 + (delta_x * i)) as i32,
-                        (y + (delta_y * i)) as i32,
-                    )
-                })
+                .map(|i| ((x + (delta_x * i)) as i32, (y + (delta_y * i)) as i32))
                 .take_while(|&(xx, yy)| {
                     0 <= xx && xx < self.width as i32 && 0 <= yy && yy < self.height as i32
                 });
 
+            // Remove any asteroids found along that ray.
             for (xx, yy) in ray_positions {
                 asteroid_positions.retain(|&(xxx, yyy)| xx as usize != xxx || yy as usize != yyy);
             }
@@ -106,6 +110,9 @@ impl Grid {
     }
 }
 
+/// "Your job is to figure out which asteroid would be the best place to build a
+/// new monitoring station. The best location is the asteroid that can
+/// detect the largest number of other asteroids."
 fn best_location_for_monitoring_station(grid: Grid) -> (usize, usize) {
     *grid
         .asteroid_positions
@@ -146,6 +153,6 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        assert_eq!(ten_a(), 282)
+        assert_eq!(ten_a(), 292)
     }
 }

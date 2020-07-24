@@ -1104,3 +1104,8 @@ i got my x and y mixed up when making asteroid_positions
 
 ok sweet, fixed
 progress!
+
+done!
+and original running time was ~65ms
+added rayon, running time is now ~35ms
+nice! :)
