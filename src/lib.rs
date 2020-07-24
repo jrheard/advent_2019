@@ -28,4 +28,5 @@ pub fn run_all_solutions() {
     println!("8a: {}", eight::eight_a());
     println!("8b:\n{}", eight::eight_b());
     println!("9a: {}", nine::nine_a());
+    println!("9b: {}", nine::nine_b());
 }
