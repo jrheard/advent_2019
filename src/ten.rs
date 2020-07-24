@@ -11,55 +11,16 @@ enum Spot {
     Empty,
 }
 
+fn manhattan_distance(x: i32, y: i32, xx: i32, yy: i32) -> i32 {
+    (x - xx).abs() + (y - yy).abs()
+}
+
 #[derive(Debug)]
 struct Grid {
     width: usize,
     height: usize,
     map: Vec<Spot>,
-    border_positions: Vec<(usize, usize)>,
-}
-
-fn num_asteroids_visible_from_location(grid: &Grid, x: usize, y: usize) -> u32 {
-    dbg!(x, y);
-    let x = x as i32;
-    let y = y as i32;
-    let slopes = grid
-        .border_positions
-        .iter()
-        .filter_map(|&(xx, yy)| {
-            if (xx as i32, yy as i32) == (x, y) {
-                None
-            } else {
-                let delta_x = xx as i32 - x;
-                let delta_y = yy as i32 - y;
-                let gcd = gcd(delta_x, delta_y);
-                Some((delta_x / gcd, delta_y / gcd))
-            }
-        })
-        .unique();
-
-    let mut num_asteroids = 0;
-
-    for (slope_x, slope_y) in slopes {
-        let ray_positions = (1..)
-            .map(|i| ((x + (slope_x * i)) as i32, (y + (slope_y * i)) as i32))
-            .take_while(|&(xx, yy)| {
-                0 <= xx && xx < grid.width as i32 && 0 <= yy && yy < grid.height as i32
-            })
-            .collect::<Vec<_>>();
-
-        //dbg!(slope_x, slope_y, &ray_positions);
-
-        for (xx, yy) in ray_positions {
-            if grid.get(xx as usize, yy as usize) == &Spot::Asteroid {
-                println!("found asteroid at {}, {}", xx, yy);
-                num_asteroids += 1;
-                break;
-            }
-        }
-    }
-
-    num_asteroids
+    asteroid_positions: Vec<(usize, usize)>,
 }
 
 impl Grid {
@@ -69,7 +30,7 @@ impl Grid {
         let height = contents.lines().count();
         let width = contents.lines().next().unwrap().chars().count();
 
-        let map = contents
+        let map: Vec<Spot> = contents
             .lines()
             .flat_map(|line| {
                 line.chars().map(|c| match c {
@@ -80,26 +41,70 @@ impl Grid {
             })
             .collect();
 
-        let top_border = (0..width).map(|x| (x, 0));
-        let bottom_border = (0..width).map(|x| (x, height - 1));
-        let left_border = (1..(height - 1)).map(|y| (0, y));
-        let right_border = (1..(height - 1)).map(|y| (width - 1, y));
-        let border_positions = top_border
-            .chain(bottom_border)
-            .chain(left_border)
-            .chain(right_border)
+        let asteroid_positions = map
+            .iter()
+            .enumerate()
+            .filter_map(|(i, spot)| {
+                if *spot == Spot::Asteroid {
+                    Some((i % width, i / width))
+                } else {
+                    None
+                }
+            })
             .collect();
 
         Grid {
             map,
             width,
             height,
-            border_positions,
+            asteroid_positions,
         }
     }
 
     pub fn get(&self, x: usize, y: usize) -> &Spot {
         &self.map[(y * self.width) + x]
+    }
+
+    fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
+        let x = x as i32;
+        let y = y as i32;
+        let mut asteroid_positions = self.asteroid_positions.clone();
+
+        // Discard the asteroid that we're currently sitting at.
+        asteroid_positions.retain(|&(xx, yy)| x != xx as i32 || y != yy as i32);
+
+        asteroid_positions.sort_by_key(|&(xx, yy)| manhattan_distance(x, y, xx as i32, yy as i32));
+
+        let mut num_asteroids_seen = 0;
+
+        while !asteroid_positions.is_empty() {
+            let (xx, yy) = asteroid_positions[0];
+            num_asteroids_seen += 1;
+
+            let delta_x = xx as i32 - x;
+            let delta_y = yy as i32 - y;
+
+            let gcd = gcd(delta_x, delta_y);
+            let delta_x = delta_x / gcd;
+            let delta_y = delta_y / gcd;
+
+            let ray_positions = (1..)
+                .map(|i| {
+                    (
+                        (x as i32 + (delta_x * i)) as i32,
+                        (y + (delta_y * i)) as i32,
+                    )
+                })
+                .take_while(|&(xx, yy)| {
+                    0 <= xx && xx < self.width as i32 && 0 <= yy && yy < self.height as i32
+                });
+
+            for (xx, yy) in ray_positions {
+                asteroid_positions.retain(|&(xxx, yyy)| xx as usize != xxx || yy as usize != yyy);
+            }
+        }
+
+        num_asteroids_seen
     }
 }
 
@@ -122,16 +127,17 @@ mod tests {
     #[test]
     fn test_solutions() {
         let grid = Grid::new("src/inputs/10_sample_1.txt");
-        assert_eq!(num_asteroids_visible_from_location(&grid, 5, 8), 33);
+        assert_eq!(grid.num_asteroids_visible_from_location(5, 8), 33);
     }
 
     #[test]
     fn test_small_map() {
         let grid = Grid::new("src/inputs/10_sample_small.txt");
+        //dbg!(&grid.asteroid_positions);
         for y in 0..grid.height {
             for x in 0..grid.width {
                 if grid.get(x, y) == &Spot::Asteroid {
-                    print!("{}", num_asteroids_visible_from_location(&grid, x, y));
+                    print!("{}", grid.num_asteroids_visible_from_location(x, y));
                 } else {
                     print!(".");
                 }

@@ -987,3 +987,120 @@ i don't think that my slope idea is actually going to work
 
 how would i describe the algorithm that seems to be necessary here?
 how do i implement this in less than n^n time???
+hm hm hm
+
+maybe this slope thing is salvageable
+
+which asteroid isn't being found?
+it's the one at (1, 2)
+
+what's the (delta_x, delta_y) between (4, 0) and (1, 2)?
+it's (-3, 2)
+
+and so there's seriously no border position with that slope?
+yeah there isn't
+so how do we know to check for that slope?
+    TODO figure this out
+
+here's an idea
+for each asteroid
+    let mut num_seen = 0;
+
+    make a sorted set of all of the other asteroids' (x, y) positions, sorted by distance from asteroid ascending
+        DONE do we have those? or maybe a heap or something?
+        NOTE - (clone a previous set and sort it, or something)
+            update: actually just use a vec buffer
+                clone it at the start of this cycle
+                sort it by distance
+                and then at each step of the way, use .retain() on it
+    while the set is non-empty:
+        let sub_asteroid = sorted_set.pop_smallest();
+        num_seen += 1;
+        calculate the (delta_x, delta_y) between asteroid and sub_asteroid
+        for each point from asteroid, along (delta_x, delta_y), stopping at the end of the grid:
+            remove that point from the sorted set (if it's in there)
+
+ok i think that could work!!!!!
+
+===
+
+7/24/20
+
+ok let's try it
+
+ok i don't think retain is going to be helpful for the ray-casting part
+i think i should just reuse my iterator approach from earlier
+
+ok so i got the approach down into code
+but it's reporting too many asteroids
+
+TODO add prints showing what we see from (4, 0)
+
+ok so from 4, 0 we see:
+
+2, 0
+2, 1
+4, 3
+2, 2
+4, 4
+0, 1
+2, 3
+3, 4
+2, 4
+
+cross-referencing that against the map:
+
+.#..#
+.....
+#####
+....#
+...##
+
+so here are the ones that i see in there that shouldn't be in there
+
+4, 3
+4, 4
+
+ok i see why, calculated the slope's too coarse, i didn't shorten it to (0, -1)
+
+DONE bring back gcd for slope simplification
+
+ok, here's where we're at now
+
+from 4, 0
+found asteroid at 2, 0
+using slope -1, 0
+dropping asteroid at 2, 0
+found asteroid at 2, 1
+using slope -2, 1
+dropping asteroid at 2, 1
+found asteroid at 4, 3
+using slope 0, 1
+dropping asteroid at 4, 3
+dropping asteroid at 4, 4
+found asteroid at 2, 2
+using slope -1, 1
+dropping asteroid at 2, 2
+dropping asteroid at 0, 4
+found asteroid at 0, 1
+using slope -4, 1
+dropping asteroid at 0, 1
+found asteroid at 2, 3
+using slope -2, 3
+dropping asteroid at 2, 3
+found asteroid at 3, 4
+using slope -1, 4
+dropping asteroid at 3, 4
+found asteroid at 2, 4
+using slope -1, 2
+dropping asteroid at 2, 4
+8
+
+why isn't there an asteroid at (4, 2) in there???
+
+&grid.asteroid_positions = [ ( 0, 1,), ( 0, 4,), ( 2, 0,), ( 2, 1,), ( 2, 2,), ( 2, 3,), ( 2, 4,), ( 3, 4,), ( 4, 3,), ( 4, 4,), ]
+lol fuck me
+i got my x and y mixed up when making asteroid_positions
+
+ok sweet, fixed
+progress!
