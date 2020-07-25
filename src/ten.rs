@@ -135,7 +135,16 @@ impl Grid {
     /// them. This line of sight can be at any angle, not just lines aligned to
     /// the grid or diagonally. "
     pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> usize {
-        group_asteroids_by_angle(&self.asteroid_positions, x as i32, y as i32).len()
+        let mut angles: Vec<_> = self
+            .asteroid_positions
+            .iter()
+            .filter(|&&(xx, yy)| x != xx || y != yy)
+            .map(|&(xx, yy)| angle_between(x as i32, y as i32, xx as i32, yy as i32).to_bits())
+            .collect();
+
+        angles.sort();
+        angles.dedup();
+        angles.len()
     }
 }
 

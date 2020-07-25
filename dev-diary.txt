@@ -1220,3 +1220,18 @@ individual              time:   [11.160 ms 11.222 ms 11.299 ms]
 and i got to delete some code too!!!
 so that is awesome
 hooray!
+
+ok actually so i had a further idea - just reuse 10b but without actually allocating vecdeques for all the grouped chunks
+instead just group asteroids by angle and then return the number of unique angles seen
+messed around for a bit and got something working
+again, here's before
+
+individual              time:   [43.432 ms 44.244 ms 45.242 ms]
+
+and here's after
+
+individual              time:   [2.9618 ms 3.1129 ms 3.2753 ms]
+                        change: [-93.331% -92.964% -92.580%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+93 percent is good!!!
