@@ -5,7 +5,7 @@ use std::collections::VecDeque;
 use std::f64::consts::PI;
 use std::fs;
 
-pub fn ten_a() -> u32 {
+pub fn ten_a() -> usize {
     let grid = Grid::new("src/inputs/10.txt");
     let (x, y) = best_location_for_monitoring_station(grid.clone());
     grid.num_asteroids_visible_from_location(x, y)
@@ -27,8 +27,30 @@ pub fn ten_b() -> usize {
 /// vaporized until the laser has returned to the same position by rotating a
 /// full 360 degrees."
 fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
-    let mut positions_and_angles: Vec<_> = grid
-        .asteroid_positions
+    let mut grouped_positions = group_asteroids_by_angle(&grid.asteroid_positions, x, y);
+
+    let mut order = vec![];
+
+    while !grouped_positions.is_empty() {
+        // Pop the first item off of each bucket.
+        for group in &mut grouped_positions {
+            order.push(group.pop_front().unwrap());
+        }
+
+        // Discard any now-empty buckets.
+        grouped_positions.retain(|x| !x.is_empty());
+    }
+
+    order
+}
+
+/// Group `asteroid_positions` into VecDeque buckets based on their angle relative to (x, y).
+fn group_asteroids_by_angle(
+    asteroid_positions: &[(usize, usize)],
+    x: i32,
+    y: i32,
+) -> Vec<VecDeque<(usize, usize)>> {
+    let mut positions_and_angles: Vec<_> = asteroid_positions
         .iter()
         .filter(|&&(xx, yy)| x != xx as i32 || y != yy as i32)
         .map(|&(xx, yy)| ((xx, yy), angle_between(x, y, xx as i32, yy as i32)))
@@ -45,19 +67,7 @@ fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
         grouped_positions.push(group.map(|(position, _)| *position).collect());
     }
 
-    let mut order = vec![];
-
-    while !grouped_positions.is_empty() {
-        // Pop the first item off of each bucket.
-        for group in &mut grouped_positions {
-            order.push(group.pop_front().unwrap());
-        }
-
-        // Discard any now-empty buckets.
-        grouped_positions.retain(|x| !x.is_empty());
-    }
-
-    order
+    grouped_positions
 }
 
 fn angle(x: i32, y: i32) -> f64 {
@@ -78,10 +88,6 @@ fn angle_between(x: i32, y: i32, xx: i32, yy: i32) -> f64 {
 enum Spot {
     Asteroid,
     Empty,
-}
-
-fn manhattan_distance(x: i32, y: i32, xx: i32, yy: i32) -> i32 {
-    (x - xx).abs() + (y - yy).abs()
 }
 
 #[derive(Debug, Clone)]
@@ -128,46 +134,8 @@ impl Grid {
     /// of sight - that is, there cannot be another asteroid exactly between
     /// them. This line of sight can be at any angle, not just lines aligned to
     /// the grid or diagonally. "
-    pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> u32 {
-        let x = x as i32;
-        let y = y as i32;
-        let mut asteroid_positions = self.asteroid_positions.clone();
-
-        // Discard the asteroid that we're currently sitting at.
-        asteroid_positions.retain(|&(xx, yy)| x != xx as i32 || y != yy as i32);
-
-        asteroid_positions.sort_by_key(|&(xx, yy)| manhattan_distance(x, y, xx as i32, yy as i32));
-
-        let mut num_asteroids_seen = 0;
-
-        while !asteroid_positions.is_empty() {
-            // Get the closest asteroid.
-            let (xx, yy) = asteroid_positions[0];
-            num_asteroids_seen += 1;
-
-            // Find the slope between it and us.
-            let delta_x = xx as i32 - x;
-            let delta_y = yy as i32 - y;
-
-            let gcd = gcd(delta_x, delta_y);
-            let delta_x = delta_x / gcd;
-            let delta_y = delta_y / gcd;
-
-            // Cast a ray from (x, y) out into the direction of (xx, yy), stopping when it reaches the end of the grid.
-            // The ray doesn't stop early if it encounters an asteroid.
-            let ray_positions = (1..)
-                .map(|i| ((x + (delta_x * i)) as i32, (y + (delta_y * i)) as i32))
-                .take_while(|&(xx, yy)| {
-                    0 <= xx && xx < self.width as i32 && 0 <= yy && yy < self.height as i32
-                });
-
-            // Remove any asteroids found along that ray.
-            for (xx, yy) in ray_positions {
-                asteroid_positions.retain(|&(xxx, yyy)| xx as usize != xxx || yy as usize != yyy);
-            }
-        }
-
-        num_asteroids_seen
+    pub fn num_asteroids_visible_from_location(&self, x: usize, y: usize) -> usize {
+        group_asteroids_by_angle(&self.asteroid_positions, x as i32, y as i32).len()
     }
 }
 
@@ -180,18 +148,6 @@ fn best_location_for_monitoring_station(grid: Grid) -> (usize, usize) {
         .par_iter()
         .max_by_key(|(x, y)| grid.num_asteroids_visible_from_location(*x, *y))
         .unwrap()
-}
-
-// Taken from https://docs.rs/num/0.1.27/src/num/.cargo/registry/src/github.com-1ecc6299db9ec823/num-0.1.27/src/integer.rs.html#173
-fn gcd(a: i32, b: i32) -> i32 {
-    let mut m = a;
-    let mut n = b;
-    while m != 0 {
-        let temp = m;
-        m = n % temp;
-        n = temp;
-    }
-    n.abs()
 }
 
 #[cfg(test)]

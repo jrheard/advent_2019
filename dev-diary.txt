@@ -1195,3 +1195,28 @@ so i did that and got some stuff running
 it's not quite right though
 i think that my main logic is functional
 but that my angle functions are effed because i'm bad at unit circles
+
+===
+
+7/25/20
+
+so i ended up finishing 10b! it was fun once i got past unit circles
+got to learn about how to use group_by, neato
+
+but so
+i benchmarked 10b, and it's really fast
+and i was like wow!
+so then i was like, what if i rewrite 10a using the implementation of 10b?
+
+so, here's 10a before
+
+individual              time:   [57.191 ms 57.640 ms 58.136 ms]
+and here it is after!!!
+
+individual              time:   [11.160 ms 11.222 ms 11.299 ms]
+                        change: [-74.311% -73.880% -73.505%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+and i got to delete some code too!!!
+so that is awesome
+hooray!
