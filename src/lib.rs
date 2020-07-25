@@ -31,4 +31,5 @@ pub fn run_all_solutions() {
     println!("9a: {}", nine::nine_a());
     println!("9b: {}", nine::nine_b());
     println!("10a: {}", ten::ten_a());
+    println!("10b: {}", ten::ten_b());
 }
