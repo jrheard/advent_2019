@@ -2,10 +2,6 @@ use regex::Regex;
 use std::cmp::Ordering;
 use std::fs;
 
-// "Each moon has a 3-dimensional position (x, y, and z) and a 3-dimensional
-// velocity. The position of each moon is given in your scan; the x, y, and z
-// velocity of each moon starts at 0."
-
 #[derive(PartialEq, Debug, Clone, Copy)]
 struct Vector {
     x: i32,
@@ -13,6 +9,7 @@ struct Vector {
     z: i32,
 }
 
+/// "Each moon has a 3-dimensional position (x, y, and z) and a 3-dimensional velocity.""""
 #[derive(PartialEq, Debug, Clone, Copy)]
 struct Moon {
     position: Vector,
@@ -20,6 +17,7 @@ struct Moon {
 }
 
 impl Moon {
+    /// "The position of each moon is given in your scan; the x, y, and z velocity of each moon starts at 0."
     pub fn new(x: i32, y: i32, z: i32) -> Moon {
         Moon {
             position: Vector { x, y, z },
@@ -34,7 +32,7 @@ impl Moon {
 /// x position of 5, then Ganymede's x velocity changes by +1 (because 5 > 3) and
 /// Callisto's x velocity changes by -1 (because 3 < 5). However, if the
 /// positions on a given axis are the same, the velocity on that axis does not
-/// change for that pair of moons.
+/// change for that pair of moons."
 fn apply_gravity(moons: &mut [Moon]) {
     for i in 0..moons.len() {
         let mut moon = moons[i];
@@ -60,15 +58,26 @@ fn calculate_gravity_for_axis(self_axis_value: i32, other_axis_value: i32) -> i3
     }
 }
 
-// "Simulate the motion of the moons in time steps. Within each time step, first
-// update the velocity of every moon by applying gravity. Then, once all moons'
-// velocities have been updated, update the position of every moon by applying
-// velocity. Time progresses by one step once all of the positions are updated."
+/// "Once all gravity has been applied, apply velocity: simply add the velocity
+/// of each moon to its own position. For example, if Europa has a position of
+/// x=1, y=2, z=3 and a velocity of x=-2, y=0,z=3, then its new position would be
+/// x=-1, y=2, z=6. This process does not modify the velocity of any moon."
+fn apply_velocity(moons: &mut [Moon]) {
+    for moon in moons {
+        moon.position.x += moon.velocity.x;
+        moon.position.y += moon.velocity.y;
+        moon.position.z += moon.velocity.z;
+    }
+}
 
-// "Once all gravity has been applied, apply velocity: simply add the velocity
-// of each moon to its own position. For example, if Europa has a position of
-// x=1, y=2, z=3 and a velocity of x=-2, y=0,z=3, then its new position would be
-// x=-1, y=2, z=6. This process does not modify the velocity of any moon."
+/// "Simulate the motion of the moons in time steps. Within each time step, first
+/// update the velocity of every moon by applying gravity. Then, once all moons'
+/// velocities have been updated, update the position of every moon by applying
+/// velocity. Time progresses by one step once all of the positions are updated."
+fn advance_time_one_step(moons: &mut [Moon]) {
+    apply_gravity(moons);
+    apply_velocity(moons);
+}
 
 /// Parses our puzzle input into a Vec of Moons.
 fn parse_moons() -> Vec<Moon> {
@@ -140,6 +149,42 @@ mod tests {
                 Moon {
                     position: Vector { x: 3, y: 5, z: -1 },
                     velocity: Vector { x: -1, y: -3, z: 1 }
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_advance_time() {
+        let mut moons = vec![
+            Moon::new(-1, 0, 2),
+            Moon::new(2, -10, -7),
+            Moon::new(4, -8, 8),
+            Moon::new(3, 5, -1),
+        ];
+
+        for _ in 0..10 {
+            advance_time_one_step(&mut moons);
+        }
+
+        assert_eq!(
+            moons,
+            vec![
+                Moon {
+                    position: Vector { x: 2, y: 1, z: -3 },
+                    velocity: Vector { x: -3, y: -2, z: 1 }
+                },
+                Moon {
+                    position: Vector { x: 1, y: -8, z: 0 },
+                    velocity: Vector { x: -1, y: 1, z: 3 }
+                },
+                Moon {
+                    position: Vector { x: 3, y: -6, z: 1 },
+                    velocity: Vector { x: 3, y: 2, z: -3 }
+                },
+                Moon {
+                    position: Vector { x: 2, y: 0, z: 4 },
+                    velocity: Vector { x: 1, y: -1, z: -1 }
                 }
             ]
         );

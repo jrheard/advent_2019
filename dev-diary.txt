@@ -1425,3 +1425,9 @@ gravity is interesting, it's basically
     for each moon:
         for each other moon:
             moon.velocity.x += if moon.x > other_moon.x {-1} else {1} // except 0 if they're the same, so match on cmp
+
+
+ok cool
+so, gravity done
+DONE velocity
+DONE wrapper function that applies gravity and then velocity
