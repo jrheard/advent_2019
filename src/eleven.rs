@@ -119,6 +119,10 @@ pub fn eleven_a() -> usize {
     painted_panels.len()
 }
 
+/// "Based on the Space Law Space Brochure that the Space Police attached to one
+/// of your windows, a valid registration identifier is always eight capital
+/// letters. After starting the robot on a single white panel instead, what
+/// registration identifier does it paint on your hull?"
 pub fn eleven_b() -> String {
     let painted_panels = run_robot_to_completion(Color::White);
     draw_panels(painted_panels)
