@@ -40,7 +40,7 @@ fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Ve
         let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
         computer.run(HaltReason::Exit);
 
-        computer.state.output[0]
+        computer.pop_output().unwrap()
     })
 }
 
@@ -71,7 +71,7 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
     let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();
 
     // "To start the process, a 0 signal is sent to amplifier A's input exactly once."
-    computers[0].state.input.push(0);
+    computers[0].push_input(0);
 
     let mut computer_index = 0;
     let mut final_output = 0;
@@ -88,8 +88,8 @@ fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Ve
         }
 
         let next_computer_index = get_next_computer_index(computer_index);
-        let output = computer.state.output.pop().unwrap();
-        computers[next_computer_index].state.input.push(output);
+        let output = computer.pop_output().unwrap();
+        computers[next_computer_index].push_input(output);
 
         if computer_index == phase_settings.len() - 1 {
             final_output = output;

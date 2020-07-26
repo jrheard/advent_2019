@@ -113,6 +113,14 @@ impl Computer {
         }
     }
 
+    pub fn push_input(&mut self, input: i64) {
+        self.state.input.push(input);
+    }
+
+    pub fn pop_output(&mut self) -> Option<i64> {
+        self.state.output.pop()
+    }
+
     /// Private function, useful for testing.
     fn _memory_starts_with(&self, expected: Vec<i64>) -> bool {
         Iterator::eq(
@@ -202,22 +210,22 @@ mod tests {
         let mut computer = Computer::new(vec![1, 0, 0, 0, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 0, 0, 0, 99]));
-        assert_eq!(computer.state.output, vec![]);
+        assert_eq!(computer.pop_output(), None);
 
         let mut computer = Computer::new(vec![2, 3, 0, 3, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 3, 0, 6, 99]));
-        assert_eq!(computer.state.output, vec![]);
+        assert_eq!(computer.pop_output(), None);
 
         let mut computer = Computer::new(vec![2, 4, 4, 5, 99, 0], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 4, 4, 5, 99, 9801]));
-        assert_eq!(computer.state.output, vec![]);
+        assert_eq!(computer.pop_output(), None);
 
         let mut computer = Computer::new(vec![1, 1, 1, 4, 99, 5, 6, 0, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![30, 1, 1, 4, 2, 5, 6, 0, 99]));
-        assert_eq!(computer.state.output, vec![]);
+        assert_eq!(computer.pop_output(), None);
     }
 
     #[test]
@@ -308,7 +316,7 @@ mod tests {
         let mut computer = Computer::new(vec![1002, 4, 3, 4, 33], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![1002, 4, 3, 4, 99]));
-        assert_eq!(computer.state.output, vec![]);
+        assert_eq!(computer.pop_output(), None);
     }
 
     #[test]
@@ -337,12 +345,12 @@ mod tests {
         let mut computer = Computer::new(position_mode_program.clone(), vec![5]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
 
         // "Using immediate mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
         let immediate_mode_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
@@ -350,12 +358,12 @@ mod tests {
         let mut computer = Computer::new(immediate_mode_program.clone(), vec![5]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 3, 1108, 0, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 3, 1108, 1, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
     }
 
     #[test]
@@ -367,13 +375,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 1, 8]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 0, 8]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
 
         // "Using immediate mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not)."
         let immediate_mode_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
@@ -382,13 +390,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1107, 1, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1107, 0, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
     }
 
     #[test]
@@ -401,14 +409,14 @@ mod tests {
 
         assert!(computer
             ._memory_starts_with(vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 5, 1, 1, 9]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
 
         let mut computer = Computer::new(jump_program_1, vec![0]);
         computer.run(HaltReason::Exit);
 
         assert!(computer
             ._memory_starts_with(vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 0, 0, 1, 9]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
 
         let jump_program_2 = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
 
@@ -416,13 +424,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1105, 5, 9, 1101, 0, 0, 12, 4, 12, 99, 1]));
-        assert_eq!(computer.state.output, vec![1]);
+        assert_eq!(computer.pop_output(), Some(1));
 
         let mut computer = Computer::new(jump_program_2, vec![0]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1105, 0, 9, 1101, 0, 0, 12, 4, 12, 99, 0]));
-        assert_eq!(computer.state.output, vec![0]);
+        assert_eq!(computer.pop_output(), Some(0));
     }
 
     #[test]
@@ -438,16 +446,10 @@ mod tests {
         // below 8, output 1000 if the input value is equal to 8, or output 1001
         // if the input value is greater than 8."
 
-        for (input, expected_output) in [
-            (vec![5], vec![999]),
-            (vec![8], vec![1000]),
-            (vec![12], vec![1001]),
-        ]
-        .iter()
-        {
+        for (input, expected_output) in [(vec![5], 999), (vec![8], 1000), (vec![12], 1001)].iter() {
             let mut computer = Computer::new(large_program.clone(), input.clone());
             computer.run(HaltReason::Exit);
-            assert_eq!(computer.state.output, *expected_output);
+            assert_eq!(computer.pop_output(), Some(*expected_output));
         }
     }
 
@@ -458,16 +460,18 @@ mod tests {
         ];
         let mut computer = Computer::new(quine_program.clone(), vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.state.output, quine_program);
+        for op in quine_program.into_iter().rev() {
+            assert_eq!(computer.pop_output(), Some(op));
+        }
 
         let outputs_large_number_program = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
         let mut computer = Computer::new(outputs_large_number_program, vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.state.output, vec![1219070632396864]);
+        assert_eq!(computer.pop_output(), Some(1219070632396864));
 
         let outputs_middle_number_program = vec![104, 1125899906842624, 99];
         let mut computer = Computer::new(outputs_middle_number_program, vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.state.output, vec![1125899906842624]);
+        assert_eq!(computer.pop_output(), Some(1125899906842624));
     }
 }

@@ -72,7 +72,7 @@ impl Robot {
     pub fn run(&mut self, current_panel_color: Color) -> Option<RobotOutput> {
         // "The program uses input instructions to access the robot's camera:
         // provide 0 if the robot is over a black panel or 1 if the robot is over a white panel."
-        self.computer.state.input.push(match current_panel_color {
+        self.computer.push_input(match current_panel_color {
             Color::Black => 0,
             Color::White => 1,
         });
@@ -88,9 +88,12 @@ impl Robot {
         // Run the computer one more step to allow the program to emit its second output of the pair.
         self.computer.run(HaltReason::Output);
 
+        // "Second, it will output a value indicating the direction the robot should turn: 0 means it should turn left 90 degrees, and 1 means it should turn right 90 degrees."
+        let turn_instruction = self.computer.pop_output().unwrap();
+
         // "First, it will output a value indicating the color to paint the
         // panel the robot is over: 0 means to paint the panel black, and 1 means to paint the panel white."
-        let color_instruction = self.computer.state.output.remove(0);
+        let color_instruction = self.computer.pop_output().unwrap();
 
         let color = match color_instruction {
             0 => Color::Black,
@@ -98,14 +101,11 @@ impl Robot {
             _ => panic!("unknown color instruction {}", color_instruction),
         };
 
-        // "Second, it will output a value indicating the direction the robot should turn: 0 means it should turn left 90 degrees, and 1 means it should turn right 90 degrees."
-
         let ret = Some(RobotOutput {
             position: self.position,
             color,
         });
 
-        let turn_instruction = self.computer.state.output.remove(0);
         self.turn(rotate(self.direction, turn_instruction));
 
         ret
