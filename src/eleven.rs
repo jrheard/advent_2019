@@ -1,10 +1,12 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
+use itertools::Itertools;
 use std::collections::HashMap;
+use std::fmt::Write;
 
 type Position = (i32, i32);
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 enum Color {
     Black,
     White,
@@ -113,9 +115,20 @@ impl Robot {
 }
 
 pub fn eleven_a() -> usize {
+    let painted_panels = run_robot_to_completion(Color::Black);
+    painted_panels.len()
+}
+
+pub fn eleven_b() -> String {
+    let painted_panels = run_robot_to_completion(Color::White);
+    draw_panels(painted_panels)
+}
+
+fn run_robot_to_completion(starting_panel_color: Color) -> HashMap<Position, Color> {
     let mut robot = Robot::new("src/inputs/11.txt");
 
-    let mut painted_panels: HashMap<Position, Color> = HashMap::new();
+    let mut painted_panels = HashMap::new();
+    painted_panels.insert((0, 0), starting_panel_color);
 
     while let Some(RobotOutput { position, color }) = robot.run(
         *painted_panels
@@ -126,7 +139,41 @@ pub fn eleven_a() -> usize {
         painted_panels.insert(position, color);
     }
 
-    painted_panels.len()
+    painted_panels
+}
+
+fn draw_panels(painted_panels: HashMap<Position, Color>) -> String {
+    let (min_x, max_x) = painted_panels
+        .keys()
+        .map(|&(x, _)| x)
+        .minmax()
+        .into_option()
+        .unwrap();
+    let (min_y, max_y) = painted_panels
+        .keys()
+        .map(|&(_, y)| -y)
+        .minmax()
+        .into_option()
+        .unwrap();
+
+    let mut s = String::new();
+
+    for y in min_y..(max_y + 1) {
+        for x in min_x..(max_x + 1) {
+            if let Some(&color) = painted_panels.get(&(x, -y)) {
+                match color {
+                    Color::White => write!(&mut s, "#"),
+                    Color::Black => write!(&mut s, " "),
+                }
+                .unwrap();
+            } else {
+                write!(&mut s, " ").unwrap();
+            };
+        }
+        writeln!(&mut s).unwrap();
+    }
+
+    s
 }
 
 // Via https://stackoverflow.com/questions/31210357/is-there-a-modulus-not-remainder-function-operation
@@ -172,5 +219,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(eleven_a(), 1894);
+        assert_eq!(eleven_b(), "   ## #  # #### #    ####   ## ###  #  #   \n    # # #     # #       #    # #  # #  #   \n    # ##     #  #      #     # ###  ####   \n    # # #   #   #     #      # #  # #  #   \n #  # # #  #    #    #    #  # #  # #  #   \n  ##  #  # #### #### ####  ##  ###  #  #   \n");
     }
 }
