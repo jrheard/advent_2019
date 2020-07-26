@@ -1,5 +1,6 @@
 mod computer;
 mod eight;
+mod eleven;
 mod five;
 mod four;
 mod nine;
@@ -32,4 +33,5 @@ pub fn run_all_solutions() {
     println!("9b: {}", nine::nine_b());
     println!("10a: {}", ten::ten_a());
     println!("10b: {}", ten::ten_b());
+    println!("11a: {}", eleven::eleven_a());
 }

@@ -1235,3 +1235,48 @@ individual              time:   [2.9618 ms 3.1129 ms 3.2753 ms]
                         Performance has improved.
 
 93 percent is good!!!
+
+ok cool
+let's look at day 11
+
+"You'll need to build a new emergency hull painting robot. The robot needs to:
+    * be able to move around on the grid of square panels on the side of your ship,
+    * detect the color of its current panel,
+    * and paint its current panel black or white.
+(All of the panels are currently black.)"
+
+this sounds a whole lot like karel
+
+"The Intcode program will serve as the brain of the robot. The program uses
+input instructions to access the robot's camera: provide 0 if the robot is
+over a black panel or 1 if the robot is over a white panel."
+
+makes sense - at first i was expecting special instructions, but input/output makes a lot more sense
+bc my computer is supposed to be general purpose after all!
+
+"Then, the program will output two values:
+
+    * First, it will output a value indicating the color to paint the panel the
+    robot is over: 0 means to paint the panel black, and 1 means to paint the
+    panel white.
+
+    * Second, it will output a value indicating the direction the
+    robot should turn: 0 means it should turn left 90 degrees, and 1 means it
+    should turn right 90 degrees."
+
+"After the robot turns, it should always move forward exactly one panel. The robot starts facing up."
+
+ok cool, sounds fun so far
+i don't see anything talking about how big the grid is
+so i think that rather than having a 2d vec or a long 1d vec, i should just do the thing i usually do in this situation,
+i.e. store a vec of visited (i32, i32) positions
+
+ok so the robot has a Direction
+and a Position
+
+hm
+i may actually want to store a hashmap of <(i32, i32), Color>
+
+ok cool
+this sounds easy+fun so far
+let's get to it
