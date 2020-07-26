@@ -10,6 +10,7 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "rayon",
+ "regex",
 ]
 
 [[package]]

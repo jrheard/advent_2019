@@ -2,7 +2,6 @@ TODOs
     * try out proptest
 
 
-
 ====
 
 7/11/20
@@ -1409,3 +1408,20 @@ and so all i needed to do was add it, and add the codecov action,
 and now i have https://codecov.io/gh/jrheard/advent_2019
 
 neat!
+
+ok
+day 12 looks interesting
+
+the input looks like this
+
+<x=-1, y=0, z=2>
+<x=2, y=-10, z=-7>
+<x=4, y=-8, z=8>
+<x=3, y=5, z=-1>
+
+let's parse it with a regex
+
+gravity is interesting, it's basically
+    for each moon:
+        for each other moon:
+            moon.velocity.x += if moon.x > other_moon.x {-1} else {1} // except 0 if they're the same, so match on cmp
