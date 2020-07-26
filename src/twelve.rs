@@ -36,25 +36,19 @@ impl Moon {
 /// positions on a given axis are the same, the velocity on that axis does not
 /// change for that pair of moons.
 fn apply_gravity(moons: &mut [Moon]) {
-    // TODO - is there a way to get rid of this array, or at least make it nicer?
-    let mut original_moons: [Option<Moon>; 4] = [None; 4];
-    for (i, moon) in moons.iter().enumerate() {
-        original_moons[i] = Some(*moon);
-    }
+    for i in 0..moons.len() {
+        let mut moon = moons[i];
 
-    for (i, moon) in moons.iter_mut().enumerate() {
-        for (j, other_moon) in original_moons.iter().enumerate() {
-            if i == j {
-                continue;
-            }
-
-            let position = original_moons[i].unwrap().position;
-            let other_position = other_moon.unwrap().position;
+        for j in (0..moons.len()).filter(|&j| j != i) {
+            let position = moons[i].position;
+            let other_position = moons[j].position;
 
             moon.velocity.x += calculate_gravity_for_axis(position.x, other_position.x);
             moon.velocity.y += calculate_gravity_for_axis(position.y, other_position.y);
             moon.velocity.z += calculate_gravity_for_axis(position.z, other_position.z);
         }
+
+        moons[i] = moon;
     }
 }
 
