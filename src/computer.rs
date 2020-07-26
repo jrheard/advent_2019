@@ -1,7 +1,6 @@
 mod operations;
 
 use operations::Operation;
-use std::collections::HashMap;
 use std::fs;
 
 pub type Memory = Vec<i64>;
@@ -27,7 +26,7 @@ pub enum HaltReason {
 /// A Computer.
 pub struct Computer {
     pub(crate) state: State,
-    operations: HashMap<i64, Operation>,
+    operations: Vec<Option<Operation>>,
     max_num_arguments: usize,
 }
 
@@ -51,10 +50,16 @@ impl Computer {
         let operations = operations::load_operations();
 
         let max_num_arguments = operations
-            .values()
-            .max_by_key(|op| op.num_arguments)
-            .unwrap()
-            .num_arguments;
+            .iter()
+            .filter_map(|op| {
+                if let Some(operation) = op {
+                    Some(operation.num_arguments)
+                } else {
+                    None
+                }
+            })
+            .max()
+            .unwrap();
 
         Computer {
             state: State {
@@ -78,7 +83,7 @@ impl Computer {
         loop {
             let instruction = self.state.memory[self.state.instruction_pointer];
             let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
-            let operation = &self.operations[&opcode];
+            let operation = self.operations[opcode as usize].as_ref().unwrap();
 
             write_arguments(
                 &self.state.memory,
@@ -315,7 +320,7 @@ mod tests {
             &[5, 4, 3, 2, 1],
             1,
             0,
-            &operations[&5],
+            operations[5].as_ref().unwrap(),
             5,
             &vec![ParameterMode::Position, ParameterMode::Immediate][..],
             &mut argument_buffer,

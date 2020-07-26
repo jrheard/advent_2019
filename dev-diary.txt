@@ -1313,3 +1313,6 @@ individual              time:   [8.0179 ms 8.0820 ms 8.1640 ms]
                         Performance has improved.
 
 let's flamegraph it and see what's up
+
+what if load_operations() returned a vec instead of a hashmap?
+gives me about a 10% perf boost in Computer.run(), neat
