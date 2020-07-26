@@ -1,3 +1,13 @@
+TODOs
+    * consider using lazy_static for load_operations()
+        i wonder if that would a) offer a tiny speedup across different solutions, and
+        b) let us take operations back off of computer
+    * try out proptest
+
+
+
+====
+
 7/11/20
 
 let's do this!

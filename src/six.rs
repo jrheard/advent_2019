@@ -97,8 +97,8 @@ fn parse_orbits(path: &str) -> (BodyToSatellites, SatelliteToBody) {
 
 #[allow(clippy::or_fun_call)]
 fn parse_orbits_into_body_to_satellites(orbits: &str) -> BodyToSatellites {
-    let mut body_to_satellites = HashMap::new();
     let tuples = split_orbits_into_tuples(orbits);
+    let mut body_to_satellites = HashMap::with_capacity(tuples.len());
 
     for (body, satellite) in tuples.into_iter() {
         body_to_satellites
@@ -111,8 +111,8 @@ fn parse_orbits_into_body_to_satellites(orbits: &str) -> BodyToSatellites {
 }
 
 fn parse_orbits_into_satellite_to_body(orbits: &str) -> SatelliteToBody {
-    let mut satellite_to_body = HashMap::new();
     let tuples = split_orbits_into_tuples(orbits);
+    let mut satellite_to_body = HashMap::with_capacity(tuples.len());
 
     for (body, satellite) in tuples.into_iter() {
         satellite_to_body.insert(satellite, body);

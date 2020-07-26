@@ -26,7 +26,7 @@ impl Default for Outcome {
 }
 
 pub(crate) fn load_operations() -> Vec<Option<Operation>> {
-    let mut operations = Vec::new();
+    let mut operations = Vec::with_capacity(100);
     for _ in 0..100 {
         operations.push(None);
     }

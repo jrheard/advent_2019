@@ -29,7 +29,7 @@ pub fn ten_b() -> usize {
 fn zap_order(grid: Grid, x: i32, y: i32) -> Vec<(usize, usize)> {
     let mut grouped_positions = group_asteroids_by_angle(&grid.asteroid_positions, x, y);
 
-    let mut order = vec![];
+    let mut order = Vec::with_capacity(grouped_positions.len() * 3);
 
     while !grouped_positions.is_empty() {
         // Pop the first item off of each bucket.
