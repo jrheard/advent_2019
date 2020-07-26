@@ -1,7 +1,4 @@
 TODOs
-    * consider using lazy_static for load_operations()
-        i wonder if that would a) offer a tiny speedup across different solutions, and
-        b) let us take operations back off of computer
     * try out proptest
 
 
@@ -1342,3 +1339,58 @@ individual              time:   [2.0650 ms 2.0730 ms 2.0830 ms]
                         Performance has improved.
 
 :)))))))
+
+ok so then i sat down to try out lazy_static
+
+it looked pretty easy:
+
+lazy_static! {
+    static ref OPERATIONS: Vec<Option<Operation>> = load_operations();
+}
+
+but it turns out that everything in a lazy_static needs to be sync:
+
+5  | / lazy_static! {
+6  | |     static ref OPERATIONS: Vec<Option<Operation>> = load_operations();
+7  | | }
+   | |_^ `(dyn for<'r, 's> std::ops::Fn(&'r mut computer::State, &'s [i64]) -> computer::operations::Outcome + 'static)` cannot be shared between threads safely
+
+what about this?
+
+https://docs.rs/once_cell/1.4.0/once_cell/
+
+i poked around with it and found that it didn't help my perf
+
+before:
+all-solutions/all solutions
+                        time:   [72.607 ms 73.619 ms 75.475 ms]
+
+after:
+all-solutions/all solutions
+                        time:   [85.469 ms 86.728 ms 88.533 ms]
+                        change: [+12.896% +16.331% +19.638%] (p = 0.00 < 0.05)
+
+relevant diff:
+-pub(crate) fn load_operations() -> Vec<Option<Operation>> {
++fn initialize_operations() -> Vec<Option<Operation>> {
+     let mut operations = Vec::with_capacity(100);
+     for _ in 0..100 {
+         operations.push(None);
+@@ -151,3 +152,8 @@ pub(crate) fn load_operations() -> Vec<Option<Operation>> {
+
+     operations
+ }
++
++#[allow(clippy::redundant_closure)]
++pub(crate) fn load_operations() -> Lazy<Vec<Option<Operation>>> {
++    Lazy::new(|| initialize_operations())
++}
+
+i think that this once_cell thing could be useful in situations where:
+* i have things that can actually be static vars (i.e. things that don't contain closures), or
+* i have things that require tons of heavy computation and can then be cached
+
+but it doesn't seem like it's a good fit for this particular situation, i.e. one where
+i just want to cache a small vec in order to avoid allocating
+
+oh well!
