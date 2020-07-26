@@ -97,8 +97,22 @@ fn parse_moons() -> Vec<Moon> {
         .collect()
 }
 
-pub fn twelve_a() -> u32 {
-    5
+fn compute_energy_for_vector(v: Vector) -> i32 {
+    v.x.abs() + v.y.abs() + v.z.abs()
+}
+
+fn compute_energy_for_moons(moons: &[Moon]) -> i32 {
+    moons.iter().fold(0, |acc, moon| {
+        acc + (compute_energy_for_vector(moon.position) * compute_energy_for_vector(moon.velocity))
+    })
+}
+
+pub fn twelve_a() -> i32 {
+    let mut moons = parse_moons();
+    for _ in 0..1000 {
+        advance_time_one_step(&mut moons);
+    }
+    compute_energy_for_moons(&moons)
 }
 
 #[cfg(test)]
@@ -188,5 +202,42 @@ mod tests {
                 }
             ]
         );
+    }
+
+    #[test]
+    fn test_compute_energy_1() {
+        let mut moons = vec![
+            Moon::new(-1, 0, 2),
+            Moon::new(2, -10, -7),
+            Moon::new(4, -8, 8),
+            Moon::new(3, 5, -1),
+        ];
+
+        for _ in 0..10 {
+            advance_time_one_step(&mut moons);
+        }
+
+        assert_eq!(compute_energy_for_moons(&moons), 179);
+    }
+
+    #[test]
+    fn test_compute_energy_2() {
+        let mut moons = vec![
+            Moon::new(-8, -10, 0),
+            Moon::new(5, 5, 10),
+            Moon::new(2, -7, 3),
+            Moon::new(9, -8, -3),
+        ];
+
+        for _ in 0..100 {
+            advance_time_one_step(&mut moons);
+        }
+
+        assert_eq!(compute_energy_for_moons(&moons), 1940);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(twelve_a(), 9441);
     }
 }

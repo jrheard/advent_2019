@@ -1431,3 +1431,6 @@ ok cool
 so, gravity done
 DONE velocity
 DONE wrapper function that applies gravity and then velocity
+
+DONE calculate energy
+and that's 12a down!
