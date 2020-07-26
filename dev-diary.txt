@@ -1316,3 +1316,19 @@ let's flamegraph it and see what's up
 
 what if load_operations() returned a vec instead of a hashmap?
 gives me about a 10% perf boost in Computer.run(), neat
+
+===
+
+7/26/20
+
+ok so i was reading chapter 20 of the rust book
+and i noticed that they were using arrays as buffers instead of using vecs as buffers
+and i remembered that in my flamegraph for 11, i saw some mysterious allocations
+and i remembered that i use vecs as my buffers for parameter modes and args
+so i was like: let's switch em to arrays instead of vecs!
+
+individual              time:   [2.0650 ms 2.0730 ms 2.0830 ms]
+                        change: [-67.767% -67.487% -67.238%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+:)))))))

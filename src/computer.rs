@@ -27,7 +27,6 @@ pub enum HaltReason {
 pub struct Computer {
     pub(crate) state: State,
     operations: Vec<Option<Operation>>,
-    max_num_arguments: usize,
 }
 
 /// A computer's mutable state.
@@ -49,18 +48,6 @@ impl Computer {
 
         let operations = operations::load_operations();
 
-        let max_num_arguments = operations
-            .iter()
-            .filter_map(|op| {
-                if let Some(operation) = op {
-                    Some(operation.num_arguments)
-                } else {
-                    None
-                }
-            })
-            .max()
-            .unwrap();
-
         Computer {
             state: State {
                 memory,
@@ -70,15 +57,14 @@ impl Computer {
                 relative_base: 0,
             },
             operations,
-            max_num_arguments,
         }
     }
 
     /// Runs the program in `self` until the event specified by `halt_level`.
     /// Returns a HaltReason indicating the event that caused the program to halt.
     pub fn run(&mut self, halt_level: HaltReason) -> HaltReason {
-        let mut parameter_mode_buffer = vec![ParameterMode::Position; self.max_num_arguments];
-        let mut argument_buffer = vec![0; self.max_num_arguments];
+        let mut parameter_mode_buffer = [ParameterMode::Position; operations::MAX_NUM_ARGUMENTS];
+        let mut argument_buffer = [0; operations::MAX_NUM_ARGUMENTS];
 
         loop {
             // Decode the instruction.
@@ -149,7 +135,7 @@ pub fn load_program(filename: &str) -> Memory {
 ///
 /// Returns an i64 opcode like `02`.
 /// Writes the instruction's encoded parameter modes to `parameter_mode_buffer`.
-fn parse_instruction(instruction: i64, parameter_mode_buffer: &mut Vec<ParameterMode>) -> i64 {
+fn parse_instruction(instruction: i64, parameter_mode_buffer: &mut [ParameterMode]) -> i64 {
     for item in &mut parameter_mode_buffer.iter_mut() {
         *item = ParameterMode::Position;
     }
@@ -180,7 +166,7 @@ fn write_arguments(
     operation: &Operation,
     opcode: i64,
     parameter_modes: &[ParameterMode],
-    argument_buffer: &mut Vec<i64>,
+    argument_buffer: &mut [i64],
 ) {
     for i in 0..operation.num_arguments {
         let value_in_memory_at_i = memory[instruction_pointer + 1 + i];

@@ -1,5 +1,7 @@
 use crate::computer::{HaltReason, State};
 
+pub const MAX_NUM_ARGUMENTS: usize = 3;
+
 /// An operation like add, jump-if-true, push-output, etc.
 pub(crate) struct Operation {
     pub num_arguments: usize,
@@ -23,7 +25,6 @@ impl Default for Outcome {
     }
 }
 
-/// Returns a tuple of (operations_by_opcode, max_num_arguments_across_all_operations).
 pub(crate) fn load_operations() -> Vec<Option<Operation>> {
     let mut operations = Vec::new();
     for _ in 0..100 {
