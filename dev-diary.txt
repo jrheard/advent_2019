@@ -1434,3 +1434,20 @@ DONE wrapper function that applies gravity and then velocity
 
 DONE calculate energy
 and that's 12a down!
+
+ok 12b is interesting
+initial implementation was ez
+but it's too slow - the problem takes a million steps to conclude
+they say "Clearly, you might need to find a more efficient way to simulate the universe."
+
+so uh
+how?
+???????
+
+ok i looked up a hint for this one bc i just wasn't going to get it
+people are talking about how you can compute x, y, and z separately
+let's look at that i guess
+
+ok ya that works - the idea is that you find out how long til x repeats, then y, then z, and get their lcm
+i don't think i would have thought of that :[
+o well!

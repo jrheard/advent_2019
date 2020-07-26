@@ -37,6 +37,7 @@ pub fn run_all_solutions() {
     println!("11a: {}", eleven::eleven_a());
     println!("11b:\n{}", eleven::eleven_b());
     println!("12a: {}", twelve::twelve_a());
+    println!("12b: {}", twelve::twelve_b());
 }
 
 #[cfg(test)]

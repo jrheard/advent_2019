@@ -1,6 +1,6 @@
+use num::integer::Integer;
 use regex::Regex;
 use std::cmp::Ordering;
-use std::collections::HashSet;
 use std::fs;
 
 #[derive(PartialEq, Debug, Clone, Copy, Hash, Eq)]
@@ -116,30 +116,57 @@ pub fn twelve_a() -> i32 {
     compute_energy_for_moons(&moons)
 }
 
-fn num_steps_until_repeat(mut moons: Vec<Moon>) -> u32 {
+fn num_steps_until_axis_repeats(mut positions: Vec<i32>, mut velocities: Vec<i32>) -> u64 {
+    assert!(positions.len() == velocities.len());
+
     let mut num_steps = 0;
-    let mut seen_states = HashSet::new();
+    let original_positions = positions.clone();
+    let original_velocities = velocities.clone();
 
     loop {
         num_steps += 1;
-        seen_states.insert(moons.clone());
-        advance_time_one_step(&mut moons);
 
-        if seen_states.contains(&moons) {
-            break;
+        // Update velocities based on gravity.
+        for i in 0..positions.len() {
+            for j in (0..positions.len()).filter(|&j| j != i) {
+                let position = positions[i];
+                let other_position = positions[j];
+
+                velocities[i] += calculate_gravity_for_axis(position, other_position);
+            }
         }
 
-        if num_steps % 1000 == 0 {
-            dbg!(num_steps);
+        // Update positions based on velocities.
+        for i in 0..positions.len() {
+            positions[i] += velocities[i];
+        }
+
+        if positions == original_positions && velocities == original_velocities {
+            break num_steps;
         }
     }
-
-    num_steps
 }
 
-pub fn twelve_b() -> u32 {
+fn num_steps_until_original_state_repeats(moons: &[Moon]) -> u64 {
+    let x_steps = num_steps_until_axis_repeats(
+        moons.iter().map(|moon| moon.position.x).collect(),
+        moons.iter().map(|moon| moon.velocity.x).collect(),
+    );
+    let y_steps = num_steps_until_axis_repeats(
+        moons.iter().map(|moon| moon.position.y).collect(),
+        moons.iter().map(|moon| moon.velocity.y).collect(),
+    );
+    let z_steps = num_steps_until_axis_repeats(
+        moons.iter().map(|moon| moon.position.z).collect(),
+        moons.iter().map(|moon| moon.velocity.z).collect(),
+    );
+
+    x_steps.lcm(&y_steps).lcm(&z_steps)
+}
+
+pub fn twelve_b() -> u64 {
     let moons = parse_moons();
-    num_steps_until_repeat(moons)
+    num_steps_until_original_state_repeats(&moons)
 }
 
 #[cfg(test)]
@@ -272,12 +299,12 @@ mod tests {
             Moon::new(3, 5, -1),
         ];
 
-        assert_eq!(num_steps_until_repeat(moons), 2772);
+        assert_eq!(num_steps_until_original_state_repeats(&moons), 2772);
     }
 
     #[test]
     fn test_solutions() {
         assert_eq!(twelve_a(), 9441);
-        assert_eq!(twelve_b(), 0);
+        assert_eq!(twelve_b(), 503560201099704);
     }
 }
