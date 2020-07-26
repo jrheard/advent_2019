@@ -1394,3 +1394,18 @@ but it doesn't seem like it's a good fit for this particular situation, i.e. one
 i just want to cache a small vec in order to avoid allocating
 
 oh well!
+
+ok i read the rust book's macro chapter online
+and also finished rereading the physical textbook :)
+and i poked around to see future stuff - i was curious to see if there'll be a 2021 edition,
+https://internals.rust-lang.org/t/2021-edition/12153/70 looks like the answer is no! which i think is prob correct
+ok let's poke around with code coverage one more time
+
+https://github.com/mun-lang/mun/pull/100
+
+ok sick that was actually really easy
+the only step i was missing last time i tried was that i didn't see there was a tarpaulin github action
+and so all i needed to do was add it, and add the codecov action,
+and now i have https://codecov.io/gh/jrheard/advent_2019
+
+neat!

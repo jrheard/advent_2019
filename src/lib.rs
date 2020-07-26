@@ -36,3 +36,14 @@ pub fn run_all_solutions() {
     println!("11a: {}", eleven::eleven_a());
     println!("11b:\n{}", eleven::eleven_b());
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_run_all_solutions() {
+        // Make sure that run_all_solutions() doesn't crash.
+        run_all_solutions()
+    }
+}
