@@ -1,8 +1,9 @@
 use regex::Regex;
 use std::cmp::Ordering;
+use std::collections::HashSet;
 use std::fs;
 
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Debug, Clone, Copy, Hash, Eq)]
 struct Vector {
     x: i32,
     y: i32,
@@ -10,7 +11,7 @@ struct Vector {
 }
 
 /// "Each moon has a 3-dimensional position (x, y, and z) and a 3-dimensional velocity.""""
-#[derive(PartialEq, Debug, Clone, Copy)]
+#[derive(PartialEq, Debug, Clone, Copy, Hash, Eq)]
 struct Moon {
     position: Vector,
     velocity: Vector,
@@ -113,6 +114,32 @@ pub fn twelve_a() -> i32 {
         advance_time_one_step(&mut moons);
     }
     compute_energy_for_moons(&moons)
+}
+
+fn num_steps_until_repeat(mut moons: Vec<Moon>) -> u32 {
+    let mut num_steps = 0;
+    let mut seen_states = HashSet::new();
+
+    loop {
+        num_steps += 1;
+        seen_states.insert(moons.clone());
+        advance_time_one_step(&mut moons);
+
+        if seen_states.contains(&moons) {
+            break;
+        }
+
+        if num_steps % 1000 == 0 {
+            dbg!(num_steps);
+        }
+    }
+
+    num_steps
+}
+
+pub fn twelve_b() -> u32 {
+    let moons = parse_moons();
+    num_steps_until_repeat(moons)
 }
 
 #[cfg(test)]
@@ -237,7 +264,20 @@ mod tests {
     }
 
     #[test]
+    fn test_num_steps_til_repeat() {
+        let moons = vec![
+            Moon::new(-1, 0, 2),
+            Moon::new(2, -10, -7),
+            Moon::new(4, -8, 8),
+            Moon::new(3, 5, -1),
+        ];
+
+        assert_eq!(num_steps_until_repeat(moons), 2772);
+    }
+
+    #[test]
     fn test_solutions() {
         assert_eq!(twelve_a(), 9441);
+        assert_eq!(twelve_b(), 0);
     }
 }
