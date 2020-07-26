@@ -1,6 +1,7 @@
 mod operations;
 
 use operations::Operation;
+use std::collections::HashMap;
 use std::fs;
 
 pub type Memory = Vec<i64>;
@@ -25,6 +26,13 @@ pub enum HaltReason {
 
 /// A Computer.
 pub struct Computer {
+    pub(crate) state: State,
+    operations: HashMap<i64, Operation>,
+    max_num_arguments: usize,
+}
+
+/// A computer's mutable state.
+pub(crate) struct State {
     pub memory: Memory,
     pub input: Input,
     pub output: Output,
@@ -40,32 +48,42 @@ impl Computer {
 
         memory.append(&mut vec![0; 10000]);
 
-        Self {
-            memory,
-            input,
-            output: vec![],
-            instruction_pointer: 0,
-            relative_base: 0,
+        let operations = operations::load_operations();
+
+        let max_num_arguments = operations
+            .values()
+            .max_by_key(|op| op.num_arguments)
+            .unwrap()
+            .num_arguments;
+
+        Computer {
+            state: State {
+                memory,
+                input,
+                output: vec![],
+                instruction_pointer: 0,
+                relative_base: 0,
+            },
+            operations,
+            max_num_arguments,
         }
     }
 
     /// Runs the program in `self` until the event specified by `halt_level`.
     /// Returns a HaltReason indicating the event that caused the program to halt.
     pub fn run(&mut self, halt_level: HaltReason) -> HaltReason {
-        let (operations, max_num_arguments) = operations::load_operations();
-
-        let mut parameter_mode_buffer = vec![ParameterMode::Position; max_num_arguments];
-        let mut argument_buffer = vec![0; max_num_arguments];
+        let mut parameter_mode_buffer = vec![ParameterMode::Position; self.max_num_arguments];
+        let mut argument_buffer = vec![0; self.max_num_arguments];
 
         loop {
-            let instruction = self.memory[self.instruction_pointer];
+            let instruction = self.state.memory[self.state.instruction_pointer];
             let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
-            let operation = &operations[&opcode];
+            let operation = &self.operations[&opcode];
 
             write_arguments(
-                &self.memory,
-                self.instruction_pointer,
-                self.relative_base,
+                &self.state.memory,
+                self.state.instruction_pointer,
+                self.state.relative_base,
                 &operation,
                 opcode,
                 &parameter_mode_buffer[0..operation.num_arguments],
@@ -74,14 +92,7 @@ impl Computer {
 
             let args = &argument_buffer[0..operation.num_arguments];
 
-            log::debug!(
-                "{}: about to perform operation {:?} on args {:?}",
-                self.instruction_pointer,
-                opcode,
-                args
-            );
-
-            let outcome = (operation.run)(self, args);
+            let outcome = (operation.run)(&mut self.state, args);
 
             match outcome.halt_reason {
                 Some(HaltReason::Output) if halt_level == HaltReason::Output => {
@@ -92,14 +103,17 @@ impl Computer {
             }
 
             if !outcome.manipulated_instruction_pointer {
-                self.instruction_pointer += operation.num_arguments + 1;
+                self.state.instruction_pointer += operation.num_arguments + 1;
             }
         }
     }
 
     /// Private function, useful for testing.
     fn _memory_starts_with(&self, expected: Vec<i64>) -> bool {
-        Iterator::eq(self.memory.iter().take(expected.len()), expected.iter())
+        Iterator::eq(
+            self.state.memory.iter().take(expected.len()),
+            expected.iter(),
+        )
     }
 }
 
@@ -183,22 +197,22 @@ mod tests {
         let mut computer = Computer::new(vec![1, 0, 0, 0, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 0, 0, 0, 99]));
-        assert_eq!(computer.output, vec![]);
+        assert_eq!(computer.state.output, vec![]);
 
         let mut computer = Computer::new(vec![2, 3, 0, 3, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 3, 0, 6, 99]));
-        assert_eq!(computer.output, vec![]);
+        assert_eq!(computer.state.output, vec![]);
 
         let mut computer = Computer::new(vec![2, 4, 4, 5, 99, 0], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![2, 4, 4, 5, 99, 9801]));
-        assert_eq!(computer.output, vec![]);
+        assert_eq!(computer.state.output, vec![]);
 
         let mut computer = Computer::new(vec![1, 1, 1, 4, 99, 5, 6, 0, 99], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![30, 1, 1, 4, 2, 5, 6, 0, 99]));
-        assert_eq!(computer.output, vec![]);
+        assert_eq!(computer.state.output, vec![]);
     }
 
     #[test]
@@ -289,13 +303,13 @@ mod tests {
         let mut computer = Computer::new(vec![1002, 4, 3, 4, 33], vec![]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![1002, 4, 3, 4, 99]));
-        assert_eq!(computer.output, vec![]);
+        assert_eq!(computer.state.output, vec![]);
     }
 
     #[test]
     fn test_write_arguments() {
         let mut argument_buffer = vec![0; 5];
-        let (operations, _) = operations::load_operations();
+        let operations = operations::load_operations();
 
         write_arguments(
             &[5, 4, 3, 2, 1],
@@ -318,12 +332,12 @@ mod tests {
         let mut computer = Computer::new(position_mode_program.clone(), vec![5]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 0, 8]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 9, 8, 9, 10, 9, 4, 9, 99, 1, 8]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
 
         // "Using immediate mode, consider whether the input is equal to 8; output 1 (if it is) or 0 (if it is not)."
         let immediate_mode_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
@@ -331,12 +345,12 @@ mod tests {
         let mut computer = Computer::new(immediate_mode_program.clone(), vec![5]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 3, 1108, 0, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
         assert!(computer._memory_starts_with(vec![3, 3, 1108, 1, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
     }
 
     #[test]
@@ -348,13 +362,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 1, 8]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
 
         let mut computer = Computer::new(position_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 9, 7, 9, 10, 9, 4, 9, 99, 0, 8]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
 
         // "Using immediate mode, consider whether the input is less than 8; output 1 (if it is) or 0 (if it is not)."
         let immediate_mode_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
@@ -363,13 +377,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1107, 1, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
 
         let mut computer = Computer::new(immediate_mode_program, vec![8]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1107, 0, 8, 3, 4, 3, 99]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
     }
 
     #[test]
@@ -382,14 +396,14 @@ mod tests {
 
         assert!(computer
             ._memory_starts_with(vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 5, 1, 1, 9]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
 
         let mut computer = Computer::new(jump_program_1, vec![0]);
         computer.run(HaltReason::Exit);
 
         assert!(computer
             ._memory_starts_with(vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, 0, 0, 1, 9]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
 
         let jump_program_2 = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
 
@@ -397,13 +411,13 @@ mod tests {
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1105, 5, 9, 1101, 0, 0, 12, 4, 12, 99, 1]));
-        assert_eq!(computer.output, vec![1]);
+        assert_eq!(computer.state.output, vec![1]);
 
         let mut computer = Computer::new(jump_program_2, vec![0]);
         computer.run(HaltReason::Exit);
 
         assert!(computer._memory_starts_with(vec![3, 3, 1105, 0, 9, 1101, 0, 0, 12, 4, 12, 99, 0]));
-        assert_eq!(computer.output, vec![0]);
+        assert_eq!(computer.state.output, vec![0]);
     }
 
     #[test]
@@ -428,7 +442,7 @@ mod tests {
         {
             let mut computer = Computer::new(large_program.clone(), input.clone());
             computer.run(HaltReason::Exit);
-            assert_eq!(computer.output, *expected_output);
+            assert_eq!(computer.state.output, *expected_output);
         }
     }
 
@@ -439,16 +453,16 @@ mod tests {
         ];
         let mut computer = Computer::new(quine_program.clone(), vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.output, quine_program);
+        assert_eq!(computer.state.output, quine_program);
 
         let outputs_large_number_program = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
         let mut computer = Computer::new(outputs_large_number_program, vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.output, vec![1219070632396864]);
+        assert_eq!(computer.state.output, vec![1219070632396864]);
 
         let outputs_middle_number_program = vec![104, 1125899906842624, 99];
         let mut computer = Computer::new(outputs_middle_number_program, vec![]);
         computer.run(HaltReason::Exit);
-        assert_eq!(computer.output, vec![1125899906842624]);
+        assert_eq!(computer.state.output, vec![1125899906842624]);
     }
 }

@@ -13,7 +13,7 @@ pub fn two_a() -> i64 {
     // What value is left at position 0 after the program halts?
     let mut computer = Computer::new(memory, vec![]);
     computer.run(HaltReason::Exit);
-    computer.memory[0]
+    computer.state.memory[0]
 }
 
 pub fn two_b() -> i64 {
@@ -33,7 +33,7 @@ pub fn two_b() -> i64 {
             let mut computer = Computer::new(memory, vec![]);
             computer.run(HaltReason::Exit);
 
-            computer.memory[0] == 19690720
+            computer.state.memory[0] == 19690720
         })
         .unwrap();
 

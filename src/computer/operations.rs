@@ -1,12 +1,12 @@
-use crate::computer::{Computer, HaltReason};
+use crate::computer::{HaltReason, State};
 use std::collections::HashMap;
 
 /// An operation like add, jump-if-true, push-output, etc.
-pub struct Operation {
+pub(crate) struct Operation {
     pub num_arguments: usize,
     // Some(usize) if this operation uses one of its arguments as a memory location to write to, None otherwise.
     pub target_memory_location_arg: Option<usize>,
-    pub run: Box<dyn Fn(&mut Computer, &[i64]) -> Outcome>,
+    pub run: Box<dyn Fn(&mut State, &[i64]) -> Outcome>,
 }
 
 /// The outcome of running an Operation.
@@ -25,7 +25,7 @@ impl Default for Outcome {
 }
 
 /// Returns a tuple of (operations_by_opcode, max_num_arguments_across_all_operations).
-pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
+pub(crate) fn load_operations() -> HashMap<i64, Operation> {
     let mut operations = HashMap::new();
 
     // Add
@@ -34,8 +34,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 3,
             target_memory_location_arg: Some(2),
-            run: Box::new(|computer, args| {
-                computer.memory[args[2] as usize] = args[0] + args[1];
+            run: Box::new(|state, args| {
+                state.memory[args[2] as usize] = args[0] + args[1];
                 Default::default()
             }),
         },
@@ -47,8 +47,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 3,
             target_memory_location_arg: Some(2),
-            run: Box::new(|computer, args| {
-                computer.memory[args[2] as usize] = args[0] * args[1];
+            run: Box::new(|state, args| {
+                state.memory[args[2] as usize] = args[0] * args[1];
                 Default::default()
             }),
         },
@@ -60,8 +60,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 1,
             target_memory_location_arg: Some(0),
-            run: Box::new(|computer, args| {
-                computer.memory[args[0] as usize] = computer.input.remove(0);
+            run: Box::new(|state, args| {
+                state.memory[args[0] as usize] = state.input.remove(0);
                 Default::default()
             }),
         },
@@ -73,9 +73,9 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 1,
             target_memory_location_arg: None,
-            run: Box::new(|computer, args| {
-                computer.output.push(args[0]);
-                computer.instruction_pointer += 2;
+            run: Box::new(|state, args| {
+                state.output.push(args[0]);
+                state.instruction_pointer += 2;
                 Outcome {
                     halt_reason: Some(HaltReason::Output),
                     manipulated_instruction_pointer: true,
@@ -90,9 +90,9 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 2,
             target_memory_location_arg: None,
-            run: Box::new(|computer, args| {
+            run: Box::new(|state, args| {
                 if args[0] != 0 {
-                    computer.instruction_pointer = args[1] as usize;
+                    state.instruction_pointer = args[1] as usize;
                     Outcome {
                         halt_reason: None,
                         manipulated_instruction_pointer: true,
@@ -110,9 +110,9 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 2,
             target_memory_location_arg: None,
-            run: Box::new(|computer, args| {
+            run: Box::new(|state, args| {
                 if args[0] == 0 {
-                    computer.instruction_pointer = args[1] as usize;
+                    state.instruction_pointer = args[1] as usize;
                     Outcome {
                         halt_reason: None,
                         manipulated_instruction_pointer: true,
@@ -130,8 +130,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 3,
             target_memory_location_arg: Some(2),
-            run: Box::new(|computer, args| {
-                computer.memory[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 };
+            run: Box::new(|state, args| {
+                state.memory[args[2] as usize] = if args[0] < args[1] { 1 } else { 0 };
                 Default::default()
             }),
         },
@@ -143,8 +143,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 3,
             target_memory_location_arg: Some(2),
-            run: Box::new(|computer, args| {
-                computer.memory[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 };
+            run: Box::new(|state, args| {
+                state.memory[args[2] as usize] = if args[0] == args[1] { 1 } else { 0 };
                 Default::default()
             }),
         },
@@ -156,8 +156,8 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         Operation {
             num_arguments: 1,
             target_memory_location_arg: None,
-            run: Box::new(|computer, args| {
-                computer.relative_base += args[0];
+            run: Box::new(|state, args| {
+                state.relative_base += args[0];
                 Default::default()
             }),
         },
@@ -176,11 +176,5 @@ pub fn load_operations() -> (HashMap<i64, Operation>, usize) {
         },
     );
 
-    let max_num_arguments = operations
-        .values()
-        .max_by_key(|op| op.num_arguments)
-        .unwrap()
-        .num_arguments;
-
-    (operations, max_num_arguments)
+    operations
 }

@@ -1280,3 +1280,36 @@ i may actually want to store a hashmap of <(i32, i32), Color>
 ok cool
 this sounds easy+fun so far
 let's get to it
+
+ok cool, that was fun!
+here's the timings from my initial implementation:
+
+individual              time:   [31.314 ms 31.395 ms 31.484 ms]
+let's flamegraph it
+
+ok cool, interesting
+so i spend the bulk of my time in computer::load_operations()
+let's see if we can cache operations on Computer
+
+that's kind of interesting
+it's easy enough mechanically at first
+but then i run into issues about ownership/borrowing
+if i borrow self.operations[foo] immutably, i can't mutably borrow self afterward to do operation.run(self)
+
+hm hm hm
+what to do?
+
+i think that putting `.operations` on Computer is a no-go
+what if instead, Computer has a State sub-struct
+
+ok that worked
+computer's api is kinda gross rn, because all of my programs reach into its state to manipulate its input and output
+TODO fix that up
+
+but so anyway here's 11a's perf!
+
+individual              time:   [8.0179 ms 8.0820 ms 8.1640 ms]
+                        change: [-74.488% -74.257% -73.963%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+let's flamegraph it and see what's up

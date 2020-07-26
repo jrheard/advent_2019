@@ -6,7 +6,7 @@ pub fn five_a() -> i64 {
     let mut computer = Computer::new(memory, vec![1]);
     computer.run(HaltReason::Exit);
 
-    *computer.output.last().unwrap()
+    *computer.state.output.last().unwrap()
 }
 
 pub fn five_b() -> i64 {
@@ -14,7 +14,7 @@ pub fn five_b() -> i64 {
     let mut computer = Computer::new(memory, vec![5]);
     computer.run(HaltReason::Exit);
 
-    computer.output[0]
+    computer.state.output[0]
 }
 
 #[cfg(test)]
