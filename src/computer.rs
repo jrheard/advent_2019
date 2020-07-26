@@ -81,6 +81,7 @@ impl Computer {
         let mut argument_buffer = vec![0; self.max_num_arguments];
 
         loop {
+            // Decode the instruction.
             let instruction = self.state.memory[self.state.instruction_pointer];
             let opcode = parse_instruction(instruction, &mut parameter_mode_buffer);
             let operation = self.operations[opcode as usize].as_ref().unwrap();
@@ -95,10 +96,13 @@ impl Computer {
                 &mut argument_buffer,
             );
 
-            let args = &argument_buffer[0..operation.num_arguments];
+            // Run the instruction.
+            let outcome = (operation.run)(
+                &mut self.state,
+                &argument_buffer[0..operation.num_arguments],
+            );
 
-            let outcome = (operation.run)(&mut self.state, args);
-
+            // Halt if we're supposed to, otherwise carry on.
             match outcome.halt_reason {
                 Some(HaltReason::Output) if halt_level == HaltReason::Output => {
                     break HaltReason::Output

@@ -80,10 +80,9 @@ impl Robot {
         });
 
         // "Then, the program will output two values..."
-        //
-        // "The robot will continue running for a while like this and halt when it is finished drawing."
         let halt_reason = self.computer.run(HaltReason::Output);
         if halt_reason == HaltReason::Exit {
+            // "The robot will continue running for a while like this and halt when it is finished drawing."
             return None;
         }
 
@@ -155,21 +154,17 @@ fn draw_panels(painted_panels: HashMap<Position, Color>) -> String {
         .unwrap();
     let (min_y, max_y) = painted_panels
         .keys()
-        .map(|&(_, y)| -y)
+        .map(|&(_, y)| y)
         .minmax()
         .into_option()
         .unwrap();
 
     let mut s = String::new();
 
-    for y in min_y..(max_y + 1) {
+    for y in (min_y..(max_y + 1)).rev() {
         for x in min_x..(max_x + 1) {
-            if let Some(&color) = painted_panels.get(&(x, -y)) {
-                match color {
-                    Color::White => write!(&mut s, "#"),
-                    Color::Black => write!(&mut s, " "),
-                }
-                .unwrap();
+            if let Some(&Color::White) = painted_panels.get(&(x, y)) {
+                write!(&mut s, "#").unwrap();
             } else {
                 write!(&mut s, " ").unwrap();
             };
