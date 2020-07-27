@@ -89,12 +89,12 @@ impl Robot {
         // Run the computer one more step to allow the program to emit its second output of the pair.
         self.computer.run(HaltReason::Output);
 
-        // "Second, it will output a value indicating the direction the robot should turn: 0 means it should turn left 90 degrees, and 1 means it should turn right 90 degrees."
-        let turn_instruction = self.computer.pop_output().unwrap();
-
         // "First, it will output a value indicating the color to paint the
         // panel the robot is over: 0 means to paint the panel black, and 1 means to paint the panel white."
         let color_instruction = self.computer.pop_output().unwrap();
+
+        // "Second, it will output a value indicating the direction the robot should turn: 0 means it should turn left 90 degrees, and 1 means it should turn right 90 degrees."
+        let turn_instruction = self.computer.pop_output().unwrap();
 
         let color = match color_instruction {
             0 => Color::Black,

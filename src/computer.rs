@@ -1,11 +1,10 @@
 mod operations;
 
 use operations::Operation;
+use std::collections::VecDeque;
 use std::fs;
 
 pub type Memory = Vec<i64>;
-type Input = Vec<i64>;
-type Output = Vec<i64>;
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum ParameterMode {
@@ -32,8 +31,8 @@ pub struct Computer {
 /// A computer's mutable state.
 pub(crate) struct State {
     pub memory: Memory,
-    pub input: Input,
-    pub output: Output,
+    pub input: Vec<i64>,
+    pub output: VecDeque<i64>,
     instruction_pointer: usize,
     relative_base: i64,
 }
@@ -52,7 +51,7 @@ impl Computer {
             state: State {
                 memory,
                 input: vec![],
-                output: vec![],
+                output: VecDeque::new(),
                 instruction_pointer: 0,
                 relative_base: 0,
             },
@@ -108,7 +107,7 @@ impl Computer {
     }
 
     pub fn pop_output(&mut self) -> Option<i64> {
-        self.state.output.pop()
+        self.state.output.pop_front()
     }
 
     /// Private function, useful for testing.
@@ -463,7 +462,7 @@ mod tests {
         ];
         let mut computer = Computer::new(quine_program.clone());
         computer.run(HaltReason::Exit);
-        for op in quine_program.into_iter().rev() {
+        for op in quine_program.into_iter() {
             assert_eq!(computer.pop_output(), Some(op));
         }
 

@@ -40,9 +40,9 @@ impl Game {
             self.computer.run(HaltReason::Output);
             self.computer.run(HaltReason::Output);
 
-            let score_or_tile_id = self.computer.pop_output().unwrap();
-            let y = self.computer.pop_output().unwrap();
             let x = self.computer.pop_output().unwrap();
+            let y = self.computer.pop_output().unwrap();
+            let score_or_tile_id = self.computer.pop_output().unwrap();
 
             if x == -1 && y == 0 {
                 // "When three output instructions specify X=-1, Y=0, the third

@@ -66,7 +66,7 @@ pub(crate) fn load_operations() -> Vec<Option<Operation>> {
         num_arguments: 1,
         target_memory_location_arg: None,
         run: Box::new(|state, args| {
-            state.output.push(args[0]);
+            state.output.push_back(args[0]);
             state.instruction_pointer += 2;
             Outcome {
                 halt_reason: Some(HaltReason::Output),

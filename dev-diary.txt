@@ -1,5 +1,4 @@
 TODOs
-    * remove input param to computer::new
     * try out proptest
 
 
@@ -1471,3 +1470,14 @@ after that, it looks like it sends down instructions like:
 ok cool done nice
 i think i could improve its perf by speeding up the is-the-game-over check
 maybe have a hashset of block positions
+
+took a peek at 14a
+initial intuition: i think the idea is going to be to work backward, recursively, one step at a time
+what's the cheapest way to get 1 fuel?
+    it's 7 LCSV, 1 LKPNB, 36 CMNH, 1 JZXPH, 20 DGJPN, 3 WDWB, 69 DXJKC, 3 WHJKH, 18 XSGP, 22 CGZL, 2 BNVB, 57 PNSD
+and what's the cheapest way to get that?
+    it's god knows what
+
+recursive steps ad infinitum
+
+so maybe some sort of hashmap of {chemical -> vec<chemical>}, mapping output to inputs

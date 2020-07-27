@@ -7,7 +7,13 @@ pub fn five_a() -> i64 {
     computer.push_input(1);
     computer.run(HaltReason::Exit);
 
-    computer.pop_output().unwrap()
+    let mut last_output = computer.pop_output().unwrap();
+    loop {
+        match computer.pop_output() {
+            Some(output) => last_output = output,
+            None => break last_output,
+        }
+    }
 }
 
 pub fn five_b() -> i64 {
