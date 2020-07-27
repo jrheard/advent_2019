@@ -1459,3 +1459,15 @@ ok cool let's do 13a
 13a was ez
 hopefully b is more interesting!
 it is :)
+
+ok so
+first, we initialize the whole screen
+after that, it looks like it sends down instructions like:
+(old_paddle_x, old_paddle_x) 0
+(new_paddle_x, new_paddle_x) 3
+(old_ball_x, old_ball_x) 0
+(new_ball_x, new_ball_x) 4
+
+ok cool done nice
+i think i could improve its perf by speeding up the is-the-game-over check
+maybe have a hashset of block positions

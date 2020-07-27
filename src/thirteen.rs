@@ -1,6 +1,6 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
-use itertools::Itertools;
+use std::cmp::Ordering;
 
 static WIDTH: usize = 43;
 static HEIGHT: usize = 21;
@@ -8,6 +8,10 @@ static HEIGHT: usize = 21;
 struct Game {
     state: Vec<Tile>,
     computer: Computer,
+    score: i64,
+    initialized: bool,
+    ball_x: i64,
+    paddle_x: i64,
 }
 
 impl Game {
@@ -17,10 +21,14 @@ impl Game {
         Game {
             state: vec![Tile::Empty; WIDTH * HEIGHT],
             computer: Computer::new(memory, vec![]),
+            score: 0,
+            initialized: false,
+            ball_x: 0,
+            paddle_x: 0,
         }
     }
 
-    fn update_state(&mut self) {
+    pub fn update_state(&mut self) {
         loop {
             let halt_reason = self.computer.run(HaltReason::Output);
             if halt_reason == HaltReason::Exit {
@@ -33,24 +41,49 @@ impl Game {
             // "The software draws tiles to the screen with output instructions: every
             // three output instructions specify the x position (distance from the left), y
             // position (distance from the top), and tile id."
-            let tile_id = self.computer.pop_output().unwrap();
+            let score_or_tile_id = self.computer.pop_output().unwrap();
             let y = self.computer.pop_output().unwrap();
             let x = self.computer.pop_output().unwrap();
 
-            let tile = match tile_id {
-                0 => Tile::Empty,
-                1 => Tile::Wall,
-                2 => Tile::Block,
-                3 => Tile::Paddle,
-                4 => Tile::Ball,
-                _ => panic!("unexpected tile {}", tile_id),
-            };
+            //dbg!(x, y, score_or_tile_id);
 
-            self.state[y as usize * WIDTH + x as usize] = tile;
+            if x == -1 && y == 0 {
+                // "When three output instructions specify X=-1, Y=0, the third
+                // output instruction is not a tile; the value instead specifies the
+                // new score to show in the segment display."
+                self.score = score_or_tile_id;
+            } else {
+                // It's a tile ID!
+                let tile = match score_or_tile_id {
+                    0 => Tile::Empty,
+                    1 => Tile::Wall,
+                    2 => Tile::Block,
+                    3 => {
+                        self.paddle_x = x;
+                        Tile::Paddle
+                    }
+                    4 => {
+                        self.ball_x = x;
+                        Tile::Ball
+                    }
+                    _ => panic!("unexpected tile {}", score_or_tile_id),
+                };
+
+                self.state[y as usize * WIDTH + x as usize] = tile;
+
+                if self.initialized {
+                    if tile == Tile::Ball {
+                        break;
+                    }
+                } else if x as usize == WIDTH - 1 && y as usize == HEIGHT - 1 {
+                    self.initialized = true;
+                    break;
+                }
+            }
         }
     }
 
-    fn draw_to_screen(&self) {
+    fn _draw_to_screen(&self) {
         for (i, tile) in self.state.iter().enumerate() {
             if i > 0 && i % WIDTH == 0 {
                 println!();
@@ -70,7 +103,7 @@ impl Game {
     }
 }
 
-#[derive(PartialEq, Clone)]
+#[derive(PartialEq, Clone, Copy)]
 enum Tile {
     /// "No game object appears in this tile."
     Empty,
@@ -89,12 +122,36 @@ pub fn thirteen_a() -> usize {
     let mut game = Game::new();
     game.update_state();
 
-    game.draw_to_screen();
-
     game.state
         .iter()
         .filter(|&tile| tile == &Tile::Block)
         .count()
+}
+
+/// "Beat the game by breaking all the blocks. What is your score after the last block is broken?"
+pub fn thirteen_b() -> i64 {
+    let mut game = Game::new();
+
+    // "Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free."
+    game.computer.state.memory[0] = 2;
+    game.state[0] = Tile::Block;
+
+    while game.state.iter().any(|tile| tile == &Tile::Block) {
+        game.update_state();
+
+        // "If the joystick is in the neutral position, provide 0.
+        // If the joystick is tilted to the left, provide -1.
+        // If the joystick is tilted to the right, provide 1."
+        let joystick_input = match game.paddle_x.cmp(&game.ball_x) {
+            Ordering::Less => 1,
+            Ordering::Equal => 0,
+            Ordering::Greater => -1,
+        };
+
+        game.computer.push_input(joystick_input);
+    }
+
+    game.score
 }
 
 #[cfg(test)]
@@ -104,5 +161,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(thirteen_a(), 284);
+        assert_eq!(thirteen_b(), 13581);
     }
 }
