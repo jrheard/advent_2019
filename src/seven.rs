@@ -37,7 +37,9 @@ fn largest_output_for_program_one_shot(memory: Memory) -> i64 {
 /// ship's thrusters."
 fn run_amplifier_controller_software_one_shot(memory: Memory, phase_settings: Vec<i64>) -> i64 {
     phase_settings.iter().fold(0, |acc, &phase_setting| {
-        let mut computer = Computer::new(memory.clone(), vec![phase_setting, acc]);
+        let mut computer = Computer::new(memory.clone());
+        computer.push_input(phase_setting);
+        computer.push_input(acc);
         computer.run(HaltReason::Exit);
 
         computer.pop_output().unwrap()
@@ -65,7 +67,11 @@ fn largest_output_for_program_feedback(memory: Memory) -> i64 {
 fn run_amplifier_controller_software_feedback(memory: Memory, phase_settings: Vec<i64>) -> i64 {
     let mut computers = phase_settings
         .iter()
-        .map(|&phase_setting| Computer::new(memory.clone(), vec![phase_setting]))
+        .map(|&phase_setting| {
+            let mut computer = Computer::new(memory.clone());
+            computer.push_input(phase_setting);
+            computer
+        })
         .collect::<Vec<_>>();
 
     let get_next_computer_index = |curr_index: usize| (curr_index + 1) % phase_settings.len();

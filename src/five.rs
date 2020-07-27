@@ -3,7 +3,8 @@ use crate::computer::{Computer, HaltReason};
 
 pub fn five_a() -> i64 {
     let memory = computer::load_program("src/inputs/5.txt");
-    let mut computer = Computer::new(memory, vec![1]);
+    let mut computer = Computer::new(memory);
+    computer.push_input(1);
     computer.run(HaltReason::Exit);
 
     computer.pop_output().unwrap()
@@ -11,7 +12,8 @@ pub fn five_a() -> i64 {
 
 pub fn five_b() -> i64 {
     let memory = computer::load_program("src/inputs/5.txt");
-    let mut computer = Computer::new(memory, vec![5]);
+    let mut computer = Computer::new(memory);
+    computer.push_input(5);
     computer.run(HaltReason::Exit);
 
     computer.pop_output().unwrap()

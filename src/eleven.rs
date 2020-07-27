@@ -42,7 +42,7 @@ struct RobotOutput {
 impl Robot {
     fn new(filename: &str) -> Self {
         let memory = computer::load_program(filename);
-        let computer = Computer::new(memory, vec![]);
+        let computer = Computer::new(memory);
 
         Robot {
             direction: Direction::Up,

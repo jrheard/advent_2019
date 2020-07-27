@@ -20,7 +20,7 @@ impl Game {
 
         Game {
             state: vec![Tile::Empty; WIDTH * HEIGHT],
-            computer: Computer::new(memory, vec![]),
+            computer: Computer::new(memory),
             score: 0,
             initialized: false,
             ball_x: 0,

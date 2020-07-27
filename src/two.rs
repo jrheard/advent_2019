@@ -11,7 +11,7 @@ pub fn two_a() -> i64 {
     memory[2] = 2;
 
     // What value is left at position 0 after the program halts?
-    let mut computer = Computer::new(memory, vec![]);
+    let mut computer = Computer::new(memory);
     computer.run(HaltReason::Exit);
     computer.state.memory[0]
 }
@@ -30,7 +30,7 @@ pub fn two_b() -> i64 {
             memory[1] = *noun;
             memory[2] = *verb;
 
-            let mut computer = Computer::new(memory, vec![]);
+            let mut computer = Computer::new(memory);
             computer.run(HaltReason::Exit);
 
             computer.state.memory[0] == 19690720
