@@ -134,11 +134,9 @@ pub fn thirteen_b() -> i64 {
 
     // "Memory address 0 represents the number of quarters that have been inserted; set it to 2 to play for free."
     game.computer.state.memory[0] = 2;
-    game.state[0] = Tile::Block;
+    game.update_state();
 
     while game.state.iter().any(|tile| tile == &Tile::Block) {
-        game.update_state();
-
         // "If the joystick is in the neutral position, provide 0.
         // If the joystick is tilted to the left, provide -1.
         // If the joystick is tilted to the right, provide 1."
@@ -149,6 +147,7 @@ pub fn thirteen_b() -> i64 {
         };
 
         game.computer.push_input(joystick_input);
+        game.update_state();
     }
 
     game.score
