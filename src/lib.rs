@@ -8,6 +8,7 @@ mod one;
 mod seven;
 mod six;
 mod ten;
+mod thirteen;
 mod three;
 mod twelve;
 mod two;
@@ -38,6 +39,7 @@ pub fn run_all_solutions() {
     println!("11b:\n{}", eleven::eleven_b());
     println!("12a: {}", twelve::twelve_a());
     println!("12b: {}", twelve::twelve_b());
+    println!("13a: {}", thirteen::thirteen_a());
 }
 
 #[cfg(test)]

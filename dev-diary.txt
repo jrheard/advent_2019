@@ -1,4 +1,5 @@
 TODOs
+    * remove input param to computer::new
     * try out proptest
 
 
@@ -1451,3 +1452,9 @@ let's look at that i guess
 ok ya that works - the idea is that you find out how long til x repeats, then y, then z, and get their lcm
 i don't think i would have thought of that :[
 o well!
+
+12b is about 20ms, can't see any way to optimize it, nbd - the whole point of it was that it's slow
+
+ok cool let's do 13a
+13a was ez
+hopefully b is more interesting!
