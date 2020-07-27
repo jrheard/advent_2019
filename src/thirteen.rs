@@ -1,9 +1,12 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
-use std::collections::HashMap;
+use itertools::Itertools;
+
+static WIDTH: usize = 43;
+static HEIGHT: usize = 21;
 
 struct Game {
-    state: HashMap<(i64, i64), Tile>,
+    state: Vec<Tile>,
     computer: Computer,
 }
 
@@ -12,7 +15,7 @@ impl Game {
         let memory = computer::load_program("src/inputs/13.txt");
 
         Game {
-            state: HashMap::new(),
+            state: vec![Tile::Empty; WIDTH * HEIGHT],
             computer: Computer::new(memory, vec![]),
         }
     }
@@ -43,12 +46,31 @@ impl Game {
                 _ => panic!("unexpected tile {}", tile_id),
             };
 
-            self.state.insert((x, y), tile);
+            self.state[y as usize * WIDTH + x as usize] = tile;
+        }
+    }
+
+    fn draw_to_screen(&self) {
+        for (i, tile) in self.state.iter().enumerate() {
+            if i > 0 && i % WIDTH == 0 {
+                println!();
+            }
+
+            print!(
+                "{}",
+                match tile {
+                    Tile::Empty => " ",
+                    Tile::Wall => "|",
+                    Tile::Block => "_",
+                    Tile::Paddle => "p",
+                    Tile::Ball => "O",
+                }
+            );
         }
     }
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 enum Tile {
     /// "No game object appears in this tile."
     Empty,
@@ -66,8 +88,11 @@ enum Tile {
 pub fn thirteen_a() -> usize {
     let mut game = Game::new();
     game.update_state();
+
+    game.draw_to_screen();
+
     game.state
-        .values()
+        .iter()
         .filter(|&tile| tile == &Tile::Block)
         .count()
 }
