@@ -30,22 +30,19 @@ impl Game {
 
     pub fn update_state(&mut self) {
         loop {
+            // "The software draws tiles to the screen with output instructions: every
+            // three output instructions specify the x position (distance from the left), y
+            // position (distance from the top), and tile id."
             let halt_reason = self.computer.run(HaltReason::Output);
             if halt_reason == HaltReason::Exit {
                 break;
             }
-
             self.computer.run(HaltReason::Output);
             self.computer.run(HaltReason::Output);
 
-            // "The software draws tiles to the screen with output instructions: every
-            // three output instructions specify the x position (distance from the left), y
-            // position (distance from the top), and tile id."
             let score_or_tile_id = self.computer.pop_output().unwrap();
             let y = self.computer.pop_output().unwrap();
             let x = self.computer.pop_output().unwrap();
-
-            //dbg!(x, y, score_or_tile_id);
 
             if x == -1 && y == 0 {
                 // "When three output instructions specify X=-1, Y=0, the third
@@ -72,10 +69,13 @@ impl Game {
                 self.state[y as usize * WIDTH + x as usize] = tile;
 
                 if self.initialized {
+                    // Once the game is in flight, it signals the end of a frame
+                    // by outputting the ball's location.
                     if tile == Tile::Ball {
                         break;
                     }
                 } else if x as usize == WIDTH - 1 && y as usize == HEIGHT - 1 {
+                    // We've finished loading the game's initial state.
                     self.initialized = true;
                     break;
                 }
