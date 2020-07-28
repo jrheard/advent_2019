@@ -42,6 +42,7 @@ impl RecipeComponent {
     }
 }
 
+// TODO see if i can remove this step once i get 14a passing
 /// TODO oh my god rename and document
 fn perform_simple_reductions(
     components: &[RecipeComponent],
@@ -62,7 +63,7 @@ fn perform_simple_reductions(
                     // We've bottomed out for this particular component for now!
                     vec![component.clone()]
                 } else {
-                    // Substitute `recipe` out for its constiutent parts.
+                    // Substitute `recipe` out for its constituent parts.
                     perform_simple_reductions(&recipe.inputs, recipes)
                         .iter()
                         .map(|reduction_component| RecipeComponent {
@@ -124,6 +125,12 @@ fn component_costs(
                 .collect()
         })
         .collect()
+
+    // TODO i think it might be a good idea to record a history of simplified things
+    // i can't tell if that's something that would make sense to do here, i.e. to have this
+    // return  a 2-tuple of (current_return_value, something_else)
+    // or if it's something that should happen in the loop, between step 4 and step 1
+    // figure it out tomorrow!!!!
 }
 
 fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
@@ -239,11 +246,11 @@ mod tests {
 
     #[test]
     fn test_cost_for_one_fuel() {
-        let recipes = load_recipes("src/inputs/14_sample_1.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 31);
+        //let recipes = load_recipes("src/inputs/14_sample_1.txt");
+        //assert_eq!(cost_for_one_fuel(&recipes), 31);
 
-        let recipes = load_recipes("src/inputs/14_sample_3.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 165);
+        //let recipes = load_recipes("src/inputs/14_sample_3.txt");
+        //assert_eq!(cost_for_one_fuel(&recipes), 165);
 
         let recipes = load_recipes("src/inputs/14_sample_2.txt");
         assert_eq!(cost_for_one_fuel(&recipes), 13312);

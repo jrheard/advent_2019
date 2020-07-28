@@ -1516,3 +1516,29 @@ Consume 2 AB, 3 BC, 4 CA to produce 1 FUEL.
 how do i investigate this?
 
 i think i should start by adding more printing to stage 1
+
+ok so i made some progress
+but i think that i'm running into issues where i'm reacting a mid-level ingredient too soon
+gotta think about this some more
+
+also my names are bad, but i'll fix em later
+
+===
+7/28/20
+
+ideas i've had so far:
+* walk the tree as a first pass, to see which chemicals show up at which level
+    * (not sure how this helps)
+* do one entire pass on the recipe, record all the components that went into `component_costs()`,
+    and then somehow coalesce them and do a second smarter+cheaper pass
+        not sure how to avoid double-counting components tho - this is why i think i need to know about levels
+
+gonna work out 14_sample_2 by hand first and compare it against what my program is doing
+yeah the issue is definitely that i'm just not doing the most efficient possible bulk buys
+
+i feel like those two ideas above could work together to get me through this
+but i just don't have like a totally firm grasp on what i have in mind
+think think think
+
+i'm not sure if the levels thing is necessary
+let's try the record-and-do-second-pass thing
