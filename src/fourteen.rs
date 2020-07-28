@@ -42,6 +42,79 @@ impl RecipeComponent {
     }
 }
 
+#[derive(Debug, PartialEq)]
+struct Node {
+    chemical: String,
+    quantity: u32,
+    children: Vec<Node>,
+}
+
+impl Node {
+    pub fn new(chemical: String, quantity: u32) -> Node {
+        Node {
+            chemical,
+            quantity,
+            children: vec![],
+        }
+    }
+}
+
+fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
+    if node.chemical == "ORE" {
+        return;
+    }
+
+    let recipe = &recipes[&node.chemical];
+    let desired_output_quantity = node.quantity;
+    let required_num_reactions =
+        (desired_output_quantity as f32 / recipe.output.quantity as f32).ceil();
+
+    node.children = recipe
+        .inputs
+        .iter()
+        .map(move |input_component| {
+            let mut child = Node::new(
+                input_component.chemical.clone(),
+                input_component.quantity * required_num_reactions as u32,
+            );
+            naively_fill_tree(&mut child, &recipes);
+            child
+        })
+        .collect();
+}
+
+/// Returns true if any collapsing happened, false if there was nothing to collapse
+fn collapse_bulk_buy_nodes(
+    node: &mut Node,
+    recipes: &HashMap<String, Recipe>,
+    bulk_buy_chemicals: &[String],
+) -> bool {
+    // TODO
+    false
+}
+
+fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
+    let mut fuel = Node::new("FUEL".to_string(), 1);
+    naively_fill_tree(&mut fuel, recipes);
+    dbg!(&fuel);
+
+    let bulk_buy_chemicals: Vec<String> = recipes
+        .values()
+        .filter_map(|recipe| {
+            if recipe.output.quantity > 1 {
+                Some(recipe.output.chemical.clone())
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    while collapse_bulk_buy_nodes(&mut fuel, &recipes, &bulk_buy_chemicals) {}
+
+    // TODO sum up ore leaves
+    5
+}
+
 // TODO see if i can remove this step once i get 14a passing
 /// TODO oh my god rename and document
 fn perform_simple_reductions(
@@ -133,20 +206,31 @@ fn component_costs(
     // figure it out tomorrow!!!!
 }
 
-fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
+fn cost_for_one_fuel_old(recipes: &HashMap<String, Recipe>) -> u32 {
+    let mut bulk_buys: HashMap<String, Vec<u32>> = HashMap::new();
     let mut components = recipes["FUEL"].inputs.clone();
-    println!("1: {:?}", components);
+    //println!("1: {:?}", components);
 
     while components.len() > 1 {
         components = perform_simple_reductions(&components, &recipes);
-        println!("2: {:?}", components);
+        //println!("2: {:?}", components);
         components = merge_components(&components);
-        println!("3: {:?}", components);
+        //println!("3: {:?}", components);
+
+        for component in components.clone() {
+            bulk_buys
+                .entry(component.chemical)
+                .or_insert_with(Vec::new)
+                .push(component.quantity);
+        }
+
         components = component_costs(&components, &recipes);
-        println!("4: {:?}", components);
+        //println!("4: {:?}", components);
         components = merge_components(&components);
-        println!("5: {:?}", components);
+        //println!("5: {:?}", components);
     }
+
+    dbg!(bulk_buys);
 
     println!("6: {:?}", components);
     components[0].quantity
@@ -253,6 +337,7 @@ mod tests {
         //assert_eq!(cost_for_one_fuel(&recipes), 165);
 
         let recipes = load_recipes("src/inputs/14_sample_2.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 13312);
+        cost_for_one_fuel(&recipes);
+        //assert_eq!(cost_for_one_fuel(&recipes), 13312);
     }
 }

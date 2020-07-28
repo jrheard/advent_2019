@@ -1542,3 +1542,38 @@ think think think
 
 i'm not sure if the levels thing is necessary
 let's try the record-and-do-second-pass thing
+
+ok so at this point i have a hashmap that's tracking the things that were inefficiently bulk-bought
+but i'm not sure what to do with it
+
+maybe directly representing recipes as individual components, and swapping out bigger ones for littler ones,
+isn't quite the right way to do this
+
+maybe instead i need to be representing recipes as trees
+and merging nodes together
+what would that look like?
+
+a Node would be like
+
+{
+    chemical: String,
+    quantity: u32,
+    children: Vec<Node>
+}
+
+ok
+
+so, the first thing we do is do a full pass where we naively fill the tree out
+and then we do series of followup passes where we merge same-chemical nodes together, discarding their children
+until there's no more merging to be done
+
+i think that that recursion is gonna be kinda tricky to get right
+
+the first part with the full pass should be easy though, so let's start there
+
+ok cool, i got some code down that does the first pass really easy
+but so now the merging pass, i think that's going to be tricky to figure out
+it should be ok to express once i figure out how to do it
+i just need to figure out how to do it!
+
+i'm pleased with how the first pass came out tho, that was p ez
