@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::HashMap;
@@ -67,6 +68,24 @@ fn required_chemicals_for(
         .collect()
 }
 
+fn merge_components(components: &[RecipeComponent]) -> Vec<RecipeComponent> {
+    let grouped_components = components
+        .iter()
+        .map(|component| (&component.chemical, component))
+        .into_group_map();
+
+    grouped_components
+        .iter()
+        .map(|(chemical, component_group)| RecipeComponent {
+            chemical: (*chemical).clone(),
+            quantity: component_group
+                .iter()
+                .map(|component| component.quantity)
+                .sum(),
+        })
+        .collect()
+}
+
 pub fn fourteen_a() -> u32 {
     let recipes = load_recipes("src/inputs/14.txt");
     //cheapest_ore_cost_for(
@@ -126,6 +145,35 @@ mod tests {
                     chemical: "B".to_string(),
                     quantity: 1
                 }
+            ]
+        );
+    }
+
+    #[test]
+    fn test_merge_components() {
+        let recipes = load_recipes("src/inputs/14_sample_1.txt");
+        let required = required_chemicals_for(
+            &[RecipeComponent {
+                chemical: "FUEL".to_string(),
+                quantity: 1,
+            }],
+            &recipes,
+        );
+
+        let mut merged = merge_components(&required);
+        merged.sort_by_key(|component| component.chemical.to_string());
+
+        assert_eq!(
+            merged,
+            vec![
+                RecipeComponent {
+                    chemical: "A".to_string(),
+                    quantity: 28
+                },
+                RecipeComponent {
+                    chemical: "B".to_string(),
+                    quantity: 1
+                },
             ]
         );
     }
