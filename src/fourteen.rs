@@ -42,14 +42,6 @@ impl RecipeComponent {
     }
 }
 
-// TODO separate this into two steps:
-// 1. collect sum of requirements
-// eg 10 A, 1 B
-// bottoming out when you reach something that costs ore
-// this is gonna involve a ton of allocations, might want to adopt some sort of buffer approach
-// 2. merge step
-// 3. find price of merged requirements
-
 fn required_chemicals_for(
     target: &[RecipeComponent],
     recipes: &HashMap<String, Recipe>,
@@ -86,17 +78,44 @@ fn merge_components(components: &[RecipeComponent]) -> Vec<RecipeComponent> {
         .collect()
 }
 
+fn component_costs_in_ore(
+    components: &[RecipeComponent],
+    recipes: &HashMap<String, Recipe>,
+) -> u32 {
+    components
+        .iter()
+        .map(|component| {
+            let recipe = &recipes[&component.chemical];
+            assert_eq!(recipe.inputs.len(), 1);
+            assert_eq!(&recipe.inputs[0].chemical, "ORE");
+
+            let ore_per_reaction = recipe.inputs[0].quantity;
+            let desired_output_quantity = component.quantity;
+            let required_num_reactions =
+                (desired_output_quantity as f32 / recipe.output.quantity as f32).ceil();
+
+            required_num_reactions as u32 * ore_per_reaction
+        })
+        .sum()
+}
+
+fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
+    let leaf_costs = required_chemicals_for(
+        &[RecipeComponent {
+            chemical: "FUEL".to_string(),
+            quantity: 1,
+        }],
+        &recipes,
+    );
+
+    let merged_leaf_costs = merge_components(&leaf_costs);
+
+    component_costs_in_ore(&merged_leaf_costs, recipes)
+}
+
 pub fn fourteen_a() -> u32 {
     let recipes = load_recipes("src/inputs/14.txt");
-    //cheapest_ore_cost_for(
-    //&[RecipeComponent {
-    //chemical: "FUEL".to_string(),
-    //quantity: 1,
-    //}],
-    //&recipes,
-    //)
-
-    5
+    cost_for_one_fuel(&recipes)
 }
 
 fn load_recipes(filename: &str) -> HashMap<String, Recipe> {
@@ -184,5 +203,14 @@ mod tests {
             Recipe::new("7 LCSV, 1 LKPNB, 36 CMNH, 1 JZXPH, 20 DGJPN, 3 WDWB, 69 DXJKC, 3 WHJKH, 18 XSGP, 22 CGZL, 2 BNVB, 57 PNSD => 1 FUEL"),
             Recipe {inputs: vec![RecipeComponent { chemical: "LCSV".to_string(), quantity: 7 }, RecipeComponent { chemical: "LKPNB".to_string(), quantity: 1 }, RecipeComponent { chemical: "CMNH".to_string(), quantity: 36 }, RecipeComponent { chemical: "JZXPH".to_string(), quantity: 1 }, RecipeComponent { chemical: "DGJPN".to_string(), quantity: 20 }, RecipeComponent { chemical: "WDWB".to_string(), quantity: 3 }, RecipeComponent { chemical: "DXJKC".to_string(), quantity: 69 }, RecipeComponent { chemical: "WHJKH".to_string(), quantity: 3 }, RecipeComponent { chemical: "XSGP".to_string(), quantity: 18 }, RecipeComponent { chemical: "CGZL".to_string(), quantity: 22 }, RecipeComponent { chemical: "BNVB".to_string(), quantity: 2 }, RecipeComponent { chemical: "PNSD".to_string(), quantity: 57 }], output: RecipeComponent { chemical: "FUEL".to_string(), quantity: 1 }}
         );
+    }
+
+    #[test]
+    fn test_cost_for_one_fuel() {
+        let recipes = load_recipes("src/inputs/14_sample_1.txt");
+        assert_eq!(cost_for_one_fuel(&recipes), 31);
+
+        let recipes = load_recipes("src/inputs/14_sample_2.txt");
+        assert_eq!(cost_for_one_fuel(&recipes), 13312);
     }
 }
