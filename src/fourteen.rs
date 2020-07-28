@@ -42,19 +42,37 @@ impl RecipeComponent {
     }
 }
 
-fn required_chemicals_for(
-    target: &[RecipeComponent],
+/// TODO oh my god rename and document
+fn perform_simple_reductions(
+    components: &[RecipeComponent],
     recipes: &HashMap<String, Recipe>,
 ) -> Vec<RecipeComponent> {
-    target
+    components
         .iter()
         .flat_map(|component| {
-            let inputs = &recipes[&component.chemical].inputs;
+            if component.chemical == "ORE" {
+                // Ore's our base material, there isn't a recipe for it.
+                return vec![component.clone()];
+            }
 
-            if inputs.len() == 1 && inputs[0].chemical == "ORE" {
-                vec![component.clone()]
+            let recipe = &recipes[&component.chemical];
+
+            if recipe.output.quantity == 1 {
+                if recipe.inputs.len() == 1 && recipe.inputs[0].chemical == "ORE" {
+                    // We've bottomed out for this particular component for now!
+                    vec![component.clone()]
+                } else {
+                    // Substitute `recipe` out for its constiutent parts.
+                    perform_simple_reductions(&recipe.inputs, recipes)
+                        .iter()
+                        .map(|reduction_component| RecipeComponent {
+                            chemical: reduction_component.chemical.clone(),
+                            quantity: reduction_component.quantity * component.quantity,
+                        })
+                        .collect()
+                }
             } else {
-                required_chemicals_for(&inputs, recipes)
+                vec![component.clone()]
             }
         })
         .collect()
@@ -78,39 +96,53 @@ fn merge_components(components: &[RecipeComponent]) -> Vec<RecipeComponent> {
         .collect()
 }
 
-fn component_costs_in_ore(
+/// TODO oh my god rename and document
+fn component_costs(
     components: &[RecipeComponent],
     recipes: &HashMap<String, Recipe>,
-) -> u32 {
+) -> Vec<RecipeComponent> {
     components
         .iter()
-        .map(|component| {
-            let recipe = &recipes[&component.chemical];
-            assert_eq!(recipe.inputs.len(), 1);
-            assert_eq!(&recipe.inputs[0].chemical, "ORE");
+        .flat_map(|component| {
+            if component.chemical == "ORE" {
+                return vec![component.clone()];
+            }
 
-            let ore_per_reaction = recipe.inputs[0].quantity;
+            let recipe = &recipes[&component.chemical];
+
             let desired_output_quantity = component.quantity;
             let required_num_reactions =
                 (desired_output_quantity as f32 / recipe.output.quantity as f32).ceil();
 
-            required_num_reactions as u32 * ore_per_reaction
+            recipe
+                .inputs
+                .iter()
+                .map(move |input_component| RecipeComponent {
+                    chemical: input_component.chemical.clone(),
+                    quantity: input_component.quantity * required_num_reactions as u32,
+                })
+                .collect()
         })
-        .sum()
+        .collect()
 }
 
 fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
-    let leaf_costs = required_chemicals_for(
-        &[RecipeComponent {
-            chemical: "FUEL".to_string(),
-            quantity: 1,
-        }],
-        &recipes,
-    );
+    let mut components = recipes["FUEL"].inputs.clone();
+    println!("1: {:?}", components);
 
-    let merged_leaf_costs = merge_components(&leaf_costs);
+    while components.len() > 1 {
+        components = perform_simple_reductions(&components, &recipes);
+        println!("2: {:?}", components);
+        components = merge_components(&components);
+        println!("3: {:?}", components);
+        components = component_costs(&components, &recipes);
+        println!("4: {:?}", components);
+        components = merge_components(&components);
+        println!("5: {:?}", components);
+    }
 
-    component_costs_in_ore(&merged_leaf_costs, recipes)
+    println!("6: {:?}", components);
+    components[0].quantity
 }
 
 pub fn fourteen_a() -> u32 {
@@ -136,7 +168,7 @@ mod tests {
         let recipes = load_recipes("src/inputs/14_sample_1.txt");
 
         assert_eq!(
-            required_chemicals_for(
+            perform_simple_reductions(
                 &[RecipeComponent {
                     chemical: "FUEL".to_string(),
                     quantity: 1
@@ -171,7 +203,7 @@ mod tests {
     #[test]
     fn test_merge_components() {
         let recipes = load_recipes("src/inputs/14_sample_1.txt");
-        let required = required_chemicals_for(
+        let required = perform_simple_reductions(
             &[RecipeComponent {
                 chemical: "FUEL".to_string(),
                 quantity: 1,
@@ -209,6 +241,9 @@ mod tests {
     fn test_cost_for_one_fuel() {
         let recipes = load_recipes("src/inputs/14_sample_1.txt");
         assert_eq!(cost_for_one_fuel(&recipes), 31);
+
+        let recipes = load_recipes("src/inputs/14_sample_3.txt");
+        assert_eq!(cost_for_one_fuel(&recipes), 165);
 
         let recipes = load_recipes("src/inputs/14_sample_2.txt");
         assert_eq!(cost_for_one_fuel(&recipes), 13312);

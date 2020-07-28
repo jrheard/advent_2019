@@ -1481,3 +1481,38 @@ and what's the cheapest way to get that?
 recursive steps ad infinitum
 
 so maybe some sort of hashmap of {chemical -> vec<chemical>}, mapping output to inputs
+
+ok so i worked on 14a for a bit
+and i'm having fun
+but my initial approach isn't working
+
+it's coming up with this:
+
+&merged_leaf_costs = [
+    RecipeComponent {
+        chemical: "A",
+        quantity: 4,
+    },
+    RecipeComponent {
+        chemical: "B",
+        quantity: 9,
+    },
+    RecipeComponent {
+        chemical: "C",
+        quantity: 11,
+    },
+]
+
+when it should be this:
+
+Consume 45 ORE to produce 10 A.
+Consume 64 ORE to produce 24 B.
+Consume 56 ORE to produce 40 C.
+Consume 6 A, 8 B to produce 2 AB.
+Consume 15 B, 21 C to produce 3 BC.
+Consume 16 C, 4 A to produce 4 CA.
+Consume 2 AB, 3 BC, 4 CA to produce 1 FUEL.
+
+how do i investigate this?
+
+i think i should start by adding more printing to stage 1
