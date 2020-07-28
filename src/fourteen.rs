@@ -6,7 +6,25 @@ use std::fs;
 static OUTER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.*) => (.*)").unwrap());
 static COMPONENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"([0-9]*) ([A-Z]*)").unwrap());
 
-#[derive(PartialEq, Eq, Debug, Hash)]
+#[derive(PartialEq, Debug)]
+struct Recipe {
+    inputs: Vec<RecipeComponent>,
+    output: RecipeComponent,
+}
+
+impl Recipe {
+    pub fn new(recipe: &str) -> Recipe {
+        let captures = OUTER_RE.captures(recipe).unwrap();
+        let inputs = captures[1].split(", ").map(RecipeComponent::new).collect();
+
+        Recipe {
+            inputs,
+            output: RecipeComponent::new(&captures[2]),
+        }
+    }
+}
+
+#[derive(PartialEq, Eq, Debug, Hash, Clone)]
 struct RecipeComponent {
     chemical: String,
     quantity: u32,
@@ -23,25 +41,51 @@ impl RecipeComponent {
     }
 }
 
-fn parse_recipe(recipe: &str) -> (Vec<RecipeComponent>, RecipeComponent) {
-    let captures = OUTER_RE.captures(recipe).unwrap();
-    let inputs = captures[1].split(", ").map(RecipeComponent::new).collect();
+// TODO separate this into two steps:
+// 1. collect sum of requirements
+// eg 10 A, 1 B
+// bottoming out when you reach something that costs ore
+// this is gonna involve a ton of allocations, might want to adopt some sort of buffer approach
+// 2. merge step
+// 3. find price of merged requirements
 
-    (inputs, RecipeComponent::new(&captures[2]))
+fn required_chemicals_for(
+    target: &[RecipeComponent],
+    recipes: &HashMap<String, Recipe>,
+) -> Vec<RecipeComponent> {
+    target
+        .iter()
+        .flat_map(|component| {
+            let inputs = &recipes[&component.chemical].inputs;
+
+            if inputs.len() == 1 && inputs[0].chemical == "ORE" {
+                vec![component.clone()]
+            } else {
+                required_chemicals_for(&inputs, recipes)
+            }
+        })
+        .collect()
 }
 
 pub fn fourteen_a() -> u32 {
-    let _recipes = load_recipes();
+    let recipes = load_recipes("src/inputs/14.txt");
+    //cheapest_ore_cost_for(
+    //&[RecipeComponent {
+    //chemical: "FUEL".to_string(),
+    //quantity: 1,
+    //}],
+    //&recipes,
+    //)
 
     5
 }
 
-fn load_recipes() -> HashMap<RecipeComponent, Vec<RecipeComponent>> {
-    let contents = fs::read_to_string("src/inputs/14.txt").unwrap();
+fn load_recipes(filename: &str) -> HashMap<String, Recipe> {
+    let contents = fs::read_to_string(filename).unwrap();
     contents
         .lines()
-        .map(parse_recipe)
-        .map(|(inputs, output)| (output, inputs))
+        .map(Recipe::new)
+        .map(|recipe| (recipe.output.chemical.clone(), recipe))
         .collect()
 }
 
@@ -50,10 +94,47 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_required_chemicals_for() {
+        let recipes = load_recipes("src/inputs/14_sample_1.txt");
+
+        assert_eq!(
+            required_chemicals_for(
+                &[RecipeComponent {
+                    chemical: "FUEL".to_string(),
+                    quantity: 1
+                }],
+                &recipes
+            ),
+            vec![
+                RecipeComponent {
+                    chemical: "A".to_string(),
+                    quantity: 7
+                },
+                RecipeComponent {
+                    chemical: "A".to_string(),
+                    quantity: 7
+                },
+                RecipeComponent {
+                    chemical: "A".to_string(),
+                    quantity: 7
+                },
+                RecipeComponent {
+                    chemical: "A".to_string(),
+                    quantity: 7
+                },
+                RecipeComponent {
+                    chemical: "B".to_string(),
+                    quantity: 1
+                }
+            ]
+        );
+    }
+
+    #[test]
     fn test_parse_recipe() {
         assert_eq!(
-            parse_recipe("7 LCSV, 1 LKPNB, 36 CMNH, 1 JZXPH, 20 DGJPN, 3 WDWB, 69 DXJKC, 3 WHJKH, 18 XSGP, 22 CGZL, 2 BNVB, 57 PNSD => 1 FUEL"),
-            (vec![RecipeComponent { chemical: "LCSV".to_string(), quantity: 7 }, RecipeComponent { chemical: "LKPNB".to_string(), quantity: 1 }, RecipeComponent { chemical: "CMNH".to_string(), quantity: 36 }, RecipeComponent { chemical: "JZXPH".to_string(), quantity: 1 }, RecipeComponent { chemical: "DGJPN".to_string(), quantity: 20 }, RecipeComponent { chemical: "WDWB".to_string(), quantity: 3 }, RecipeComponent { chemical: "DXJKC".to_string(), quantity: 69 }, RecipeComponent { chemical: "WHJKH".to_string(), quantity: 3 }, RecipeComponent { chemical: "XSGP".to_string(), quantity: 18 }, RecipeComponent { chemical: "CGZL".to_string(), quantity: 22 }, RecipeComponent { chemical: "BNVB".to_string(), quantity: 2 }, RecipeComponent { chemical: "PNSD".to_string(), quantity: 57 }], RecipeComponent { chemical: "FUEL".to_string(), quantity: 1 })
+            Recipe::new("7 LCSV, 1 LKPNB, 36 CMNH, 1 JZXPH, 20 DGJPN, 3 WDWB, 69 DXJKC, 3 WHJKH, 18 XSGP, 22 CGZL, 2 BNVB, 57 PNSD => 1 FUEL"),
+            Recipe {inputs: vec![RecipeComponent { chemical: "LCSV".to_string(), quantity: 7 }, RecipeComponent { chemical: "LKPNB".to_string(), quantity: 1 }, RecipeComponent { chemical: "CMNH".to_string(), quantity: 36 }, RecipeComponent { chemical: "JZXPH".to_string(), quantity: 1 }, RecipeComponent { chemical: "DGJPN".to_string(), quantity: 20 }, RecipeComponent { chemical: "WDWB".to_string(), quantity: 3 }, RecipeComponent { chemical: "DXJKC".to_string(), quantity: 69 }, RecipeComponent { chemical: "WHJKH".to_string(), quantity: 3 }, RecipeComponent { chemical: "XSGP".to_string(), quantity: 18 }, RecipeComponent { chemical: "CGZL".to_string(), quantity: 22 }, RecipeComponent { chemical: "BNVB".to_string(), quantity: 2 }, RecipeComponent { chemical: "PNSD".to_string(), quantity: 57 }], output: RecipeComponent { chemical: "FUEL".to_string(), quantity: 1 }}
         );
     }
 }
