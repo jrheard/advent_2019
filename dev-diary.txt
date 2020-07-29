@@ -1607,3 +1607,8 @@ let's do 1 first :)
 
 ok holy cow after a lot of flailing i think i did it!
 turned out the trick was to use a vecdeque, neat
+
+ok cool
+uh next up i wanna do 1.5:
+track the depth in the tree at which bulk-buy chemicals first appear
+ok that didn't help, oh well

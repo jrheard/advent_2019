@@ -169,7 +169,7 @@ fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
     let mut root = Node::new("FUEL".to_string(), 1);
     naively_fill_tree(&mut root, recipes);
 
-    let bulk_buy_chemicals: Vec<String> = recipes
+    let mut bulk_buy_chemicals: Vec<String> = recipes
         .values()
         .filter_map(|recipe| {
             if recipe.output.quantity > 1 {
@@ -179,6 +179,9 @@ fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
             }
         })
         .collect();
+
+    bulk_buy_chemicals
+        .sort_by_key(|chemical| root.into_iter().position(|node| &node.chemical == chemical));
 
     while collapse_bulk_buy_nodes(&mut root, &recipes, &bulk_buy_chemicals) {}
 
