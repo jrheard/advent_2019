@@ -83,20 +83,91 @@ fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
         .collect();
 }
 
+fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
+    let found_quantity = if node.chemical == chemical {
+        node.quantity
+    } else {
+        0
+    };
+
+    found_quantity
+        + node
+            .children
+            .iter()
+            .map(|child| total_quantity_of_chemical_in_tree(child, chemical))
+            .sum::<u32>()
+}
+
+// TODO here's my updated plan for the collapse function:
+// it's meant to be called a bunch of times in a loop until it returns false
+// it walks the tree until it finds a chemical that has two or more nodes
+//      when that happens, it deletes all nodes for that chemical from the tree
+//      and makes a new node with the sum of all their quantities, which it appends to root.children
+//      and reruns naively_fill_tree() on that new node,
+//      and returns true
+// if it doesn't find one, it returns false
+
+// TODO rename
+fn find_a_chemical_with_multiple_nodes(
+    node: &Node,
+    root: &Node,
+    bulk_buy_chemicals: &[String],
+) -> Option<String> {
+    if bulk_buy_chemicals.contains(&node.chemical)
+        && total_quantity_of_chemical_in_tree(root, &node.chemical) > node.quantity
+    {
+        Some(node.chemical.clone())
+    } else if node.children.is_empty() {
+        None
+    } else {
+        for result in node
+            .children
+            .iter()
+            .map(|child| find_a_chemical_with_multiple_nodes(child, root, bulk_buy_chemicals))
+        {
+            if result.is_some() {
+                return result;
+            }
+        }
+
+        None
+    }
+}
+
+fn delete_nodes_with_chemical_from_tree(node: &mut Node, chemical: &str) {
+    node.children.retain(|child| child.chemical != chemical);
+
+    for child in &mut node.children {
+        delete_nodes_with_chemical_from_tree(child, chemical);
+    }
+}
+
 /// Returns true if any collapsing happened, false if there was nothing to collapse
 fn collapse_bulk_buy_nodes(
-    node: &mut Node,
+    root: &mut Node,
     recipes: &HashMap<String, Recipe>,
     bulk_buy_chemicals: &[String],
 ) -> bool {
-    // TODO
-    false
+    let chemical_with_multiple_nodes =
+        find_a_chemical_with_multiple_nodes(root, root, bulk_buy_chemicals);
+
+    match chemical_with_multiple_nodes {
+        Some(chemical) => {
+            let quantity = total_quantity_of_chemical_in_tree(root, &chemical);
+            delete_nodes_with_chemical_from_tree(root, &chemical);
+            let mut new_node = Node::new(chemical, quantity);
+            naively_fill_tree(&mut new_node, recipes);
+            root.children.push(new_node);
+            true
+        }
+        None => false,
+    }
 }
 
 fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
-    let mut fuel = Node::new("FUEL".to_string(), 1);
-    naively_fill_tree(&mut fuel, recipes);
-    dbg!(&fuel);
+    let mut root = Node::new("FUEL".to_string(), 1);
+    naively_fill_tree(&mut root, recipes);
+    dbg!(&root);
 
     let bulk_buy_chemicals: Vec<String> = recipes
         .values()
@@ -109,10 +180,9 @@ fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
         })
         .collect();
 
-    while collapse_bulk_buy_nodes(&mut fuel, &recipes, &bulk_buy_chemicals) {}
+    while collapse_bulk_buy_nodes(&mut root, &recipes, &bulk_buy_chemicals) {}
 
-    // TODO sum up ore leaves
-    5
+    total_quantity_of_chemical_in_tree(&root, "ORE")
 }
 
 // TODO see if i can remove this step once i get 14a passing
@@ -337,7 +407,11 @@ mod tests {
         //assert_eq!(cost_for_one_fuel(&recipes), 165);
 
         let recipes = load_recipes("src/inputs/14_sample_2.txt");
-        cost_for_one_fuel(&recipes);
-        //assert_eq!(cost_for_one_fuel(&recipes), 13312);
+        assert_eq!(cost_for_one_fuel(&recipes), 13312);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(fourteen_a(), 0);
     }
 }

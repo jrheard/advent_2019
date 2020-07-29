@@ -1577,3 +1577,12 @@ it should be ok to express once i figure out how to do it
 i just need to figure out how to do it!
 
 i'm pleased with how the first pass came out tho, that was p ez
+
+ok lol this is devolving rapidly
+so i have another approach, and it solves 14_sample_2
+but it's hideous, because i don't know how to do trees in rust
+and it fails on the actual puzzle input
+
+TODO try it on one of the other samples i haven't downloaded yet
+TODO figure out how to clean it up
+    it's so bad
