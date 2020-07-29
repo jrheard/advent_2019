@@ -1586,3 +1586,24 @@ and it fails on the actual puzzle input
 TODO try it on one of the other samples i haven't downloaded yet
 TODO figure out how to clean it up
     it's so bad
+
+TODO try out #[cfg(not(tarpaulin_include))] to hide 13's unused draw function from codecov
+
+TODO also track depth first seen in the initial tree
+and then walk the chemicals in that order
+
+===
+
+7/29/20
+
+ok uh hm
+what to do
+i think i need to do two things:
+
+1) implement IntoIter for fun
+2) start this whole problem over again from scratch
+
+let's do 1 first :)
+
+ok holy cow after a lot of flailing i think i did it!
+turned out the trick was to use a vecdeque, neat

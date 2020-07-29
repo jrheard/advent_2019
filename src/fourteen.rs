@@ -1,8 +1,9 @@
 use itertools::Itertools;
 use once_cell::sync::Lazy;
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
 use std::fs;
+use std::iter;
 
 static OUTER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.*) => (.*)").unwrap());
 static COMPONENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"([0-9]*) ([A-Z]*)").unwrap());
@@ -59,6 +60,34 @@ impl Node {
     }
 }
 
+struct NodeIntoIter<'a> {
+    nodes: VecDeque<&'a Node>,
+}
+
+impl<'a> Iterator for NodeIntoIter<'a> {
+    type Item = &'a Node;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.nodes.pop_front() {
+            Some(node) => {
+                self.nodes.extend(node.children.iter());
+                Some(node)
+            }
+            None => None,
+        }
+    }
+}
+
+impl<'a> IntoIterator for &'a Node {
+    type Item = &'a Node;
+    type IntoIter = NodeIntoIter<'a>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        let mut nodes = VecDeque::new();
+        nodes.push_back(self);
+        NodeIntoIter { nodes }
+    }
+}
+
 fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
     if node.chemical == "ORE" {
         return;
@@ -84,18 +113,10 @@ fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
 }
 
 fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
-    let found_quantity = if node.chemical == chemical {
-        node.quantity
-    } else {
-        0
-    };
-
-    found_quantity
-        + node
-            .children
-            .iter()
-            .map(|child| total_quantity_of_chemical_in_tree(child, chemical))
-            .sum::<u32>()
+    node.into_iter()
+        .filter(|&child| child.chemical == chemical)
+        .map(|child| child.quantity)
+        .sum()
 }
 
 // TODO here's my updated plan for the collapse function:
@@ -413,5 +434,27 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(fourteen_a(), 0);
+    }
+
+    #[test]
+    fn test_tree_iteration() {
+        let mut root = Node::new("FOO".to_string(), 5);
+        root.children.push(Node::new("BAR".to_string(), 10));
+        root.children.push(Node::new("BAZ".to_string(), 1));
+        root.children[1]
+            .children
+            .push(Node::new("QUUX".to_string(), 100));
+
+        let vector: Vec<&Node> = root.into_iter().collect();
+
+        assert_eq!(
+            vector,
+            vec![
+                &root,
+                &root.children[0],
+                &root.children[1],
+                &root.children[1].children[0]
+            ]
+        );
     }
 }
