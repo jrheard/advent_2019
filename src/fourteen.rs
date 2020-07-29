@@ -3,7 +3,6 @@ use once_cell::sync::Lazy;
 use regex::Regex;
 use std::collections::{HashMap, VecDeque};
 use std::fs;
-use std::iter;
 
 static OUTER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.*) => (.*)").unwrap());
 static COMPONENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"([0-9]*) ([A-Z]*)").unwrap());
@@ -119,40 +118,22 @@ fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
         .sum()
 }
 
-// TODO here's my updated plan for the collapse function:
-// it's meant to be called a bunch of times in a loop until it returns false
-// it walks the tree until it finds a chemical that has two or more nodes
-//      when that happens, it deletes all nodes for that chemical from the tree
-//      and makes a new node with the sum of all their quantities, which it appends to root.children
-//      and reruns naively_fill_tree() on that new node,
-//      and returns true
-// if it doesn't find one, it returns false
-
-// TODO rename
 fn find_a_chemical_with_multiple_nodes(
-    node: &Node,
     root: &Node,
     bulk_buy_chemicals: &[String],
 ) -> Option<String> {
-    if bulk_buy_chemicals.contains(&node.chemical)
-        && total_quantity_of_chemical_in_tree(root, &node.chemical) > node.quantity
-    {
-        Some(node.chemical.clone())
-    } else if node.children.is_empty() {
-        None
-    } else {
-        for result in node
-            .children
-            .iter()
-            .map(|child| find_a_chemical_with_multiple_nodes(child, root, bulk_buy_chemicals))
+    for chemical in bulk_buy_chemicals {
+        if root
+            .into_iter()
+            .filter(|&node| &node.chemical == chemical)
+            .count()
+            > 1
         {
-            if result.is_some() {
-                return result;
-            }
+            return Some(chemical.clone());
         }
-
-        None
     }
+
+    None
 }
 
 fn delete_nodes_with_chemical_from_tree(node: &mut Node, chemical: &str) {
@@ -170,7 +151,7 @@ fn collapse_bulk_buy_nodes(
     bulk_buy_chemicals: &[String],
 ) -> bool {
     let chemical_with_multiple_nodes =
-        find_a_chemical_with_multiple_nodes(root, root, bulk_buy_chemicals);
+        find_a_chemical_with_multiple_nodes(root, bulk_buy_chemicals);
 
     match chemical_with_multiple_nodes {
         Some(chemical) => {
