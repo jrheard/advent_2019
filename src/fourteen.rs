@@ -217,43 +217,27 @@ pub fn fourteen_a() -> u64 {
 
 struct Nanofactory<'a> {
     chemical_amounts: HashMap<&'a str, u64>,
-    fuel_produced: u64,
+    ore_spent: u64,
 }
 
 impl<'a> Nanofactory<'a> {
-    fn produce_one_fuel(&mut self, recipes: &'a HashMap<String, Recipe>) -> bool {
-        if self.perform_recipe("FUEL", 1, recipes) {
-            self.fuel_produced += 1;
-            dbg!(self.fuel_produced);
-            true
-        } else {
-            false
-        }
-    }
-
     fn perform_recipe(
         &mut self,
         chemical: &'a str,
         quantity: u64,
         recipes: &'a HashMap<String, Recipe>,
-    ) -> bool {
+    ) {
         if chemical == "ORE" {
-            if self.chemical_amounts["ORE"] >= quantity {
-                self.chemical_amounts
-                    .entry("ORE")
-                    .and_modify(|amount| *amount -= quantity);
-                return true;
-            } else {
-                return false;
-            }
+            self.ore_spent += quantity;
+            return;
         }
 
         let recipe = &recipes[chemical];
 
         for component in &recipe.inputs {
-            if !self.perform_recipe(&component.chemical, component.quantity as u64, recipes) {
-                return false;
-            } else {
+            self.perform_recipe(&component.chemical, component.quantity as u64, recipes);
+
+            if chemical != "ORE" {
                 self.chemical_amounts
                     .entry(&component.chemical)
                     .and_modify(|amount| *amount -= component.quantity as u64);
@@ -263,8 +247,18 @@ impl<'a> Nanofactory<'a> {
         self.chemical_amounts
             .entry(&chemical)
             .and_modify(|amount| *amount += quantity);
+    }
 
-        true
+    pub fn new(recipes: &'a HashMap<String, Recipe>) -> Self {
+        let chemical_amounts: HashMap<&str, u64> = recipes
+            .keys()
+            .map(|chemical| (chemical.as_str(), 0))
+            .collect();
+
+        Nanofactory {
+            chemical_amounts,
+            ore_spent: 0,
+        }
     }
 }
 
@@ -276,21 +270,29 @@ fn num_fuel_producible_with_one_trillion_ore_old(recipes: &HashMap<String, Recip
 
     chemical_amounts.insert("ORE", ONE_TRILLION as u64);
 
-    let mut factory = Nanofactory {
-        chemical_amounts,
-        fuel_produced: 0,
-    };
+    //let mut factory = Nanofactory {
+    //chemical_amounts,
+    //fuel_produced: 0,
+    //};
+    //
+    //while factory.produce_one_fuel(&recipes) {}
 
-    while factory.produce_one_fuel(&recipes) {}
+    //factory.fuel_produced
+    5
+}
 
-    factory.fuel_produced
+fn ore_cost_for_fuel(recipes: &HashMap<String, Recipe>, fuel_quantity: u64) -> u64 {
+    let mut factory = Nanofactory::new(recipes);
+    factory.perform_recipe("FUEL", fuel_quantity, recipes);
+    factory.ore_spent
 }
 
 fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) -> u64 {
     let mut lower_bound = ONE_TRILLION / cost_for_fuel_amount(&recipes, 1);
     let mut upper_bound = 10 * lower_bound;
 
-    while cost_for_fuel_amount(&recipes, upper_bound) < ONE_TRILLION {
+    while ore_cost_for_fuel(&recipes, upper_bound) < ONE_TRILLION {
+        dbg!(upper_bound, ore_cost_for_fuel(&recipes, upper_bound));
         lower_bound = upper_bound;
         upper_bound *= 10;
     }
@@ -298,10 +300,14 @@ fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) 
     loop {
         let midpoint = (lower_bound + upper_bound) / 2;
         println!("midpoint is {}", midpoint);
-        let cost = cost_for_fuel_amount(&recipes, midpoint);
+        let cost = ore_cost_for_fuel(&recipes, midpoint);
         dbg!(cost);
 
-        if cost <= ONE_TRILLION && cost_for_fuel_amount(&recipes, midpoint + 1) > ONE_TRILLION {
+        if cost <= ONE_TRILLION && ore_cost_for_fuel(&recipes, midpoint + 1) > ONE_TRILLION {
+            println!(
+                "ding ding ding, cost of one more is {}",
+                ore_cost_for_fuel(&recipes, midpoint + 1)
+            );
             return midpoint;
         }
 

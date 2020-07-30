@@ -1651,3 +1651,11 @@ that's cool, that's cool
 but so
 i have no idea whether or not my solution will actually work in this scneario
 guess we'll find out!!!!
+
+i don't think my 14a solutoin is going to work here
+i think i need to go with the shopping cart solution that everyone else did
+ugh
+i have enjoyed this problem less than i had hoped :(
+at least i got to learn fun tree+iter things
+it just sucks to try a ton of different solutions and have them all fail
+oh well!!!!
