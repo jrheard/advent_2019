@@ -86,6 +86,7 @@ impl<'a> IntoIterator for &'a Node {
     }
 }
 
+/// Recursively expands the tree in `node` by following the recipes in `recipes`, bottoming out at ORE.
 fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
     if node.chemical == "ORE" {
         return;
@@ -110,6 +111,7 @@ fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
         .collect();
 }
 
+/// Returns the total `quantity` of `chemical` in the tree represented by `node`.
 fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
     node.into_iter()
         .filter(|&child| child.chemical == chemical)
@@ -117,6 +119,7 @@ fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
         .sum()
 }
 
+/// Returns Some(chemical) if there's a chemical in `root` that appears in multiple nodes, None otherwise.
 fn find_a_chemical_with_multiple_nodes(
     root: &Node,
     bulk_buy_chemicals: &[String],
@@ -135,6 +138,7 @@ fn find_a_chemical_with_multiple_nodes(
     None
 }
 
+/// Removes all Nodes with `chemical` from the tree represented by `node`.
 fn delete_nodes_with_chemical_from_tree(node: &mut Node, chemical: &str) {
     node.children.retain(|child| child.chemical != chemical);
 
@@ -143,7 +147,9 @@ fn delete_nodes_with_chemical_from_tree(node: &mut Node, chemical: &str) {
     }
 }
 
-/// Returns true if any collapsing happened, false if there was nothing to collapse
+/// Searches the tree in `root` for a chemical in `bulk_buy_chemicals` that appears in multiple Nodes.
+/// If a chemical is found, all Nodes with that chemical are collapsed together into a single Node.
+/// Returns true if any collapsing happened, false if there was nothing to collapse.
 fn collapse_bulk_buy_nodes(
     root: &mut Node,
     recipes: &HashMap<String, Recipe>,
@@ -165,6 +171,21 @@ fn collapse_bulk_buy_nodes(
     }
 }
 
+/// Returns the lowest depth at which `chemical` was found in the tree represented by `node`.
+fn lowest_depth_seen(node: &Node, chemical: &str, depth: u32) -> Option<u32> {
+    if node.chemical == chemical {
+        Some(depth)
+    } else if node.children.is_empty() {
+        None
+    } else {
+        node.children
+            .iter()
+            .map(|child| lowest_depth_seen(child, chemical, depth + 1))
+            .max()?
+    }
+}
+
+/// Returns the minimum amount of ORE required to produce exactly 1 FUEL according to `recipes`.
 fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
     let mut root = Node::new("FUEL".to_string(), 1);
     naively_fill_tree(&mut root, recipes);
@@ -180,8 +201,7 @@ fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
         })
         .collect();
 
-    bulk_buy_chemicals
-        .sort_by_key(|chemical| root.into_iter().position(|node| &node.chemical == chemical));
+    bulk_buy_chemicals.sort_by_key(|chemical| lowest_depth_seen(&root, chemical, 0));
 
     while collapse_bulk_buy_nodes(&mut root, &recipes, &bulk_buy_chemicals) {}
 

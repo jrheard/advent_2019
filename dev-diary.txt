@@ -1612,3 +1612,6 @@ ok cool
 uh next up i wanna do 1.5:
 track the depth in the tree at which bulk-buy chemicals first appear
 ok that didn't help, oh well
+
+okay, so, let's take a step back and look at the problem statement again from scratch
+    TODO i think maybe i could salvage this by just tuning my sorting of bulk-buy chemicals
