@@ -43,13 +43,58 @@ impl RecipeComponent {
     }
 }
 
-pub fn fourteen_a() -> u64 {
-    let recipes = load_recipes("src/inputs/14.txt");
-    5
+fn ore_cost_for_fuel(recipes: &HashMap<String, Recipe>, fuel_quantity: u64) -> u64 {
+    let mut shopping_cart: VecDeque<RecipeComponent> = VecDeque::new();
+    shopping_cart.push_back(RecipeComponent {
+        chemical: "FUEL".to_string(),
+        quantity: fuel_quantity,
+    });
+
+    let mut chemical_bank: HashMap<String, u64> = HashMap::new();
+
+    let mut ore_spent = 0;
+
+    while !shopping_cart.is_empty() {
+        let component = shopping_cart.pop_front().unwrap();
+
+        if component.chemical == "ORE" {
+            ore_spent += component.quantity;
+            continue;
+        }
+
+        let recipe = &recipes[&component.chemical];
+        let desired_output_quantity = component.quantity;
+
+        let bank_entry = chemical_bank.entry(component.chemical).or_insert(0);
+        if *bank_entry >= desired_output_quantity {
+            // We have enough of that chemical lying around already.
+            *bank_entry -= desired_output_quantity;
+        } else {
+            // We don't have enough of that chemical stored, let's make some.
+
+            let missing_amount = desired_output_quantity - *bank_entry;
+
+            let required_num_reactions =
+                (missing_amount as f64 / recipe.output.quantity as f64).ceil() as u64;
+
+            for input in &recipe.inputs {
+                shopping_cart.push_back(RecipeComponent {
+                    chemical: input.chemical.clone(),
+                    quantity: input.quantity * required_num_reactions,
+                });
+            }
+
+            *bank_entry += recipe.output.quantity * required_num_reactions;
+            *bank_entry -= desired_output_quantity;
+        }
+    }
+
+    ore_spent
 }
 
-fn ore_cost_for_fuel(recipes: &HashMap<String, Recipe>, fuel_quantity: u64) -> u64 {
-    5
+pub fn fourteen_a() -> u64 {
+    let recipes = load_recipes("src/inputs/14.txt");
+    ore_cost_for_fuel(&recipes, 1)
 }
 
 fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) -> u64 {
@@ -57,30 +102,21 @@ fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) 
     let mut upper_bound = 10 * lower_bound;
 
     while ore_cost_for_fuel(&recipes, upper_bound) < ONE_TRILLION {
-        dbg!(upper_bound, ore_cost_for_fuel(&recipes, upper_bound));
         lower_bound = upper_bound;
         upper_bound *= 10;
     }
 
     loop {
         let midpoint = (lower_bound + upper_bound) / 2;
-        println!("midpoint is {}", midpoint);
         let cost = ore_cost_for_fuel(&recipes, midpoint);
-        dbg!(cost);
 
         if cost <= ONE_TRILLION && ore_cost_for_fuel(&recipes, midpoint + 1) > ONE_TRILLION {
-            println!(
-                "ding ding ding, cost of one more is {}",
-                ore_cost_for_fuel(&recipes, midpoint + 1)
-            );
             return midpoint;
         }
 
         if cost < ONE_TRILLION {
-            println!("setting lower bound to {}", midpoint);
             lower_bound = midpoint;
         } else {
-            println!("setting upper bound to {}", midpoint);
             upper_bound = midpoint;
         }
     }
@@ -131,6 +167,7 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(fourteen_a(), 158482);
+        assert_eq!(fourteen_b(), 7993831);
     }
 
     #[test]

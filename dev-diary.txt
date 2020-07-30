@@ -1659,3 +1659,11 @@ i have enjoyed this problem less than i had hoped :(
 at least i got to learn fun tree+iter things
 it just sucks to try a ton of different solutions and have them all fail
 oh well!!!!
+
+===
+
+7/30/20
+
+ok i did 14a+b over from scratch with the shopping cart queue approach
+and at long last it works!
+so i will take it.
