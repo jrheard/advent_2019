@@ -1640,3 +1640,14 @@ lol whatever
 i played around with it a bit but like
 i already spent enough time on 14a
 let's move on
+
+oh, i see
+it took me a while to understand what people were doing
+so right now, i have a function that computes the amount of ore required for 1 fuel
+what they're doing is, they're calling that function with different inputs
+until they find the largest input whose output is less than one trillion
+
+that's cool, that's cool
+but so
+i have no idea whether or not my solution will actually work in this scneario
+guess we'll find out!!!!

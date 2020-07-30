@@ -29,7 +29,7 @@ impl Recipe {
 #[derive(PartialEq, Eq, Debug, Hash, Clone)]
 struct RecipeComponent {
     chemical: String,
-    quantity: u32,
+    quantity: u64,
 }
 
 impl RecipeComponent {
@@ -46,12 +46,12 @@ impl RecipeComponent {
 #[derive(Debug, PartialEq)]
 struct Node {
     chemical: String,
-    quantity: u32,
+    quantity: u64,
     children: Vec<Node>,
 }
 
 impl Node {
-    pub fn new(chemical: String, quantity: u32) -> Node {
+    pub fn new(chemical: String, quantity: u64) -> Node {
         Node {
             chemical,
             quantity,
@@ -105,7 +105,7 @@ fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
         .map(move |input_component| {
             let mut child = Node::new(
                 input_component.chemical.clone(),
-                input_component.quantity * required_num_reactions as u32,
+                input_component.quantity * required_num_reactions as u64,
             );
             naively_fill_tree(&mut child, &recipes);
             child
@@ -114,7 +114,7 @@ fn naively_fill_tree(node: &mut Node, recipes: &HashMap<String, Recipe>) {
 }
 
 /// Returns the total `quantity` of `chemical` in the tree represented by `node`.
-fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u32 {
+fn total_quantity_of_chemical_in_tree(node: &Node, chemical: &str) -> u64 {
     node.into_iter()
         .filter(|&child| child.chemical == chemical)
         .map(|child| child.quantity)
@@ -174,7 +174,7 @@ fn collapse_bulk_buy_nodes(
 }
 
 /// Returns the lowest depth at which `chemical` was found in the tree represented by `node`.
-fn lowest_depth_seen(node: &Node, chemical: &str, depth: u32) -> Option<u32> {
+fn lowest_depth_seen(node: &Node, chemical: &str, depth: u64) -> Option<u64> {
     if node.chemical == chemical {
         Some(depth)
     } else if node.children.is_empty() {
@@ -188,8 +188,8 @@ fn lowest_depth_seen(node: &Node, chemical: &str, depth: u32) -> Option<u32> {
 }
 
 /// Returns the minimum amount of ORE required to produce exactly 1 FUEL according to `recipes`.
-fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
-    let mut root = Node::new("FUEL".to_string(), 1);
+fn cost_for_fuel_amount(recipes: &HashMap<String, Recipe>, quantity: u64) -> u64 {
+    let mut root = Node::new("FUEL".to_string(), quantity);
     naively_fill_tree(&mut root, recipes);
 
     let mut bulk_buy_chemicals: Vec<String> = recipes
@@ -210,14 +210,14 @@ fn cost_for_one_fuel(recipes: &HashMap<String, Recipe>) -> u32 {
     total_quantity_of_chemical_in_tree(&root, "ORE")
 }
 
-pub fn fourteen_a() -> u32 {
+pub fn fourteen_a() -> u64 {
     let recipes = load_recipes("src/inputs/14.txt");
-    cost_for_one_fuel(&recipes)
+    cost_for_fuel_amount(&recipes, 1)
 }
 
 struct Nanofactory<'a> {
     chemical_amounts: HashMap<&'a str, u64>,
-    fuel_produced: u32,
+    fuel_produced: u64,
 }
 
 impl<'a> Nanofactory<'a> {
@@ -268,13 +268,13 @@ impl<'a> Nanofactory<'a> {
     }
 }
 
-fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) -> u32 {
+fn num_fuel_producible_with_one_trillion_ore_old(recipes: &HashMap<String, Recipe>) -> u64 {
     let mut chemical_amounts: HashMap<&str, u64> = recipes
         .keys()
         .map(|chemical| (chemical.as_str(), 0))
         .collect();
 
-    chemical_amounts.insert("ORE", ONE_TRILLION);
+    chemical_amounts.insert("ORE", ONE_TRILLION as u64);
 
     let mut factory = Nanofactory {
         chemical_amounts,
@@ -286,11 +286,39 @@ fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) 
     factory.fuel_produced
 }
 
+fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) -> u64 {
+    let mut lower_bound = ONE_TRILLION / cost_for_fuel_amount(&recipes, 1);
+    let mut upper_bound = 10 * lower_bound;
+
+    while cost_for_fuel_amount(&recipes, upper_bound) < ONE_TRILLION {
+        lower_bound = upper_bound;
+        upper_bound *= 10;
+    }
+
+    loop {
+        let midpoint = (lower_bound + upper_bound) / 2;
+        println!("midpoint is {}", midpoint);
+        let cost = cost_for_fuel_amount(&recipes, midpoint);
+        dbg!(cost);
+
+        if cost <= ONE_TRILLION && cost_for_fuel_amount(&recipes, midpoint + 1) > ONE_TRILLION {
+            return midpoint;
+        }
+
+        if cost < ONE_TRILLION {
+            println!("setting lower bound to {}", midpoint);
+            lower_bound = midpoint;
+        } else {
+            println!("setting upper bound to {}", midpoint);
+            upper_bound = midpoint;
+        }
+    }
+}
+
 /// "Given 1 trillion ORE, what is the maximum amount of FUEL you can produce?"
-pub fn fourteen_b() -> u32 {
+pub fn fourteen_b() -> u64 {
     let recipes = load_recipes("src/inputs/14.txt");
-    //num_fuel_producible_with_one_trillion_ore(&recipes)
-    5
+    num_fuel_producible_with_one_trillion_ore(&recipes)
 }
 
 fn load_recipes(filename: &str) -> HashMap<String, Recipe> {
@@ -317,16 +345,16 @@ mod tests {
     #[test]
     fn test_cost_for_one_fuel() {
         let recipes = load_recipes("src/inputs/14_sample_1.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 31);
+        assert_eq!(cost_for_fuel_amount(&recipes, 1), 31);
 
         let recipes = load_recipes("src/inputs/14_sample_2.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 13312);
+        assert_eq!(cost_for_fuel_amount(&recipes, 1), 13312);
 
         let recipes = load_recipes("src/inputs/14_sample_3.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 165);
+        assert_eq!(cost_for_fuel_amount(&recipes, 1), 165);
 
         let recipes = load_recipes("src/inputs/14_sample_4.txt");
-        assert_eq!(cost_for_one_fuel(&recipes), 180697);
+        assert_eq!(cost_for_fuel_amount(&recipes, 1), 180697);
     }
 
     #[test]
@@ -358,10 +386,10 @@ mod tests {
 
     #[test]
     fn test_one_trillion_ore() {
-        //let recipes = load_recipes("src/inputs/14_sample_2.txt");
-        //assert_eq!(
-        //num_fuel_producible_with_one_trillion_ore(&recipes),
-        //82892753
-        //);
+        let recipes = load_recipes("src/inputs/14_sample_2.txt");
+        assert_eq!(
+            num_fuel_producible_with_one_trillion_ore(&recipes),
+            82892753
+        );
     }
 }
