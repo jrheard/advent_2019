@@ -289,7 +289,8 @@ fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) 
 /// "Given 1 trillion ORE, what is the maximum amount of FUEL you can produce?"
 pub fn fourteen_b() -> u32 {
     let recipes = load_recipes("src/inputs/14.txt");
-    num_fuel_producible_with_one_trillion_ore(&recipes)
+    //num_fuel_producible_with_one_trillion_ore(&recipes)
+    5
 }
 
 fn load_recipes(filename: &str) -> HashMap<String, Recipe> {
