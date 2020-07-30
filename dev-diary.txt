@@ -1614,4 +1614,19 @@ track the depth in the tree at which bulk-buy chemicals first appear
 ok that didn't help, oh well
 
 okay, so, let's take a step back and look at the problem statement again from scratch
-    TODO i think maybe i could salvage this by just tuning my sorting of bulk-buy chemicals
+    DONE i think maybe i could salvage this by just tuning my sorting of bulk-buy chemicals
+        yes indeed :))))))
+
+ok! 14b is pretty interesting
+it's a different approach
+you need to "run" these recipes now
+
+i need to make a struct that has a bank of chemicals and buys more as needed
+
+so the interesting question is
+do i give it the naive tree?
+or my fancy collapsed tree?
+i think i give it my fancy collapsed tree
+
+no, never mind, bc my collapsed tree no longer resembles the input tree due to all my collapsing
+i think i have to use the original recipes hashmap

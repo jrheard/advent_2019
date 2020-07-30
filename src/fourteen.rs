@@ -6,7 +6,9 @@ use std::fs;
 static OUTER_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"(.*) => (.*)").unwrap());
 static COMPONENT_RE: Lazy<Regex> = Lazy::new(|| Regex::new(r"([0-9]*) ([A-Z]*)").unwrap());
 
-#[derive(PartialEq, Debug)]
+static ONE_TRILLION: u64 = 1_000_000_000_000;
+
+#[derive(PartialEq, Debug, Clone)]
 struct Recipe {
     inputs: Vec<RecipeComponent>,
     output: RecipeComponent,
@@ -213,6 +215,83 @@ pub fn fourteen_a() -> u32 {
     cost_for_one_fuel(&recipes)
 }
 
+struct Nanofactory<'a> {
+    chemical_amounts: HashMap<&'a str, u64>,
+    fuel_produced: u32,
+}
+
+impl<'a> Nanofactory<'a> {
+    fn produce_one_fuel(&mut self, recipes: &'a HashMap<String, Recipe>) -> bool {
+        if self.perform_recipe("FUEL", 1, recipes) {
+            self.fuel_produced += 1;
+            dbg!(self.fuel_produced);
+            true
+        } else {
+            false
+        }
+    }
+
+    fn perform_recipe(
+        &mut self,
+        chemical: &'a str,
+        quantity: u64,
+        recipes: &'a HashMap<String, Recipe>,
+    ) -> bool {
+        if chemical == "ORE" {
+            if self.chemical_amounts["ORE"] >= quantity {
+                self.chemical_amounts
+                    .entry("ORE")
+                    .and_modify(|amount| *amount -= quantity);
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+        let recipe = &recipes[chemical];
+
+        for component in &recipe.inputs {
+            if !self.perform_recipe(&component.chemical, component.quantity as u64, recipes) {
+                return false;
+            } else {
+                self.chemical_amounts
+                    .entry(&component.chemical)
+                    .and_modify(|amount| *amount -= component.quantity as u64);
+            }
+        }
+
+        self.chemical_amounts
+            .entry(&chemical)
+            .and_modify(|amount| *amount += quantity);
+
+        true
+    }
+}
+
+fn num_fuel_producible_with_one_trillion_ore(recipes: &HashMap<String, Recipe>) -> u32 {
+    let mut chemical_amounts: HashMap<&str, u64> = recipes
+        .keys()
+        .map(|chemical| (chemical.as_str(), 0))
+        .collect();
+
+    chemical_amounts.insert("ORE", ONE_TRILLION);
+
+    let mut factory = Nanofactory {
+        chemical_amounts,
+        fuel_produced: 0,
+    };
+
+    while factory.produce_one_fuel(&recipes) {}
+
+    factory.fuel_produced
+}
+
+/// "Given 1 trillion ORE, what is the maximum amount of FUEL you can produce?"
+pub fn fourteen_b() -> u32 {
+    let recipes = load_recipes("src/inputs/14.txt");
+    num_fuel_producible_with_one_trillion_ore(&recipes)
+}
+
 fn load_recipes(filename: &str) -> HashMap<String, Recipe> {
     let contents = fs::read_to_string(filename).unwrap();
     contents
@@ -251,7 +330,7 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        assert_eq!(fourteen_a(), 0);
+        assert_eq!(fourteen_a(), 158482);
     }
 
     #[test]
@@ -274,5 +353,14 @@ mod tests {
                 &root.children[1].children[0]
             ]
         );
+    }
+
+    #[test]
+    fn test_one_trillion_ore() {
+        //let recipes = load_recipes("src/inputs/14_sample_2.txt");
+        //assert_eq!(
+        //num_fuel_producible_with_one_trillion_ore(&recipes),
+        //82892753
+        //);
     }
 }
