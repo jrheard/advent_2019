@@ -1630,3 +1630,13 @@ i think i give it my fancy collapsed tree
 
 no, never mind, bc my collapsed tree no longer resembles the input tree due to all my collapsing
 i think i have to use the original recipes hashmap
+
+ok i'm pretty stumped on 14b
+i poked around online
+one thing i saw was that peoples' 14a solutions tended to do a single pass and just keep track of leftover chemicals as you go
+that seems like a good idea
+let's play around with that and see if it simplifies things for 14a
+lol whatever
+i played around with it a bit but like
+i already spent enough time on 14a
+let's move on
