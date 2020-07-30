@@ -83,6 +83,7 @@ impl Game {
         }
     }
 
+    #[cfg(not(tarpaulin_include))]
     fn _draw_to_screen(&self) {
         for (i, tile) in self.state.iter().enumerate() {
             if i > 0 && i % WIDTH == 0 {

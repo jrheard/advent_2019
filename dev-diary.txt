@@ -363,7 +363,7 @@ still a few more done to resolve
 
 finished up 5b!
 
-TODO how can we associate operations' code more closely with their structs? will traits get involved here?
+DONE how can we associate operations' code more closely with their structs? will traits get involved here?
 
 DONE try out a logging library
     https://fasterthanli.me/articles/getting-in-and-out-of-trouble-with-rust-futures has an example
@@ -510,7 +510,7 @@ i think that would work.
 
 let me reread the prompt a few more times to make sure i'm interpreting it correctly before i go through all this work
 
-TODO also have `run_program` take some sort of, like, `halt_level` input
+DONE also have `run_program` take some sort of, like, `halt_level` input
 that defaults to `EXIT`
 but that can also be set to `OUTPUT`
 
@@ -852,7 +852,7 @@ ok nine looks interesting!
 relative base is hopefully straightforward
 DONE implement the write_arguments() portion of it
 
-TODO:
+DONE:
     The computer's available memory should be much larger than the initial
     program. Memory beyond the initial program starts with the value 0 and can be
     read or written like any other memory.
@@ -876,9 +876,9 @@ output 109
 
 ok cool i ended up figuring out the issue - i hadn't fully implemented relative-base behavior in write_arguments()
 
-TODO - still having an issue with the 9a program in test mode
-TODO i think that the issue is my messed-up if-statement at the end of write_arguments
-TODO augh revisit that
+DONE - still having an issue with the 9a program in test mode
+DONE i think that the issue is my messed-up if-statement at the end of write_arguments
+DONE augh revisit that
 
 ===
 
@@ -926,9 +926,9 @@ so let's say we have an 8x9 grid and we're at (4, 4)
 
 
 then we look at each outermost element in the grid, one by one
-    TODO i'll want a vec of their coordinates
+    DONE i'll want a vec of their coordinates
 and for each one, we'll calculate its slope
-    TODO how do we reduce slopes?
+    DONE how do we reduce slopes?
         eg we want (1, 0) instead of (3, 0)
         there's a gcd crate
         and the gcd of 0 and k is k
@@ -941,8 +941,8 @@ etc
 
 and so we end up with an asteroid at position (x, y)
 and a SET of slopes
-    TODO: note - not a list!
-    TODO figure out how to use the set as a reusable buffer
+    DONE: note - not a list!
+    DONE figure out how to use the set as a reusable buffer
 
 and for each slope,
     for i in 0..,
@@ -1006,7 +1006,7 @@ it's (-3, 2)
 and so there's seriously no border position with that slope?
 yeah there isn't
 so how do we know to check for that slope?
-    TODO figure this out
+    DONE figure this out
 
 here's an idea
 for each asteroid
@@ -1040,7 +1040,7 @@ i think i should just reuse my iterator approach from earlier
 ok so i got the approach down into code
 but it's reporting too many asteroids
 
-TODO add prints showing what we see from (4, 0)
+DONE add prints showing what we see from (4, 0)
 
 ok so from 4, 0 we see:
 
@@ -1191,7 +1191,7 @@ fn angle(x: i32, y: i32) -> f64 {
 had to transform negative angles
 anywayyyyyy
 
-now we can make a nice ordered vec of buckets (TODO vecdeques for buckets?)
+now we can make a nice ordered vec of buckets (DONE vecdeques for buckets?)
 and just visit them in order, popping off the first item from each bucket if it still exists
 
 ok i think the way to do this is to first transform the vec of asteroids into a vec of ((x, y), angle) tuples
@@ -1310,7 +1310,7 @@ what if instead, Computer has a State sub-struct
 
 ok that worked
 computer's api is kinda gross rn, because all of my programs reach into its state to manipulate its input and output
-TODO fix that up
+DONE fix that up
 
 but so anyway here's 11a's perf!
 
@@ -1583,13 +1583,13 @@ so i have another approach, and it solves 14_sample_2
 but it's hideous, because i don't know how to do trees in rust
 and it fails on the actual puzzle input
 
-TODO try it on one of the other samples i haven't downloaded yet
-TODO figure out how to clean it up
+DONE try it on one of the other samples i haven't downloaded yet
+DONE figure out how to clean it up
     it's so bad
 
-TODO try out #[cfg(not(tarpaulin_include))] to hide 13's unused draw function from codecov
+DONE try out #[cfg(not(tarpaulin_include))] to hide 13's unused draw function from codecov
 
-TODO also track depth first seen in the initial tree
+DONE also track depth first seen in the initial tree
 and then walk the chemicals in that order
 
 ===
