@@ -9,6 +9,7 @@ mod nine;
 mod one;
 mod seven;
 mod six;
+mod sixteen;
 mod ten;
 pub mod thirteen;
 mod three;
@@ -47,6 +48,7 @@ pub fn run_all_solutions() {
     println!("14b: {}", fourteen::fourteen_b());
     println!("15a: {}", fifteen::fifteen_a());
     println!("15b: {}", fifteen::fifteen_b());
+    println!("16a: {}", sixteen::sixteen_a());
 }
 
 #[cfg(test)]
