@@ -39,6 +39,15 @@ impl Robot {
         };
     }
 
+    pub fn turn_right(&mut self) {
+        self.direction = match self.direction {
+            Direction::North => Direction::East,
+            Direction::West => Direction::North,
+            Direction::South => Direction::West,
+            Direction::East => Direction::South,
+        };
+    }
+
     pub fn walk_forward(&mut self) -> i64 {
         self.computer
             .push_input(direction_to_input_command(self.direction));
@@ -66,6 +75,7 @@ impl Robot {
 enum Space {
     Wall,
     Empty,
+    Goal,
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -84,6 +94,21 @@ fn direction_to_input_command(direction: Direction) -> i64 {
         Direction::West => 3,
         Direction::East => 4,
     }
+}
+
+fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
+    let output = robot.walk_forward();
+
+    let (k, v) = match output {
+        0 => (robot.one_position_ahead(), Space::Wall),
+        1 => (robot.position, Space::Empty),
+        2 => (robot.position, Space::Goal),
+        _ => unreachable!(),
+    };
+
+    map.insert(k, v);
+
+    v
 }
 
 fn explore_by_following_walls(robot: &mut Robot, map: &mut ShipMap) {
@@ -105,30 +130,41 @@ fn explore_by_following_walls(robot: &mut Robot, map: &mut ShipMap) {
             directions_unexplored_from_origin.retain(|&direction| direction != robot.direction);
         }
 
-        let output = robot.walk_forward();
+        let encountered_space = navigate_one_space_forward(robot, map);
 
-        if output == 0 {
-            map.insert(robot.one_position_ahead(), Space::Wall);
-            robot.turn_left();
-        } else {
-            map.insert(robot.position, Space::Empty);
-        }
+        match encountered_space {
+            Space::Wall => {
+                robot.turn_left();
+            }
+            Space::Empty => {
+                robot.turn_right();
+            }
+            // TODO maybe keep going so we can fully map out ship
+            //Space::Goal => break,
+            Space::Goal => (),
+        };
 
-        print_map(&map);
+        print_map(map, robot);
+        println!();
     }
 }
 
-fn print_map(map: &ShipMap) {
+fn print_map(map: &ShipMap, robot: &Robot) {
     let (min_x, max_x) = map.keys().map(|&(x, _)| x).minmax().into_option().unwrap();
     let (min_y, max_y) = map.keys().map(|&(_, y)| y).minmax().into_option().unwrap();
 
     for y in (min_y..(max_y + 1)).rev() {
         for x in min_x..(max_x + 1) {
-            if let Some(&Space::Wall) = map.get(&(x, y)) {
-                print!("#");
+            if robot.position == (x, y) {
+                print!("R");
             } else {
-                print!(".");
-            };
+                match map.get(&(x, y)) {
+                    Some(&Space::Wall) => print!("#"),
+                    Some(&Space::Empty) => print!("."),
+                    Some(&Space::Goal) => print!("$"),
+                    None => print!(" "),
+                }
+            }
         }
         println!();
     }
@@ -141,5 +177,17 @@ pub fn fifteen_a() -> u32 {
 
     explore_by_following_walls(&mut robot, &mut map);
 
+    dbg!(robot.position, map[&robot.position]);
+
     5
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_solutions() {
+        fifteen_a();
+    }
 }

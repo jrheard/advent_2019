@@ -1707,3 +1707,14 @@ i think phase 1 is over if:
     * you return to where you started, AND
     * all of the spaces around the start position have been explored
         * cardinal directions for now, not diagonals
+
+ok so here's something interesting
+my robot immediately got stuck in this hallway
+
+ . #
+#R..#
+ #
+
+it paces back and forth between these two corners, because i'm just telling it to turn left every time it hits a wall
+that turn-left strategy isn't about when you _hit_ a wall, it's about when you're able to _see_ and _hug_ a wall
+let's come up with something better
