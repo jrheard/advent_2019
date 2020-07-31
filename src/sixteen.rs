@@ -1,23 +1,13 @@
-use itertools::Itertools;
-
-use std::iter;
-/// "FFT operates in repeated phases. In each phase, a new list is constructed
-/// with the same length as the input list. This new list is also used as the
-/// input for the next phase.
-
-/// Each element in the new list is built by multiplying every value in the input
-/// list by a value in a repeating pattern and then adding up the results. So, if
-/// the input list were 9, 8, 7, 6, 5 and the pattern for a given element were 1,
-/// 2, 3, the result would be 9*1 + 8*2 + 7*3 + 6*1 + 5*2 (with each input
-/// element on the left and each value in the repeating pattern on the right of
-/// each multiplication). Then, only the ones digit is kept: 38 becomes 8, -17
-/// becomes 7, and so on."
-
-// ok this is going to maybe be fine or maybe be insane
-// we'll see
+use std::fs;
 
 static BASE_PATTERN: [i32; 4] = [0, 1, 0, -1];
 
+/// "repeat each value in the pattern a number of times equal to the position in
+/// the output list being considered. Repeat once for the first element, twice
+/// for the second element, three times for the third element, and so on. So, if
+/// the third element of the output list is being calculated, repeating the
+/// values would produce: 0, 0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1.
+/// When applying the pattern, skip the very first value exactly once."
 fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
     BASE_PATTERN
         .iter()
@@ -26,6 +16,13 @@ fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
         .skip(1)
 }
 
+/// "Each element in the new list is built by multiplying every value in the input
+/// list by a value in a repeating pattern and then adding up the results. So, if
+/// the input list were 9, 8, 7, 6, 5 and the pattern for a given element were 1,
+/// 2, 3, the result would be 9*1 + 8*2 + 7*3 + 6*1 + 5*2 (with each input
+/// element on the left and each value in the repeating pattern on the right of
+/// each multiplication). Then, only the ones digit is kept: 38 becomes 8, -17
+/// becomes 7, and so on."
 fn fft_one_phase(numbers: &mut Vec<i32>) {
     *numbers = (0..numbers.len())
         .map(|i| {
@@ -43,6 +40,9 @@ fn fft_one_phase(numbers: &mut Vec<i32>) {
         .collect();
 }
 
+/// "FFT operates in repeated phases. In each phase, a new list is constructed
+/// with the same length as the input list. This new list is also used as the
+/// input for the next phase."
 fn run_fft(numbers: &mut Vec<i32>, num_times: usize) {
     for _ in 0..num_times {
         fft_one_phase(numbers);
@@ -56,8 +56,24 @@ fn parse_int_str(int_str: &str) -> Vec<i32> {
         .collect()
 }
 
-pub fn sixteen_a() -> u32 {
-    5
+fn number_slice_into_number(numbers: &[i32]) -> u64 {
+    numbers
+        .iter()
+        .rev()
+        .enumerate()
+        .fold(0, |acc, (i, &number)| {
+            acc + number as u64 * ((10.0 as f64).powi(i as i32) as u64)
+        })
+}
+
+pub fn sixteen_a() -> u64 {
+    let contents = fs::read_to_string("src/inputs/16.txt").unwrap();
+    let number_string = contents.lines().next().unwrap();
+
+    let mut numbers = parse_int_str(number_string);
+    run_fft(&mut numbers, 100);
+
+    number_slice_into_number(&numbers[..8])
 }
 
 #[cfg(test)]
@@ -113,5 +129,18 @@ mod tests {
         let mut numbers = parse_int_str("69317163492948606335995924319873");
         run_fft(&mut numbers, 100);
         assert_eq!(&numbers[..8], [5, 2, 4, 3, 2, 1, 3, 3]);
+    }
+
+    #[test]
+    fn test_number_slice_into_number() {
+        assert_eq!(
+            number_slice_into_number(&[5, 2, 4, 3, 2, 1, 3, 3]),
+            52432133
+        )
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(sixteen_a(), 69549155);
     }
 }

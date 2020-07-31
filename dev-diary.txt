@@ -1752,5 +1752,8 @@ hrm, nvm, that wouldn't work bc flood_fill numbers will obviously be larger than
 ok fft time
 bit apprehensive
 
+ok sick, i got 16a working, lots of fun with iterators
+pretty slow tho!
 
 is it possible to automatically skip the elements corresponding to zeroes in the pattern?
+
