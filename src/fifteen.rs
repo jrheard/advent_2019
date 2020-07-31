@@ -206,19 +206,34 @@ fn flood_fill(
     }
 }
 
-pub fn fifteen_a() -> u32 {
+fn fill_out_map_and_distances() -> (ShipMap, Position) {
     let mut map: ShipMap = HashMap::new();
     let mut robot = Robot::new("src/inputs/15.txt");
     map.insert(robot.position, Space::Empty);
 
     let goal_position = explore_ship(&mut robot, &mut map).unwrap();
 
+    (map, goal_position)
+}
+
+pub fn fifteen_a() -> u32 {
+    let (map, goal_position) = fill_out_map_and_distances();
+
     let mut distances: HashMap<Position, u32> = HashMap::new();
     distances.insert(ORIGIN, 0);
-
     flood_fill(&mut distances, ORIGIN, 0, &map);
 
     distances[&goal_position]
+}
+
+pub fn fifteen_b() -> u32 {
+    let (map, goal_position) = fill_out_map_and_distances();
+
+    let mut distances: HashMap<Position, u32> = HashMap::new();
+    distances.insert(goal_position, 0);
+    flood_fill(&mut distances, goal_position, 0, &map);
+
+    *distances.values().max().unwrap()
 }
 
 #[cfg(test)]
@@ -228,5 +243,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(fifteen_a(), 282);
+        assert_eq!(fifteen_b(), 286);
     }
 }
