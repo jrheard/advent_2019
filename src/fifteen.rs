@@ -1,5 +1,6 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
+use itertools::Itertools;
 use std::collections::HashMap;
 
 static ORIGIN: (i32, i32) = (0, 0);
@@ -16,7 +17,7 @@ struct Robot {
 impl Robot {
     pub fn new(filename: &str) -> Robot {
         let memory = computer::load_program(filename);
-        let mut computer = Computer::new(memory);
+        let computer = Computer::new(memory);
 
         Robot {
             position: ORIGIN,
@@ -29,8 +30,8 @@ impl Robot {
         self.direction = direction;
     }
 
-    pub fn turn_left(&mut self, direction: Direction) {
-        self.direction = match direction {
+    pub fn turn_left(&mut self) {
+        self.direction = match self.direction {
             Direction::North => Direction::West,
             Direction::West => Direction::South,
             Direction::South => Direction::East,
@@ -42,7 +43,22 @@ impl Robot {
         self.computer
             .push_input(direction_to_input_command(self.direction));
         self.computer.run(HaltReason::Output);
-        self.computer.pop_output().unwrap()
+        let output = self.computer.pop_output().unwrap();
+
+        if output == 1 || output == 2 {
+            self.position = self.one_position_ahead();
+        }
+
+        output
+    }
+
+    pub fn one_position_ahead(&self) -> Position {
+        match self.direction {
+            Direction::North => (self.position.0, self.position.1 + 1),
+            Direction::East => (self.position.0 + 1, self.position.1),
+            Direction::South => (self.position.0, self.position.1 - 1),
+            Direction::West => (self.position.0 - 1, self.position.1),
+        }
     }
 }
 
@@ -70,7 +86,7 @@ fn direction_to_input_command(direction: Direction) -> i64 {
     }
 }
 
-fn explore_by_following_walls(robot: &mut Robot, computer: &mut Computer, map: &mut ShipMap) {
+fn explore_by_following_walls(robot: &mut Robot, map: &mut ShipMap) {
     let mut directions_unexplored_from_origin = vec![
         Direction::North,
         Direction::East,
@@ -81,21 +97,49 @@ fn explore_by_following_walls(robot: &mut Robot, computer: &mut Computer, map: &
     robot.set_direction(Direction::North);
 
     loop {
+        if robot.position == ORIGIN {
+            if directions_unexplored_from_origin.is_empty() {
+                break;
+            }
+
+            directions_unexplored_from_origin.retain(|&direction| direction != robot.direction);
+        }
+
         let output = robot.walk_forward();
 
         if output == 0 {
-            robot.turn_left(direction);
+            map.insert(robot.one_position_ahead(), Space::Wall);
+            robot.turn_left();
+        } else {
+            map.insert(robot.position, Space::Empty);
         }
 
-        // TODO pausing development here, pick up later
+        print_map(&map);
+    }
+}
+
+fn print_map(map: &ShipMap) {
+    let (min_x, max_x) = map.keys().map(|&(x, _)| x).minmax().into_option().unwrap();
+    let (min_y, max_y) = map.keys().map(|&(_, y)| y).minmax().into_option().unwrap();
+
+    for y in (min_y..(max_y + 1)).rev() {
+        for x in min_x..(max_x + 1) {
+            if let Some(&Space::Wall) = map.get(&(x, y)) {
+                print!("#");
+            } else {
+                print!(".");
+            };
+        }
+        println!();
     }
 }
 
 pub fn fifteen_a() -> u32 {
     let mut map: ShipMap = HashMap::new();
     let mut robot = Robot::new("src/inputs/15.txt");
+    map.insert(robot.position, Space::Empty);
 
-    explore_by_following_walls(&mut robot, &mut computer, &mut map);
+    explore_by_following_walls(&mut robot, &mut map);
 
     5
 }
