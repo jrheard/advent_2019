@@ -9,17 +9,41 @@ type ShipMap = HashMap<Position, Space>;
 
 struct Robot {
     position: Position,
+    computer: Computer,
+    direction: Direction,
 }
 
 impl Robot {
-    pub fn new() -> Robot {
-        Robot { position: ORIGIN }
+    pub fn new(filename: &str) -> Robot {
+        let memory = computer::load_program(filename);
+        let mut computer = Computer::new(memory);
+
+        Robot {
+            position: ORIGIN,
+            direction: Direction::North,
+            computer,
+        }
     }
 
-    // TODO i think it'd be worth putting computer on robot
-    // and having robot also own direction
-    // and have robot have a turn_left() method
-    // and a walk_forward() method
+    pub fn set_direction(&mut self, direction: Direction) {
+        self.direction = direction;
+    }
+
+    pub fn turn_left(&mut self, direction: Direction) {
+        self.direction = match direction {
+            Direction::North => Direction::West,
+            Direction::West => Direction::South,
+            Direction::South => Direction::East,
+            Direction::East => Direction::North,
+        };
+    }
+
+    pub fn walk_forward(&mut self) -> i64 {
+        self.computer
+            .push_input(direction_to_input_command(self.direction));
+        self.computer.run(HaltReason::Output);
+        self.computer.pop_output().unwrap()
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -46,51 +70,30 @@ fn direction_to_input_command(direction: Direction) -> i64 {
     }
 }
 
-fn turn_left(direction: Direction) -> Direction {
-    match direction {
-        Direction::North => Direction::West,
-        Direction::West => Direction::South,
-        Direction::South => Direction::East,
-        Direction::East => Direction::North,
-    }
-}
-
 fn explore_by_following_walls(robot: &mut Robot, computer: &mut Computer, map: &mut ShipMap) {
-    let mut directions_explored_from_origin = vec![
+    let mut directions_unexplored_from_origin = vec![
         Direction::North,
         Direction::East,
         Direction::South,
         Direction::West,
     ];
 
-    let mut direction = Direction::North;
+    robot.set_direction(Direction::North);
 
     loop {
-        computer.push_input(direction_to_input_command(direction));
-        computer.run(HaltReason::Output);
+        let output = robot.walk_forward();
 
-        // "The repair droid can reply with any of the following status codes:
-        // 0: The repair droid hit a wall. Its position has not changed.
-        // 1: The repair droid has moved one step in the requested direction.
-        // 2: The repair droid has moved one step in the requested direction;
-        //     its new position is the location of the oxygen system."
-        let output = computer.pop_output().unwrap();
-
-        match output {
-            0 => direction = turn_left(direction),
-            1 => {}
-            2 => {}
-            _ => panic!("unexpected droid output {}", output),
+        if output == 0 {
+            robot.turn_left(direction);
         }
+
+        // TODO pausing development here, pick up later
     }
 }
 
 pub fn fifteen_a() -> u32 {
-    let memory = computer::load_program("src/inputs/15.txt");
-    let mut computer = Computer::new(memory);
-
     let mut map: ShipMap = HashMap::new();
-    let mut robot = Robot::new();
+    let mut robot = Robot::new("src/inputs/15.txt");
 
     explore_by_following_walls(&mut robot, &mut computer, &mut map);
 
