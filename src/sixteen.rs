@@ -23,8 +23,8 @@ fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
 /// element on the left and each value in the repeating pattern on the right of
 /// each multiplication). Then, only the ones digit is kept: 38 becomes 8, -17
 /// becomes 7, and so on."
-fn fft_one_phase(numbers: &mut Vec<i32>) {
-    *numbers = (0..numbers.len())
+fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
+    (0..numbers.len())
         .map(|i| {
             let pattern = pattern_for_position(i);
 
@@ -37,16 +37,18 @@ fn fft_one_phase(numbers: &mut Vec<i32>) {
                 .abs()
                 % 10
         })
-        .collect();
+        .collect()
 }
 
 /// "FFT operates in repeated phases. In each phase, a new list is constructed
 /// with the same length as the input list. This new list is also used as the
 /// input for the next phase."
-fn run_fft(numbers: &mut Vec<i32>, num_times: usize) {
+fn run_fft(numbers: &[i32], num_times: usize) -> Vec<i32> {
+    let mut out = numbers.to_vec();
     for _ in 0..num_times {
-        fft_one_phase(numbers);
+        out = fft_one_phase(&out);
     }
+    out
 }
 
 fn parse_int_str(int_str: &str) -> Vec<i32> {
@@ -71,7 +73,7 @@ pub fn sixteen_a() -> u64 {
     let number_string = contents.lines().next().unwrap();
 
     let mut numbers = parse_int_str(number_string);
-    run_fft(&mut numbers, 100);
+    numbers = run_fft(&numbers, 100);
 
     number_slice_into_number(&numbers[..8])
 }
@@ -96,16 +98,16 @@ mod tests {
     fn test_fft_one_phase() {
         let mut numbers = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
-        fft_one_phase(&mut numbers);
+        numbers = fft_one_phase(&numbers);
         assert_eq!(numbers, vec![4, 8, 2, 2, 6, 1, 5, 8]);
 
-        fft_one_phase(&mut numbers);
+        numbers = fft_one_phase(&numbers);
         assert_eq!(numbers, vec![3, 4, 0, 4, 0, 4, 3, 8]);
 
-        fft_one_phase(&mut numbers);
+        numbers = fft_one_phase(&numbers);
         assert_eq!(numbers, vec![0, 3, 4, 1, 5, 5, 1, 8]);
 
-        fft_one_phase(&mut numbers);
+        numbers = fft_one_phase(&numbers);
         assert_eq!(numbers, vec![0, 1, 0, 2, 9, 4, 9, 8]);
     }
 
@@ -123,11 +125,11 @@ mod tests {
     #[test]
     fn test_run_fft() {
         let mut numbers = parse_int_str("80871224585914546619083218645595");
-        run_fft(&mut numbers, 100);
+        numbers = run_fft(&numbers, 100);
         assert_eq!(&numbers[..8], [2, 4, 1, 7, 6, 1, 7, 6]);
 
         let mut numbers = parse_int_str("69317163492948606335995924319873");
-        run_fft(&mut numbers, 100);
+        numbers = run_fft(&numbers, 100);
         assert_eq!(&numbers[..8], [5, 2, 4, 3, 2, 1, 3, 3]);
     }
 

@@ -1757,3 +1757,7 @@ pretty slow tho!
 
 is it possible to automatically skip the elements corresponding to zeroes in the pattern?
 
+TODO rewrite inner part of one_pass fn to be a loop instead of an iterator
+
+here's what perf looks like right now for 16a
+individual              time:   [114.04 ms 116.19 ms 118.87 ms]
