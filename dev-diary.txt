@@ -1741,3 +1741,6 @@ what if instead i just explore the whole level and _then_ do a flood fill _mysel
 let's see if i can explore the whole level
 
 ok yeah i totally can, it immediately exits in about 3100 steps
+
+what if i modified print_map fn to use flood_fill numbers too?
+hrm, nvm, that wouldn't work bc flood_fill numbers will obviously be larger than one tile!!

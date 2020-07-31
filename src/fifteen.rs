@@ -8,6 +8,21 @@ static ORIGIN: (i32, i32) = (0, 0);
 type Position = (i32, i32);
 type ShipMap = HashMap<Position, Space>;
 
+#[derive(Debug, Copy, Clone, PartialEq)]
+enum Space {
+    Wall,
+    Empty,
+    Goal,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq)]
+enum Direction {
+    North,
+    South,
+    West,
+    East,
+}
+
 struct Robot {
     position: Position,
     computer: Computer,
@@ -55,35 +70,20 @@ impl Robot {
         let output = self.computer.pop_output().unwrap();
 
         if output == 1 || output == 2 {
-            self.position = self.one_position_ahead();
+            self.position = one_position_ahead(&self.direction, &self.position);
         }
 
         output
     }
+}
 
-    pub fn one_position_ahead(&self) -> Position {
-        match self.direction {
-            Direction::North => (self.position.0, self.position.1 + 1),
-            Direction::East => (self.position.0 + 1, self.position.1),
-            Direction::South => (self.position.0, self.position.1 - 1),
-            Direction::West => (self.position.0 - 1, self.position.1),
-        }
+fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
+    match direction {
+        Direction::North => (position.0, position.1 + 1),
+        Direction::East => (position.0 + 1, position.1),
+        Direction::South => (position.0, position.1 - 1),
+        Direction::West => (position.0 - 1, position.1),
     }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-enum Space {
-    Wall,
-    Empty,
-    Goal,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq)]
-enum Direction {
-    North,
-    South,
-    West,
-    East,
 }
 
 /// "Only four movement commands are understood: north (1), south (2), west (3), and east (4)."
@@ -100,7 +100,10 @@ fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
     let output = robot.walk_forward();
 
     let (k, v) = match output {
-        0 => (robot.one_position_ahead(), Space::Wall),
+        0 => (
+            one_position_ahead(&robot.direction, &robot.position),
+            Space::Wall,
+        ),
         1 => (robot.position, Space::Empty),
         2 => (robot.position, Space::Goal),
         _ => unreachable!(),
@@ -111,7 +114,7 @@ fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
     v
 }
 
-fn explore_ship(robot: &mut Robot, map: &mut ShipMap) {
+fn explore_ship(robot: &mut Robot, map: &mut ShipMap) -> Option<(i32, i32)> {
     let mut directions_unexplored_from_origin = vec![
         Direction::North,
         Direction::East,
@@ -120,6 +123,8 @@ fn explore_ship(robot: &mut Robot, map: &mut ShipMap) {
     ];
 
     robot.set_direction(Direction::North);
+
+    let mut goal_position = None;
 
     loop {
         if robot.position == ORIGIN {
@@ -139,14 +144,13 @@ fn explore_ship(robot: &mut Robot, map: &mut ShipMap) {
             Space::Empty => {
                 robot.turn_right();
             }
-            // TODO maybe keep going so we can fully map out ship
-            //Space::Goal => break,
-            Space::Goal => (),
+            Space::Goal => {
+                goal_position = Some(robot.position);
+            }
         };
-
-        //print_map(map, robot);
-        //println!();
     }
+
+    goal_position
 }
 
 #[cfg(not(tarpaulin_include))]
@@ -171,16 +175,50 @@ fn _print_map(map: &ShipMap, robot: &Robot) {
     }
 }
 
+fn flood_fill(
+    distances: &mut HashMap<Position, u32>,
+    position: Position,
+    distance: u32,
+    map: &ShipMap,
+) {
+    for direction in [
+        Direction::North,
+        Direction::East,
+        Direction::South,
+        Direction::West,
+    ]
+    .iter()
+    {
+        let position_ahead = one_position_ahead(direction, &position);
+
+        if distances.contains_key(&position_ahead) {
+            continue;
+        }
+
+        match map.get(&position_ahead) {
+            None | Some(Space::Wall) => (),
+            _ => {
+                distances.insert(position_ahead, distance + 1);
+
+                flood_fill(distances, position_ahead, distance + 1, map);
+            }
+        }
+    }
+}
+
 pub fn fifteen_a() -> u32 {
     let mut map: ShipMap = HashMap::new();
     let mut robot = Robot::new("src/inputs/15.txt");
     map.insert(robot.position, Space::Empty);
 
-    explore_ship(&mut robot, &mut map);
+    let goal_position = explore_ship(&mut robot, &mut map).unwrap();
 
-    dbg!(robot.position, map[&robot.position]);
+    let mut distances: HashMap<Position, u32> = HashMap::new();
+    distances.insert(ORIGIN, 0);
 
-    5
+    flood_fill(&mut distances, ORIGIN, 0, &map);
+
+    distances[&goal_position]
 }
 
 #[cfg(test)]
@@ -189,6 +227,6 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        fifteen_a();
+        assert_eq!(fifteen_a(), 282);
     }
 }
