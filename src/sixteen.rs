@@ -1,5 +1,6 @@
 use itertools::Itertools;
 
+use std::iter;
 /// "FFT operates in repeated phases. In each phase, a new list is constructed
 /// with the same length as the input list. This new list is also used as the
 /// input for the next phase.
@@ -25,8 +26,8 @@ fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
         .skip(1)
 }
 
-fn fft_one_phase(numbers: Vec<i32>) -> Vec<i32> {
-    (0..numbers.len())
+fn fft_one_phase(numbers: &mut Vec<i32>) {
+    *numbers = (0..numbers.len())
         .map(|i| {
             let pattern = pattern_for_position(i);
 
@@ -39,6 +40,19 @@ fn fft_one_phase(numbers: Vec<i32>) -> Vec<i32> {
                 .abs()
                 % 10
         })
+        .collect();
+}
+
+fn run_fft(numbers: &mut Vec<i32>, num_times: usize) {
+    for _ in 0..num_times {
+        fft_one_phase(numbers);
+    }
+}
+
+fn parse_int_str(int_str: &str) -> Vec<i32> {
+    int_str
+        .chars()
+        .map(|x| x.to_digit(10).unwrap() as i32)
         .collect()
 }
 
@@ -64,21 +78,40 @@ mod tests {
 
     #[test]
     fn test_fft_one_phase() {
+        let mut numbers = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        fft_one_phase(&mut numbers);
+        assert_eq!(numbers, vec![4, 8, 2, 2, 6, 1, 5, 8]);
+
+        fft_one_phase(&mut numbers);
+        assert_eq!(numbers, vec![3, 4, 0, 4, 0, 4, 3, 8]);
+
+        fft_one_phase(&mut numbers);
+        assert_eq!(numbers, vec![0, 3, 4, 1, 5, 5, 1, 8]);
+
+        fft_one_phase(&mut numbers);
+        assert_eq!(numbers, vec![0, 1, 0, 2, 9, 4, 9, 8]);
+    }
+
+    #[test]
+    fn test_parse_int_str() {
         assert_eq!(
-            fft_one_phase(vec![1, 2, 3, 4, 5, 6, 7, 8]),
-            vec![4, 8, 2, 2, 6, 1, 5, 8]
+            parse_int_str("80871224585914546619083218645595"),
+            vec![
+                8, 0, 8, 7, 1, 2, 2, 4, 5, 8, 5, 9, 1, 4, 5, 4, 6, 6, 1, 9, 0, 8, 3, 2, 1, 8, 6, 4,
+                5, 5, 9, 5
+            ]
         );
-        assert_eq!(
-            fft_one_phase(vec![4, 8, 2, 2, 6, 1, 5, 8]),
-            vec![3, 4, 0, 4, 0, 4, 3, 8]
-        );
-        assert_eq!(
-            fft_one_phase(vec![3, 4, 0, 4, 0, 4, 3, 8]),
-            vec![0, 3, 4, 1, 5, 5, 1, 8]
-        );
-        assert_eq!(
-            fft_one_phase(vec![0, 3, 4, 1, 5, 5, 1, 8]),
-            vec![0, 1, 0, 2, 9, 4, 9, 8]
-        );
+    }
+
+    #[test]
+    fn test_run_fft() {
+        let mut numbers = parse_int_str("80871224585914546619083218645595");
+        run_fft(&mut numbers, 100);
+        assert_eq!(&numbers[..8], [2, 4, 1, 7, 6, 1, 7, 6]);
+
+        let mut numbers = parse_int_str("69317163492948606335995924319873");
+        run_fft(&mut numbers, 100);
+        assert_eq!(&numbers[..8], [5, 2, 4, 3, 2, 1, 3, 3]);
     }
 }
