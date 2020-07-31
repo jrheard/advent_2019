@@ -46,6 +46,7 @@ pub fn run_all_solutions() {
     println!("14a: {}", fourteen::fourteen_a());
     println!("14b: {}", fourteen::fourteen_b());
     println!("15a: {}", fifteen::fifteen_a());
+    println!("15b: {}", fifteen::fifteen_b());
 }
 
 #[cfg(test)]

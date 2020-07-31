@@ -23,6 +23,7 @@ enum Direction {
     East,
 }
 
+/// A remotely-operated repair droid.
 struct Robot {
     position: Position,
     computer: Computer,
@@ -41,10 +42,7 @@ impl Robot {
         }
     }
 
-    pub fn set_direction(&mut self, direction: Direction) {
-        self.direction = direction;
-    }
-
+    /// Turns the robot 90 degrees to the left.
     pub fn turn_left(&mut self) {
         self.direction = match self.direction {
             Direction::North => Direction::West,
@@ -54,6 +52,7 @@ impl Robot {
         };
     }
 
+    /// Turns the robot 90 degrees to the right.
     pub fn turn_right(&mut self) {
         self.direction = match self.direction {
             Direction::North => Direction::East,
@@ -63,6 +62,7 @@ impl Robot {
         };
     }
 
+    /// Attempts to move the robot forward one step in the direction that it's currently facing.
     pub fn walk_forward(&mut self) -> i64 {
         self.computer
             .push_input(direction_to_input_command(self.direction));
@@ -77,6 +77,7 @@ impl Robot {
     }
 }
 
+/// Returns the Position that's one step ahead of `position` in `direction`.
 fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     match direction {
         Direction::North => (position.0, position.1 + 1),
@@ -96,6 +97,7 @@ fn direction_to_input_command(direction: Direction) -> i64 {
     }
 }
 
+/// Moves `robot` one space forward, fills out `map` with the space that the robot encountered, and returns the space.
 fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
     let output = robot.walk_forward();
 
@@ -114,15 +116,15 @@ fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
     v
 }
 
-fn explore_ship(robot: &mut Robot, map: &mut ShipMap) -> Option<(i32, i32)> {
+/// Explores the ship in `robot`'s program, filling out `map` along the way.
+/// Returns Some(Position) if the oxygen tank was found, None otherwise.
+fn explore_ship(robot: &mut Robot, map: &mut ShipMap) -> Option<Position> {
     let mut directions_unexplored_from_origin = vec![
         Direction::North,
         Direction::East,
         Direction::South,
         Direction::West,
     ];
-
-    robot.set_direction(Direction::North);
 
     let mut goal_position = None;
 
@@ -175,6 +177,7 @@ fn _print_map(map: &ShipMap, robot: &Robot) {
     }
 }
 
+/// Fills out `distances` by performing a flood fill.
 fn flood_fill(
     distances: &mut HashMap<Position, u32>,
     position: Position,
@@ -206,7 +209,16 @@ fn flood_fill(
     }
 }
 
-fn fill_out_map_and_distances() -> (ShipMap, Position) {
+/// Returns a map of {Position -> distance_from_starting_point}.
+fn flood_fill_from(position: Position, map: &ShipMap) -> HashMap<Position, u32> {
+    let mut distances: HashMap<Position, u32> = HashMap::new();
+    distances.insert(position, 0);
+    flood_fill(&mut distances, position, 0, &map);
+    distances
+}
+
+/// Returns a tuple of (filled_out_ship_map, oxygen_tank_position).
+fn fill_out_map() -> (ShipMap, Position) {
     let mut map: ShipMap = HashMap::new();
     let mut robot = Robot::new("src/inputs/15.txt");
     map.insert(robot.position, Space::Empty);
@@ -216,23 +228,18 @@ fn fill_out_map_and_distances() -> (ShipMap, Position) {
     (map, goal_position)
 }
 
+/// "What is the fewest number of movement commands required to move the repair
+/// droid from its starting position to the location of the oxygen system?"
 pub fn fifteen_a() -> u32 {
-    let (map, goal_position) = fill_out_map_and_distances();
-
-    let mut distances: HashMap<Position, u32> = HashMap::new();
-    distances.insert(ORIGIN, 0);
-    flood_fill(&mut distances, ORIGIN, 0, &map);
-
+    let (map, goal_position) = fill_out_map();
+    let distances = flood_fill_from(ORIGIN, &map);
     distances[&goal_position]
 }
 
+/// "How many minutes will it take to fill with oxygen?"
 pub fn fifteen_b() -> u32 {
-    let (map, goal_position) = fill_out_map_and_distances();
-
-    let mut distances: HashMap<Position, u32> = HashMap::new();
-    distances.insert(goal_position, 0);
-    flood_fill(&mut distances, goal_position, 0, &map);
-
+    let (map, goal_position) = fill_out_map();
+    let distances = flood_fill_from(goal_position, &map);
     *distances.values().max().unwrap()
 }
 
