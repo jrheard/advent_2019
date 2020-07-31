@@ -1751,3 +1751,6 @@ hrm, nvm, that wouldn't work bc flood_fill numbers will obviously be larger than
 
 ok fft time
 bit apprehensive
+
+
+is it possible to automatically skip the elements corresponding to zeroes in the pattern?

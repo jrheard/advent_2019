@@ -26,15 +26,20 @@ fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
 }
 
 fn fft_one_phase(numbers: Vec<i32>) -> Vec<i32> {
-    // TODO can this thing be one giant iterator with a .collect()?
+    (0..numbers.len())
+        .map(|i| {
+            let pattern = pattern_for_position(i);
 
-    let ret = Vec::with_capacity(numbers.len());
-
-    for (i, value) in numbers.iter().enumerate() {
-        //pass
-    }
-
-    ret
+            numbers
+                .iter()
+                .zip(pattern)
+                .fold(0, |acc, (&number, pattern_piece)| {
+                    acc + number * pattern_piece
+                })
+                .abs()
+                % 10
+        })
+        .collect()
 }
 
 pub fn sixteen_a() -> u32 {
@@ -55,5 +60,25 @@ mod tests {
             pattern_for_position(1).take(15).collect::<Vec<i32>>(),
             vec![0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1]
         )
+    }
+
+    #[test]
+    fn test_fft_one_phase() {
+        assert_eq!(
+            fft_one_phase(vec![1, 2, 3, 4, 5, 6, 7, 8]),
+            vec![4, 8, 2, 2, 6, 1, 5, 8]
+        );
+        assert_eq!(
+            fft_one_phase(vec![4, 8, 2, 2, 6, 1, 5, 8]),
+            vec![3, 4, 0, 4, 0, 4, 3, 8]
+        );
+        assert_eq!(
+            fft_one_phase(vec![3, 4, 0, 4, 0, 4, 3, 8]),
+            vec![0, 3, 4, 1, 5, 5, 1, 8]
+        );
+        assert_eq!(
+            fft_one_phase(vec![0, 3, 4, 1, 5, 5, 1, 8]),
+            vec![0, 1, 0, 2, 9, 4, 9, 8]
+        );
     }
 }
