@@ -1718,3 +1718,26 @@ my robot immediately got stuck in this hallway
 it paces back and forth between these two corners, because i'm just telling it to turn left every time it hits a wall
 that turn-left strategy isn't about when you _hit_ a wall, it's about when you're able to _see_ and _hug_ a wall
 let's come up with something better
+
+ok cool so the alg is actually really easy
+if you hit a wall: turn left
+otherwise: turn right
+ezpz
+thankfully, there aren't any open spaces in this level, it's all just corridors
+so my robot finds the goal!!!!
+
+next up: pathfinding
+
+i think that the right approach here would be:
+give the robot a distance_from_origin map
+with Position keys and u32 values
+and maybe also give him a .last_position
+
+hrm
+hrm hrm hrm
+i'm not sure if that's actually a thing
+hrm
+what if instead i just explore the whole level and _then_ do a flood fill _myself_, without the robot??
+let's see if i can explore the whole level
+
+ok yeah i totally can, it immediately exits in about 3100 steps

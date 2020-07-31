@@ -111,7 +111,7 @@ fn navigate_one_space_forward(robot: &mut Robot, map: &mut ShipMap) -> Space {
     v
 }
 
-fn explore_by_following_walls(robot: &mut Robot, map: &mut ShipMap) {
+fn explore_ship(robot: &mut Robot, map: &mut ShipMap) {
     let mut directions_unexplored_from_origin = vec![
         Direction::North,
         Direction::East,
@@ -144,12 +144,13 @@ fn explore_by_following_walls(robot: &mut Robot, map: &mut ShipMap) {
             Space::Goal => (),
         };
 
-        print_map(map, robot);
-        println!();
+        //print_map(map, robot);
+        //println!();
     }
 }
 
-fn print_map(map: &ShipMap, robot: &Robot) {
+#[cfg(not(tarpaulin_include))]
+fn _print_map(map: &ShipMap, robot: &Robot) {
     let (min_x, max_x) = map.keys().map(|&(x, _)| x).minmax().into_option().unwrap();
     let (min_y, max_y) = map.keys().map(|&(_, y)| y).minmax().into_option().unwrap();
 
@@ -175,7 +176,7 @@ pub fn fifteen_a() -> u32 {
     let mut robot = Robot::new("src/inputs/15.txt");
     map.insert(robot.position, Space::Empty);
 
-    explore_by_following_walls(&mut robot, &mut map);
+    explore_ship(&mut robot, &mut map);
 
     dbg!(robot.position, map[&robot.position]);
 
