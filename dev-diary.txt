@@ -1667,3 +1667,43 @@ oh well!!!!
 ok i did 14a+b over from scratch with the shopping cart queue approach
 and at long last it works!
 so i will take it.
+
+taking a peek at 15a
+looks fun!
+
+i expect that the general idea is going to be to go straight until you hit a wall,
+then hug the wall, always turning left wherever possible (unless you reach a dead end and have to turn around)
+and in this way you can map out all the walls (hopefully)
+and once you've done that, perhaps you can do some sort of pathfinding + flood fill operation to explore the rest
+
+so i think there are gonna be two passes here
+
+1) explore the whole zone until you find the oxygen system
+2) starting over from scratch, and armed with the filled-out map from step 1, what's the shortest path to the oxygen system
+
+TODO i'm probably gonna want to make some sort of print_map() function
+
+okay, so we make a robot
+and we load the program and make a Computer
+
+the program takes an input, a number between 1-4:
+    "Only four movement commands are understood: north (1), south (2), west (3), and east (4)."
+
+and then it returns a number as output:
+
+    "The repair droid can reply with any of the following status codes:
+    - 0: The repair droid hit a wall. Its position has not changed.
+    - 1: The repair droid has moved one step in the requested direction.
+    - 2: The repair droid has moved one step in the requested direction;
+        its new position is the location of the oxygen system."
+
+so, again, my plan is to just try to explore the whole level
+and i was thinking about doing that in two phases
+how do i know when phase one is over?
+a naive answer would be that it's over if you return to the place where you started
+i don't like that tho, bc what if you go down a dead end alley and then come right back
+
+i think phase 1 is over if:
+    * you return to where you started, AND
+    * all of the spaces around the start position have been explored
+        * cardinal directions for now, not diagonals
