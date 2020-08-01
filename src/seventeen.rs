@@ -31,24 +31,23 @@ impl Robot {
         if !ship.spot_is_on_ship(try_x, try_y)
             || ship.get(try_x as usize, try_y as usize) == Spot::Empty
         {
+            let directions_to_try: [Direction; 2] = match self.direction {
+                Direction::North => [Direction::East, Direction::West],
+                Direction::East => [Direction::North, Direction::South],
+                Direction::South => [Direction::East, Direction::West],
+                Direction::West => [Direction::North, Direction::South],
+            };
+
             // If we keep going forward, we'll fall off of a scaffold or off of the ship entirely. Time to turn.
-            // Find the first direction...
-            self.direction = *[
-                Direction::North,
-                Direction::East,
-                Direction::South,
-                Direction::West,
-            ]
-            .iter()
-            // ... that isn't the way that we're currently facing...
-            .filter(|&x| *x != self.direction)
-            // ... that'll take us to a Scaffold.
-            .find(|&direction| {
-                let (new_x, new_y) = one_position_ahead(direction, &self.position);
-                ship.spot_is_on_ship(new_x, new_y)
-                    && ship.get(new_x as usize, new_y as usize) == Spot::Scaffold
-            })
-            .unwrap();
+            // Find the first direction that'll take us to a scaffold.
+            self.direction = *directions_to_try
+                .iter()
+                .find(|&direction| {
+                    let (new_x, new_y) = one_position_ahead(direction, &self.position);
+                    ship.spot_is_on_ship(new_x, new_y)
+                        && ship.get(new_x as usize, new_y as usize) == Spot::Scaffold
+                })
+                .unwrap();
         }
 
         // Now that we're sure we're pointing in a valid direction, we can safely walk forward!
@@ -73,7 +72,7 @@ struct Ship {
 
 impl Ship {
     fn spot_is_on_ship(&self, x: i32, y: i32) -> bool {
-        x >= 0 || x < self.width as i32 || y >= 0 || y < self.height as i32
+        x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32
     }
 
     fn walk_map<'a>(&'a self) -> impl Iterator<Item = (Position, Spot)> + 'a {
@@ -84,7 +83,8 @@ impl Ship {
             .map(move |(i, &spot)| (((i % width) as i32, (i / width) as i32), spot))
     }
 
-    fn draw(&self, robot: &Robot) {
+    #[cfg(not(tarpaulin_include))]
+    fn _draw(&self, robot: &Robot) {
         for ((x, y), spot) in self.walk_map() {
             if x == 0 {
                 println!();
@@ -161,14 +161,40 @@ fn load_level() -> (Ship, Robot) {
     )
 }
 
-fn find_scaffolds(ship: &Ship, robot: Robot) -> Vec<Position> {
-    let unvisited_scaffolds: HashSet<Position> = HashSet::new();
+fn find_intersections(ship: &Ship, mut robot: Robot) -> Vec<Position> {
+    let mut unvisited_scaffolds: HashSet<Position> = ship
+        .walk_map()
+        .filter_map(|(position, spot)| {
+            if spot == Spot::Scaffold {
+                Some(position)
+            } else {
+                None
+            }
+        })
+        .collect();
+    let mut visited_scaffolds = HashSet::new();
+    let mut intersections = vec![];
 
-    vec![]
+    unvisited_scaffolds.remove(&robot.position);
+
+    while !unvisited_scaffolds.is_empty() {
+        robot.walk_forward(&ship);
+        unvisited_scaffolds.remove(&robot.position);
+
+        if visited_scaffolds.contains(&robot.position) {
+            intersections.push(robot.position);
+        } else {
+            visited_scaffolds.insert(robot.position);
+        }
+    }
+
+    intersections
 }
 
-pub fn seventeen_a() -> u32 {
-    5
+pub fn seventeen_a() -> i32 {
+    let (ship, robot) = load_level();
+    let intersections = find_intersections(&ship, robot);
+    intersections.iter().fold(0, |acc, &(x, y)| acc + x * y)
 }
 
 #[cfg(test)]
@@ -176,9 +202,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_foo() {
-        let (ship, robot) = load_level();
-        ship.draw(&robot);
-        dbg!(robot);
+    fn test_solutions() {
+        assert_eq!(seventeen_a(), 7816);
     }
 }

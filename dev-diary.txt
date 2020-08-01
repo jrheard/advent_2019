@@ -1870,5 +1870,8 @@ that way my intersection-finding code will be somewhat "linear" :)
 ok so the robot starts at the end of a scaffold and is facing in a correct direction
 so let's just try implementing a robot.walk_forward() function
 
-TODO how we know when we've reached the end?
+DONE how we know when we've reached the end?
 i guess we could have an unvisited_scaffolds set of positions
+
+ok also lol
+we need to figure out how to keep the robot from just turning around back and forth forever
