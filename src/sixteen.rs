@@ -2,18 +2,22 @@ use std::fs;
 
 static BASE_PATTERN: [i32; 4] = [0, 1, 0, -1];
 
-/// "repeat each value in the pattern a number of times equal to the position in
+/// "Repeat each value in the pattern a number of times equal to the position in
 /// the output list being considered. Repeat once for the first element, twice
 /// for the second element, three times for the third element, and so on. So, if
 /// the third element of the output list is being calculated, repeating the
 /// values would produce: 0, 0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1.
 /// When applying the pattern, skip the very first value exactly once."
-fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
+fn indexes_and_pattern_pieces(position: usize) -> impl Iterator<Item = (usize, i32)> {
     BASE_PATTERN
         .iter()
         .flat_map(move |&element| itertools::repeat_n(element, position + 1))
         .cycle()
         .skip(1)
+        .enumerate()
+        // We skip pattern pieces whose value is 0, because there's no point in
+        // multiplying a bunch of numbers by zero.
+        .filter(|&(_, element)| element != 0)
 }
 
 /// "Each element in the new list is built by multiplying every value in the input
@@ -26,13 +30,11 @@ fn pattern_for_position(position: usize) -> impl Iterator<Item = i32> {
 fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
     (0..numbers.len())
         .map(|i| {
-            let pattern = pattern_for_position(i);
-
-            numbers
-                .iter()
-                .zip(pattern)
-                .fold(0, |acc, (&number, pattern_piece)| {
-                    acc + number * pattern_piece
+            let indexes_and_patterns = indexes_and_pattern_pieces(i);
+            indexes_and_patterns
+                .take_while(|&(j, _)| j < numbers.len())
+                .fold(0, |acc, (j, pattern_piece)| {
+                    acc + numbers[j] * pattern_piece
                 })
                 .abs()
                 % 10
@@ -85,12 +87,45 @@ mod tests {
     #[test]
     fn test_pattern_for_position() {
         assert_eq!(
-            pattern_for_position(2).take(12).collect::<Vec<i32>>(),
-            vec![0, 0, 1, 1, 1, 0, 0, 0, -1, -1, -1, 0]
+            indexes_and_pattern_pieces(2)
+                .take(12)
+                .collect::<Vec<(usize, i32)>>(),
+            vec![
+                (2, 1),
+                (3, 1),
+                (4, 1),
+                (8, -1),
+                (9, -1),
+                (10, -1),
+                (14, 1),
+                (15, 1),
+                (16, 1),
+                (20, -1),
+                (21, -1),
+                (22, -1)
+            ]
         );
         assert_eq!(
-            pattern_for_position(1).take(15).collect::<Vec<i32>>(),
-            vec![0, 1, 1, 0, 0, -1, -1, 0, 0, 1, 1, 0, 0, -1, -1]
+            indexes_and_pattern_pieces(1)
+                .take(15)
+                .collect::<Vec<(usize, i32)>>(),
+            vec![
+                (1, 1),
+                (2, 1),
+                (5, -1),
+                (6, -1),
+                (9, 1),
+                (10, 1),
+                (13, -1),
+                (14, -1),
+                (17, 1),
+                (18, 1),
+                (21, -1),
+                (22, -1),
+                (25, 1),
+                (26, 1),
+                (29, -1)
+            ]
         )
     }
 
