@@ -1,10 +1,10 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
-use std::fs;
+use std::collections::HashSet;
 
-type Position = (usize, usize);
+type Position = (i32, i32);
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 enum Direction {
     North,
     East,
@@ -12,7 +12,7 @@ enum Direction {
     West,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq)]
 enum Spot {
     Scaffold,
     Empty,
@@ -24,19 +24,73 @@ struct Robot {
     direction: Direction,
 }
 
+impl Robot {
+    fn walk_forward(&mut self, ship: &Ship) {
+        let (try_x, try_y) = one_position_ahead(&self.direction, &self.position);
+
+        if !ship.spot_is_on_ship(try_x, try_y)
+            || ship.get(try_x as usize, try_y as usize) == Spot::Empty
+        {
+            // If we keep going forward, we'll fall off of a scaffold or off of the ship entirely. Time to turn.
+            // Find the first direction...
+            self.direction = *[
+                Direction::North,
+                Direction::East,
+                Direction::South,
+                Direction::West,
+            ]
+            .iter()
+            // ... that isn't the way that we're currently facing...
+            .filter(|&x| *x != self.direction)
+            // ... that'll take us to a Scaffold.
+            .find(|&direction| {
+                let (new_x, new_y) = one_position_ahead(direction, &self.position);
+                ship.spot_is_on_ship(new_x, new_y)
+                    && ship.get(new_x as usize, new_y as usize) == Spot::Scaffold
+            })
+            .unwrap();
+        }
+
+        // Now that we're sure we're pointing in a valid direction, we can safely walk forward!
+        self.position = one_position_ahead(&self.direction, &self.position);
+    }
+}
+
+/// Returns the Position that's one step ahead of `position` in `direction`.
+fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
+    match direction {
+        Direction::North => (position.0, position.1 - 1),
+        Direction::East => (position.0 + 1, position.1),
+        Direction::South => (position.0, position.1 + 1),
+        Direction::West => (position.0 - 1, position.1),
+    }
+}
 struct Ship {
     map: Vec<Spot>,
     width: usize,
+    height: usize,
 }
 
 impl Ship {
+    fn spot_is_on_ship(&self, x: i32, y: i32) -> bool {
+        x >= 0 || x < self.width as i32 || y >= 0 || y < self.height as i32
+    }
+
+    fn walk_map<'a>(&'a self) -> impl Iterator<Item = (Position, Spot)> + 'a {
+        let width = self.width;
+        self.map
+            .iter()
+            .enumerate()
+            .map(move |(i, &spot)| (((i % width) as i32, (i / width) as i32), spot))
+    }
+
     fn draw(&self, robot: &Robot) {
-        for (i, &spot) in self.map.iter().enumerate() {
-            if i % self.width == 0 {
+        for ((x, y), spot) in self.walk_map() {
+            if x == 0 {
                 println!();
             }
 
-            if (i / self.width) == robot.position.1 && (i % self.width) == robot.position.0 {
+            if y == robot.position.1 && x == robot.position.0 {
                 print!("R");
             } else {
                 print!(
@@ -97,7 +151,20 @@ fn load_level() -> (Ship, Robot) {
         x += 1;
     }
 
-    (Ship { map, width }, robot.unwrap())
+    (
+        Ship {
+            map,
+            width: width as usize,
+            height: (y - 1) as usize,
+        },
+        robot.unwrap(),
+    )
+}
+
+fn find_scaffolds(ship: &Ship, robot: Robot) -> Vec<Position> {
+    let unvisited_scaffolds: HashSet<Position> = HashSet::new();
+
+    vec![]
 }
 
 pub fn seventeen_a() -> u32 {
