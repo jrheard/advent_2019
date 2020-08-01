@@ -1819,3 +1819,16 @@ here's what happens if i chop off the first half of the string
 time:   [1.7887 s 1.8765 s 1.9292 s]
 
 50% speedup as expected, good!
+
+omg i ran a flamegraph and half of our time is in vec extend allocation
+let's put a with_capacity or two somewhere
+
+ok nvm the easier thing to do is to just rewrite the fft-one-phase fn as something that mutates the vec in-place
+just a manual forloop
+that gives us:
+
+individual/individual   time:   [337.67 ms 338.62 ms 339.63 ms]
+                        change: [-82.455% -81.954% -81.066%] (p = 0.00 < 0.05)
+
+not bad!!
+let's look at the flamegraph now

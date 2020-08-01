@@ -56,26 +56,19 @@ fn run_dft(numbers: &[i32], num_times: usize) -> Vec<i32> {
 // got here from following the advice on https://www.reddit.com/r/adventofcode/comments/ebf5cy/2019_day_16_part_2_understanding_how_to_come_up/
 // i tried learning about the actual fft but i don't really have any background in math and lecture vids made my head spin
 // oh well!
-fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
-    let mut ret: Vec<i32> = numbers
-        .iter()
-        .rev()
-        .scan(0, |sum, &digit| {
-            *sum += digit;
-            Some(*sum % 10)
-        })
-        .collect();
+fn fft_one_phase(numbers: &mut [i32]) {
+    let mut sum = 0;
 
-    ret.reverse();
-    ret
+    for number in numbers.iter_mut().rev() {
+        sum += *number;
+        *number = sum % 10;
+    }
 }
 
-fn run_fft(numbers: &[i32], num_times: usize) -> Vec<i32> {
-    let mut out = numbers.to_vec();
+fn run_fft(numbers: &mut [i32], num_times: usize) {
     for _ in 0..num_times {
-        out = fft_one_phase(&out);
+        fft_one_phase(numbers);
     }
-    out
 }
 
 fn parse_int_str(int_str: &str) -> Vec<i32> {
@@ -112,7 +105,7 @@ pub fn sixteen_b() -> u64 {
     let mut numbers = parse_int_str(&number_string.repeat(5000));
     let offset = (number_slice_into_number(&numbers[..7]) as usize) - (5000 * number_string.len());
 
-    numbers = run_fft(&numbers, 100);
+    run_fft(&mut numbers, 100);
 
     number_slice_into_number(&numbers[offset..offset + 8])
 }
