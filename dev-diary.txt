@@ -1832,3 +1832,5 @@ individual/individual   time:   [337.67 ms 338.62 ms 339.63 ms]
 
 not bad!!
 let's look at the flamegraph now
+ok i think that's about as good as it's gonna get
+>10x speedup ain't bad!
