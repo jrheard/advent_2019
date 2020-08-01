@@ -1875,3 +1875,5 @@ i guess we could have an unvisited_scaffolds set of positions
 
 ok also lol
 we need to figure out how to keep the robot from just turning around back and forth forever
+ok ez
+17a done!

@@ -25,12 +25,14 @@ struct Robot {
 }
 
 impl Robot {
-    fn walk_forward(&mut self, ship: &Ship) {
+    fn walk_forward(&mut self, ship: &ShipMap) {
         let (try_x, try_y) = one_position_ahead(&self.direction, &self.position);
 
         if !ship.spot_is_on_ship(try_x, try_y)
             || ship.get(try_x as usize, try_y as usize) == Spot::Empty
         {
+            // If we keep going forward, we'll fall off of a scaffold or off of the ship entirely. Time to turn.
+            // Find the first direction that'll take us to a scaffold.
             let directions_to_try: [Direction; 2] = match self.direction {
                 Direction::North => [Direction::East, Direction::West],
                 Direction::East => [Direction::North, Direction::South],
@@ -38,8 +40,6 @@ impl Robot {
                 Direction::West => [Direction::North, Direction::South],
             };
 
-            // If we keep going forward, we'll fall off of a scaffold or off of the ship entirely. Time to turn.
-            // Find the first direction that'll take us to a scaffold.
             self.direction = *directions_to_try
                 .iter()
                 .find(|&direction| {
@@ -64,13 +64,13 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
         Direction::West => (position.0 - 1, position.1),
     }
 }
-struct Ship {
+struct ShipMap {
     map: Vec<Spot>,
     width: usize,
     height: usize,
 }
 
-impl Ship {
+impl ShipMap {
     fn spot_is_on_ship(&self, x: i32, y: i32) -> bool {
         x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32
     }
@@ -109,7 +109,7 @@ impl Ship {
     }
 }
 
-fn load_level() -> (Ship, Robot) {
+fn load_level() -> (ShipMap, Robot) {
     let memory = computer::load_program("src/inputs/17.txt");
     let mut computer = Computer::new(memory);
     computer.run(HaltReason::Exit);
@@ -152,7 +152,7 @@ fn load_level() -> (Ship, Robot) {
     }
 
     (
-        Ship {
+        ShipMap {
             map,
             width: width as usize,
             height: (y - 1) as usize,
@@ -161,7 +161,7 @@ fn load_level() -> (Ship, Robot) {
     )
 }
 
-fn find_intersections(ship: &Ship, mut robot: Robot) -> Vec<Position> {
+fn find_intersections(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
         .filter_map(|(position, spot)| {
