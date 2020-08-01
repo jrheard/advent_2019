@@ -1834,3 +1834,38 @@ not bad!!
 let's look at the flamegraph now
 ok i think that's about as good as it's gonna get
 >10x speedup ain't bad!
+
+ok cool so
+started on 17a
+straightforward so far
+i've written a function that loads the ship map and robot
+but i think there's something wrong with it, bc it has diagonal lines sometimes
+i bet it has to do with the line that makes the robot
+ok yeah i had forgotten to push a scaffold spot on when i encounter the robot, cool
+
+ok so next up is gonna be detecting the locations of all of the intersections
+a position is at an intersection if three or more of its cardinal-direction neighbors are scaffolds
+eg
+
+ #
+###
+
+ #
+##
+ #
+
+#
+##
+#
+
+etc
+
+hrm
+i could do this in a few different ways
+at first i was gonna write a neighbors-for-position function
+but - given that we're going to have a robot that points in different directions and walks across these scaffolds
+i think that it might be appropriate to walk these scaffold lines in a directional way
+that way my intersection-finding code will be somewhat "linear" :)
+
+ok so the robot starts at the end of a scaffold and is facing in a correct direction
+so let's just try implementing a robot.walk_forward() function
