@@ -27,7 +27,7 @@ fn indexes_and_pattern_pieces(position: usize) -> impl Iterator<Item = (usize, i
 /// element on the left and each value in the repeating pattern on the right of
 /// each multiplication). Then, only the ones digit is kept: 38 becomes 8, -17
 /// becomes 7, and so on."
-fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
+fn dft_one_phase(numbers: &[i32]) -> Vec<i32> {
     (0..numbers.len())
         .map(|i| {
             let indexes_and_patterns = indexes_and_pattern_pieces(i);
@@ -45,6 +45,31 @@ fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
 /// "FFT operates in repeated phases. In each phase, a new list is constructed
 /// with the same length as the input list. This new list is also used as the
 /// input for the next phase."
+fn run_dft(numbers: &[i32], num_times: usize) -> Vec<i32> {
+    let mut out = numbers.to_vec();
+    for _ in 0..num_times {
+        out = dft_one_phase(&out);
+    }
+    out
+}
+
+// got here from following the advice on https://www.reddit.com/r/adventofcode/comments/ebf5cy/2019_day_16_part_2_understanding_how_to_come_up/
+// i tried learning about the actual fft but i don't really have any background in math and lecture vids made my head spin
+// oh well!
+fn fft_one_phase(numbers: &[i32]) -> Vec<i32> {
+    let mut ret: Vec<i32> = numbers
+        .iter()
+        .rev()
+        .scan(0, |sum, &digit| {
+            *sum += digit;
+            Some(*sum % 10)
+        })
+        .collect();
+
+    ret.reverse();
+    ret
+}
+
 fn run_fft(numbers: &[i32], num_times: usize) -> Vec<i32> {
     let mut out = numbers.to_vec();
     for _ in 0..num_times {
@@ -75,9 +100,21 @@ pub fn sixteen_a() -> u64 {
     let number_string = contents.lines().next().unwrap();
 
     let mut numbers = parse_int_str(number_string);
-    numbers = run_fft(&numbers, 100);
+    numbers = run_dft(&numbers, 100);
 
     number_slice_into_number(&numbers[..8])
+}
+
+pub fn sixteen_b() -> u64 {
+    let contents = fs::read_to_string("src/inputs/16.txt").unwrap();
+    let number_string = contents.lines().next().unwrap();
+
+    let mut numbers = parse_int_str(&number_string.repeat(5000));
+    let offset = (number_slice_into_number(&numbers[..7]) as usize) - (5000 * number_string.len());
+
+    numbers = run_fft(&numbers, 100);
+
+    number_slice_into_number(&numbers[offset..offset + 8])
 }
 
 #[cfg(test)]
@@ -130,19 +167,19 @@ mod tests {
     }
 
     #[test]
-    fn test_fft_one_phase() {
+    fn test_dft_one_phase() {
         let mut numbers = vec![1, 2, 3, 4, 5, 6, 7, 8];
 
-        numbers = fft_one_phase(&numbers);
+        numbers = dft_one_phase(&numbers);
         assert_eq!(numbers, vec![4, 8, 2, 2, 6, 1, 5, 8]);
 
-        numbers = fft_one_phase(&numbers);
+        numbers = dft_one_phase(&numbers);
         assert_eq!(numbers, vec![3, 4, 0, 4, 0, 4, 3, 8]);
 
-        numbers = fft_one_phase(&numbers);
+        numbers = dft_one_phase(&numbers);
         assert_eq!(numbers, vec![0, 3, 4, 1, 5, 5, 1, 8]);
 
-        numbers = fft_one_phase(&numbers);
+        numbers = dft_one_phase(&numbers);
         assert_eq!(numbers, vec![0, 1, 0, 2, 9, 4, 9, 8]);
     }
 
@@ -158,13 +195,13 @@ mod tests {
     }
 
     #[test]
-    fn test_run_fft() {
+    fn test_run_dft() {
         let mut numbers = parse_int_str("80871224585914546619083218645595");
-        numbers = run_fft(&numbers, 100);
+        numbers = run_dft(&numbers, 100);
         assert_eq!(&numbers[..8], [2, 4, 1, 7, 6, 1, 7, 6]);
 
         let mut numbers = parse_int_str("69317163492948606335995924319873");
-        numbers = run_fft(&numbers, 100);
+        numbers = run_dft(&numbers, 100);
         assert_eq!(&numbers[..8], [5, 2, 4, 3, 2, 1, 3, 3]);
     }
 
@@ -179,5 +216,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(sixteen_a(), 69549155);
+        assert_eq!(sixteen_b(), 83253465);
     }
 }

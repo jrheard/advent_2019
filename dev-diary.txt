@@ -1771,3 +1771,51 @@ individual              time:   [73.766 ms 74.364 ms 74.955 ms]
 also: i immediately discovered that the loop code was going to be super shitty, so i was able
 to easily adapt the iterator code and it totally worked!
 hooray iterators! hooray funcitonal programming!
+
+===
+
+8/1/20
+
+ok so i'm watching https://www.youtube.com/watch?v=spUNpyF58BY
+about the fft
+and the main idea appears to be:
+the transform of a summed list of frequencies
+is equal to the sum of the individual transformed frequencies
+
+i'm pretty cofident that there's gotta be a direct relation to this problem
+i'm now realizing that the whole "pattern" thing - the -1, 0, 1, 0 - is directly analogous to frequencies
+
+what i haven't figured out yet is, precisely how does this apply to the problem at hand?
+maybe parallelism can happen here? seems kinda nutty to spin off ten million little rayon threadlets tho
+i haven't gotten to the part of the video where he explains the fft itself yet tho, gonna keep watching
+
+ok he didn't really, this is just the ft
+fine
+so i'm watching https://www.youtube.com/watch?v=nl9TZanwbBk , the dft
+he's saying that the idea is
+you take a bunch of samples of a function at times x1, x2, ...xn
+and so those samples are called f1, f2, ...fn
+and somehow you're going to be able to compute a series of values
+f1^, f2^, ..fn^
+where each of _those_ values indicates the extent to which the frequency corresponding
+to that position - 1, 2, ...n - was present in your series of values
+
+this sounds scary and is making my head hurt a little but i think that actually it's maybe not scary at all
+ok cool let's keep going
+
+ok so i'm in https://www.youtube.com/watch?v=E8HeD-MUrjY
+he says that the dft is o(n^2), that's what i've got so far
+and he says that the fft is o(nlogn)
+which, cool! awesome!
+
+ok whatever
+i ended up getting hints via reddit
+here's the initial runtime of 16b
+
+individual         time:   [3.9024 s 3.9745 s 4.0650 s]
+
+here's what happens if i chop off the first half of the string
+
+time:   [1.7887 s 1.8765 s 1.9292 s]
+
+50% speedup as expected, good!
