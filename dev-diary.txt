@@ -1899,3 +1899,10 @@ TODO catch up
 ok so i've gotten most of the above working
 
 NOTE: there are only 34 (turn, distance) segments in the whole path
+
+===
+
+8/2/20
+
+ok let's get back to it
+so itertools .combinations() is going to be what i want here

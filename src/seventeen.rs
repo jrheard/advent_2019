@@ -271,16 +271,11 @@ fn path_to_segments(path: Path) -> Vec<Segment> {
     segments
 }
 
-pub fn seventeen_b() -> i64 {
-    let (ship, robot) = load_level();
-    //ship._draw(&robot);
-    let path = find_path(&ship, robot);
-    let segments = path_to_segments(path);
-    dbg!(segments.len());
-
+fn most_popular_segment_chunks(segments: Vec<Segment>) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
-    for window_size in 3..10 {
+    // TODO tweak range
+    for window_size in 2..8 {
         for window in segments.windows(window_size) {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
             *entry += 1;
@@ -289,14 +284,22 @@ pub fn seventeen_b() -> i64 {
         dbg!(window_frequencies.len());
     }
 
-    let highest_scoring_windows = window_frequencies
-        .iter()
-        .sorted_by_key(|&(window, count)| window.len() * count)
+    window_frequencies
+        .into_iter()
+        .sorted_by_key(|(window, count)| window.len() * count)
+        .map(|(chunk, _)| chunk)
         .rev()
+        // TODO tweak
         .take(50)
-        .collect::<Vec<_>>();
+        .collect::<Vec<_>>()
+}
 
-    dbg!(highest_scoring_windows);
+pub fn seventeen_b() -> i64 {
+    let (ship, robot) = load_level();
+    let path = find_path(&ship, robot);
+    let segments = path_to_segments(path);
+    let most_popular_segment_chunks = most_popular_segment_chunks(segments);
+
     // TODO try to paint the path with each
 
     5
