@@ -248,7 +248,7 @@ pub fn seventeen_a() -> i32 {
 }
 
 /// Takes a path, returns a Vec of tuples like [(Right, 8), (Left, 4), ..]
-fn path_to_segments(path: &Path) -> Vec<Segment> {
+fn path_to_segments(path: &[(Option<Turn>, Position)]) -> Vec<Segment> {
     let mut segments = vec![];
     let mut turn = None;
     let mut distance = 0;
@@ -271,7 +271,7 @@ fn path_to_segments(path: &Path) -> Vec<Segment> {
     segments
 }
 
-fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
+fn most_popular_segment_chunks(segments: &[Segment]) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
     // TODO tweak range
@@ -294,10 +294,10 @@ fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
 
 fn paint_segments_with_chunks(
     segments: &[Segment],
-    chunks: &Vec<Vec<Segment>>,
+    chunks: &[Vec<Segment>],
     painted_segments: &mut Vec<Vec<Segment>>,
 ) -> Option<Vec<Vec<Segment>>> {
-    if segments.len() == 0 {
+    if segments.is_empty() {
         return Some(painted_segments.clone());
     }
 
