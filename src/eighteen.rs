@@ -64,7 +64,7 @@ impl Vault {
                             Space::Empty
                         }
                         (character, _, true) => {
-                            doors.insert(character, (x, y));
+                            doors.insert(character.to_lowercase().next().unwrap(), (x, y));
                             Space::Door
                         }
                         _ => unreachable!(),
@@ -126,9 +126,8 @@ fn flood_fill(
     }
 }
 
-// TODO take flood fill as input?
-// for each key in vault.keys, see if it's in the flood fill (i.e. Some, or >= 0 depending on how i choose to represent it)
-fn find_available_keys(vault: &Vault) -> Vec<(char, Position)> {
+/// Returns a Vec of (key_letter, Position, distance_from_player) tuples.
+fn find_available_keys(vault: &Vault) -> Vec<(char, Position, u32)> {
     let mut distances = HashMap::new();
     flood_fill(&mut distances, vault.player, 0, &vault);
 
@@ -137,7 +136,41 @@ fn find_available_keys(vault: &Vault) -> Vec<(char, Position)> {
         .clone()
         .into_iter()
         .filter(|(_, position)| distances.contains_key(position))
+        .map(|(key, position)| (key, position, distances[&position]))
         .collect()
+}
+
+fn find_shortest_path(vault: &mut Vault, distance_so_far: u32) -> u32 {
+    if vault.keys.is_empty() {
+        return distance_so_far;
+    }
+
+    let mut shortest_path = u32::MAX;
+    let player_position = vault.player;
+
+    for (key, position, key_distance) in find_available_keys(vault) {
+        // Remove the key, open the door, and move the player to the key's position.
+        vault.keys.remove(&key);
+        let door = vault.doors.remove(&key);
+        if let Some(door_position) = door {
+            vault.map[door_position.0 + door_position.1 * vault.width] = Space::Empty;
+        }
+        vault.player = position;
+
+        // See if the path from here is shorter than the paths we've seen so far.
+        shortest_path =
+            shortest_path.min(find_shortest_path(vault, distance_so_far + key_distance));
+
+        // Put things back the way they were before we tried this key.
+        vault.player = player_position;
+        if let Some(door_position) = door {
+            vault.map[door_position.0 + door_position.1 * vault.width] = Space::Door;
+            vault.doors.insert(key, door_position);
+        }
+        vault.keys.insert(key, position);
+    }
+
+    shortest_path
 }
 
 pub fn eighteen_a() -> u32 {
@@ -153,20 +186,20 @@ mod tests {
     #[test]
     fn test_find_available_keys() {
         let vault = Vault::new("src/inputs/18_sample_1.txt");
-        assert_eq!(find_available_keys(&vault), vec![('a', (7, 1))]);
+        assert_eq!(find_available_keys(&vault), vec![('a', (7, 1), 2)]);
 
         let vault = Vault::new("src/inputs/18_sample_2.txt");
         assert_eq!(
             find_available_keys(&vault).iter().collect::<HashSet<_>>(),
             vec![
-                ('b', (6, 3)),
-                ('c', (6, 1)),
-                ('e', (10, 1)),
-                ('g', (10, 5)),
-                ('h', (10, 7)),
-                ('f', (10, 3)),
-                ('a', (6, 5)),
-                ('d', (6, 7))
+                ('h', (10, 7), 7),
+                ('f', (10, 3), 3),
+                ('c', (6, 1), 5),
+                ('e', (10, 1), 5),
+                ('b', (6, 3), 3),
+                ('a', (6, 5), 5),
+                ('g', (10, 5), 5),
+                ('d', (6, 7), 7)
             ]
             .iter()
             .collect::<HashSet<_>>()
