@@ -1,5 +1,6 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
+use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 
 type Position = (i32, i32);
@@ -20,7 +21,7 @@ enum Spot {
     Empty,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq, Hash)]
 enum Turn {
     Left,
     Right,
@@ -274,7 +275,30 @@ pub fn seventeen_b() -> i64 {
     let (ship, robot) = load_level();
     //ship._draw(&robot);
     let path = find_path(&ship, robot);
-    dbg!(path_to_segments(path));
+    let segments = path_to_segments(path);
+    dbg!(segments.len());
+
+    let mut window_frequencies = HashMap::new();
+
+    for window_size in 3..10 {
+        for window in segments.windows(window_size) {
+            let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
+            *entry += 1;
+        }
+
+        dbg!(window_frequencies.len());
+    }
+
+    let highest_scoring_windows = window_frequencies
+        .iter()
+        .sorted_by_key(|&(window, count)| window.len() * count)
+        .rev()
+        .take(50)
+        .collect::<Vec<_>>();
+
+    dbg!(highest_scoring_windows);
+    // TODO try to paint the path with each
+
     5
 }
 
