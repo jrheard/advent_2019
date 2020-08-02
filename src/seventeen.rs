@@ -189,7 +189,6 @@ fn load_level() -> (ShipMap, Robot) {
     )
 }
 
-// TODO return a vec of (Option<Turn>, Position)
 fn find_path(ship: &ShipMap, mut robot: Robot) -> Path {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
@@ -271,6 +270,9 @@ fn path_to_segments(path: &[(Option<Turn>, Position)]) -> Vec<Segment> {
     segments
 }
 
+/// Finds Returns a Vec of the top 20 most popular windows in `segments`.
+/// If `segments` looks like [(R, 8), (R, 4), (L, 12), (R, 5), (L, 20)],
+/// then a window can look like [(R, 4), (L, 12)], or [(L, 12), (R, 5), (L, 20)], etc.
 fn most_popular_segment_chunks(segments: &[Segment]) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
@@ -290,6 +292,8 @@ fn most_popular_segment_chunks(segments: &[Segment]) -> Vec<Vec<Segment>> {
         .collect::<Vec<_>>()
 }
 
+/// Returns Some(segments_painted_by_chunks) if `chunks` can be used to fully paint the path
+/// described by `segments`, None otherwise.
 fn paint_segments_with_chunks(
     segments: &[Segment],
     chunks: &[Vec<Segment>],
@@ -323,11 +327,9 @@ fn movement_functions_and_path(
     let painted_path = chunks
         .iter()
         .cloned()
+        // We're making three movement functions: "A", "B", and "C".
         .combinations(3)
-        // TODO i gotta figure out how to handle searching for the first non-none element more elegantly
-        .map(|chunks| paint_segments_with_chunks(segments, &chunks, &mut vec![]))
-        .find(|x| x.is_some())
-        .unwrap()
+        .find_map(|chunks| paint_segments_with_chunks(segments, &chunks, &mut vec![]))
         .unwrap();
 
     let movement_functions: Vec<Vec<Segment>> = painted_path.iter().unique().cloned().collect();
@@ -392,6 +394,14 @@ pub fn seventeen_b() -> i64 {
 
     computer.run(HaltReason::Exit);
 
+    // "As the vacuum robot finds other robots and notifies them of the
+    // impending solar flare, it also can't help but leave them squeaky clean,
+    // collecting any space dust it finds. Once it finishes the programmed set
+    // of movements, assuming it hasn't drifted off into space, the cleaning
+    // robot will return to its docking station and report the amount of space
+    // dust it collected as a large, non-ASCII value in a single output
+    // instruction. After visiting every part of the scaffold at least once, how
+    // much dust does the vacuum robot report it has collected?"
     let mut last_output = computer.pop_output().unwrap();
     while let Some(output) = computer.pop_output() {
         last_output = output;
