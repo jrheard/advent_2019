@@ -275,7 +275,7 @@ fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
     // TODO tweak range
-    for window_size in 2..12 {
+    for window_size in 3..6 {
         for window in segments.windows(window_size) {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
             *entry += 1;
@@ -290,28 +290,57 @@ fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
         .map(|(chunk, _)| chunk)
         .rev()
         // TODO tweak
-        //.take(50)
+        .take(50)
         .collect::<Vec<_>>()
 }
 
-fn paint_segments_with_chunks(segments: &[Segment], chunks: &Vec<Vec<Segment>>) -> bool {
+fn paint_segments_with_chunks(
+    segments: &[Segment],
+    chunks: &Vec<Vec<Segment>>,
+    painted_segments: &mut Vec<Vec<Segment>>,
+) -> Option<Vec<Vec<Segment>>> {
+    if segments.len() == 0 {
+        return Some(painted_segments.clone());
+    }
+
     for chunk in chunks {
-        if segments.starts_with(chunk)
-            && paint_segments_with_chunks(&segments[chunk.len()..], chunks)
-        {
-            return true;
+        if segments.starts_with(chunk) {
+            painted_segments.push(chunk.clone());
+
+            if let Some(painted_path) =
+                paint_segments_with_chunks(&segments[chunk.len()..], chunks, painted_segments)
+            {
+                return Some(painted_path);
+            }
+
+            painted_segments.pop();
         }
     }
-    false
+    None
 }
 
-fn find_movement_functions(segments: &[Segment], chunks: Vec<Vec<Segment>>) -> Vec<Vec<Segment>> {
-    chunks
+/// Returns a tuple of (vec_of_three_movement_functions, vec_of_indexes_into_first_vec).
+fn movement_functions_and_path(
+    segments: &[Segment],
+    chunks: Vec<Vec<Segment>>,
+) -> (Vec<Vec<Segment>>, Vec<usize>) {
+    let painted_path = chunks
         .iter()
         .cloned()
         .combinations(3)
-        .find(|chunks| paint_segments_with_chunks(segments, chunks))
+        // TODO i gotta figure out how to handle searching for the first non-none element more elegantly
+        .map(|chunks| paint_segments_with_chunks(segments, &chunks, &mut vec![]))
+        .find(|x| x.is_some())
         .unwrap()
+        .unwrap();
+
+    let movement_functions: Vec<Vec<Segment>> = painted_path.iter().unique().cloned().collect();
+    let indexes_path = painted_path
+        .iter()
+        .map(|chunk| movement_functions.iter().position(|x| x == chunk).unwrap())
+        .collect();
+
+    (movement_functions, indexes_path)
 }
 
 pub fn seventeen_b() -> i64 {
@@ -320,7 +349,7 @@ pub fn seventeen_b() -> i64 {
     let segments = path_to_segments(&path);
     let chunks = most_popular_segment_chunks(&segments);
 
-    dbg!(find_movement_functions(&segments, chunks));
+    dbg!(movement_functions_and_path(&segments, chunks));
 
     5
 }
