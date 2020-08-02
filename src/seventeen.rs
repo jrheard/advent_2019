@@ -248,7 +248,7 @@ pub fn seventeen_a() -> i32 {
 }
 
 /// Takes a path, returns a Vec of tuples like [(Right, 8), (Left, 4), ..]
-fn path_to_segments(path: Path) -> Vec<Segment> {
+fn path_to_segments(path: &Path) -> Vec<Segment> {
     let mut segments = vec![];
     let mut turn = None;
     let mut distance = 0;
@@ -259,7 +259,7 @@ fn path_to_segments(path: Path) -> Vec<Segment> {
                 segments.push((turn, distance));
             }
 
-            turn = Some(new_turn);
+            turn = Some(*new_turn);
             distance = 1;
         } else {
             distance += 1;
@@ -271,11 +271,11 @@ fn path_to_segments(path: Path) -> Vec<Segment> {
     segments
 }
 
-fn most_popular_segment_chunks(segments: Vec<Segment>) -> Vec<Vec<Segment>> {
+fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
     // TODO tweak range
-    for window_size in 2..8 {
+    for window_size in 2..12 {
         for window in segments.windows(window_size) {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
             *entry += 1;
@@ -290,17 +290,37 @@ fn most_popular_segment_chunks(segments: Vec<Segment>) -> Vec<Vec<Segment>> {
         .map(|(chunk, _)| chunk)
         .rev()
         // TODO tweak
-        .take(50)
+        //.take(50)
         .collect::<Vec<_>>()
+}
+
+fn paint_segments_with_chunks(segments: &[Segment], chunks: &Vec<Vec<Segment>>) -> bool {
+    for chunk in chunks {
+        if segments.starts_with(chunk)
+            && paint_segments_with_chunks(&segments[chunk.len()..], chunks)
+        {
+            return true;
+        }
+    }
+    false
+}
+
+fn find_movement_functions(segments: &[Segment], chunks: Vec<Vec<Segment>>) -> Vec<Vec<Segment>> {
+    chunks
+        .iter()
+        .cloned()
+        .combinations(3)
+        .find(|chunks| paint_segments_with_chunks(segments, chunks))
+        .unwrap()
 }
 
 pub fn seventeen_b() -> i64 {
     let (ship, robot) = load_level();
     let path = find_path(&ship, robot);
-    let segments = path_to_segments(path);
-    let most_popular_segment_chunks = most_popular_segment_chunks(segments);
+    let segments = path_to_segments(&path);
+    let chunks = most_popular_segment_chunks(&segments);
 
-    // TODO try to paint the path with each
+    dbg!(find_movement_functions(&segments, chunks));
 
     5
 }
