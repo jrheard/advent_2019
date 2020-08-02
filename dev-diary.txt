@@ -1991,3 +1991,9 @@ whenever we pick up a key:
     * we remove it from keys
     * we remove the door from doors
     * we turn the coresponding `vault.map` entry from a `door` into an `empty`
+
+ok cool
+so, i got the basics working
+right now my solution's too slow tho
+also it was buggy for a bit but i fixed the bug - my mistake was that i forgot to put (player.position, 0)
+in the flood-fill distances map before running the flood fill. whoops!

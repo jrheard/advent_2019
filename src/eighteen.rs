@@ -129,6 +129,7 @@ fn flood_fill(
 /// Returns a Vec of (key_letter, Position, distance_from_player) tuples.
 fn find_available_keys(vault: &Vault) -> Vec<(char, Position, u32)> {
     let mut distances = HashMap::new();
+    distances.insert(vault.player, 0);
     flood_fill(&mut distances, vault.player, 0, &vault);
 
     vault
@@ -152,7 +153,6 @@ fn find_shortest_path(vault: &mut Vault, distance_so_far: u32, depth: u32) -> u3
     }
 
     let mut shortest_path = u32::MAX;
-    let player_position = vault.player;
 
     for (key, position, key_distance) in find_available_keys(vault) {
         // Remove the key, open the door, and move the player to the key's position.
@@ -161,14 +161,18 @@ fn find_shortest_path(vault: &mut Vault, distance_so_far: u32, depth: u32) -> u3
         if let Some(door_position) = door {
             vault.map[door_position.0 + door_position.1 * vault.width] = Space::Empty;
         }
+        let player_position = vault.player;
         vault.player = position;
 
         //println!("{}, {}", key, distance_so_far + key_distance);
         println!(
-            "{}> {} trying {}",
+            "{}> {} trying {} at {:?} for {} from {:?}",
             (0..depth).map(|_| "=").collect::<String>(),
             distance_so_far,
-            key
+            key,
+            position,
+            key_distance,
+            player_position
         );
 
         // See if the path from here is shorter than the paths we've seen so far.
