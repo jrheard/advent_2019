@@ -275,7 +275,7 @@ fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
     // TODO tweak range
-    for window_size in 3..6 {
+    for window_size in 2..5 {
         for window in segments.windows(window_size) {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
             *entry += 1;
@@ -348,10 +348,47 @@ pub fn seventeen_b() -> i64 {
     let path = find_path(&ship, robot);
     let segments = path_to_segments(&path);
     let chunks = most_popular_segment_chunks(&segments);
+    let (movement_functions, main_routine) = movement_functions_and_path(&segments, chunks);
 
-    dbg!(movement_functions_and_path(&segments, chunks));
+    let mut memory = computer::load_program("src/inputs/17.txt");
+    // "Force the vacuum robot to wake up by changing the value in your ASCII program at address 0 from 1 to 2."
+    memory[0] = 2;
 
-    5
+    let mut computer = Computer::new(memory);
+
+    // "First, you will be prompted for the main movement routine. The main
+    // routine may only call the movement functions: A, B, or C. Supply the
+    // movement functions to use as ASCII text, separating them with commas (,
+    // ASCII code 44), and ending the list with a newline (ASCII code 10)."
+    for index in main_routine {
+        computer.push_input(index as i64 + 65);
+        computer.push_input(44);
+    }
+    computer.push_input(10);
+
+    // "Then, you will be prompted for each movement function. Movement
+    // functions may use L to turn left, R to turn right, or a number to move
+    // forward that many units. Movement functions may not call other movement
+    // functions. Again, separate the actions with commas and end the list with
+    // a newline."
+    for function in movement_functions {
+        for (turn, distance) in function {
+            computer.push_input(if turn == Turn::Left { 76 } else { 82 });
+            computer.push_input(44);
+            computer.push_input(distance as i64 + 48);
+            computer.push_input(44);
+        }
+        computer.push_input(10);
+    }
+
+    // "Finally, you will be asked whether you want to see a continuous video
+    // feed; provide either y or n and a newline."
+    computer.push_input(110);
+    computer.push_input(10);
+
+    computer.run(HaltReason::Exit);
+
+    computer.pop_output().unwrap()
 }
 
 #[cfg(test)]
