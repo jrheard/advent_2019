@@ -3,6 +3,8 @@ use crate::computer::{Computer, HaltReason};
 use std::collections::{HashMap, HashSet};
 
 type Position = (i32, i32);
+type Path = Vec<(Option<Turn>, Position)>;
+type Segment = (Turn, usize);
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Direction {
@@ -16,6 +18,12 @@ enum Direction {
 enum Spot {
     Scaffold,
     Empty,
+}
+
+#[derive(Clone, Copy, Debug)]
+enum Turn {
+    Left,
+    Right,
 }
 
 #[derive(Debug)]
@@ -181,7 +189,7 @@ fn load_level() -> (ShipMap, Robot) {
 }
 
 // TODO return a vec of (Option<Turn>, Position)
-fn find_path(ship: &ShipMap, mut robot: Robot) -> Vec<(Option<Turn>, Position)> {
+fn find_path(ship: &ShipMap, mut robot: Robot) -> Path {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
         .filter_map(|(position, spot)| {
@@ -238,19 +246,35 @@ pub fn seventeen_a() -> i32 {
     intersections.iter().fold(0, |acc, &(x, y)| acc + x * y)
 }
 
-#[derive(Clone, Copy)]
-enum Turn {
-    Left,
-    Right,
+/// Takes a path, returns a Vec of tuples like [(Right, 8), (Left, 4), ..]
+fn path_to_segments(path: Path) -> Vec<Segment> {
+    let mut segments = vec![];
+    let mut turn = None;
+    let mut distance = 0;
+
+    for (maybe_turn, _) in path {
+        if let Some(new_turn) = maybe_turn {
+            if let Some(turn) = turn {
+                segments.push((turn, distance));
+            }
+
+            turn = Some(new_turn);
+            distance = 1;
+        } else {
+            distance += 1;
+        }
+    }
+
+    segments.push((turn.unwrap(), distance));
+
+    segments
 }
-
-type Segment = (Turn, usize);
-
-fn path_to_segments(path: Vec<i32>) {}
 
 pub fn seventeen_b() -> i64 {
     let (ship, robot) = load_level();
+    //ship._draw(&robot);
     let path = find_path(&ship, robot);
+    dbg!(path_to_segments(path));
     5
 }
 
@@ -261,5 +285,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(seventeen_a(), 7816);
+        assert_eq!(seventeen_b(), 0);
     }
 }
