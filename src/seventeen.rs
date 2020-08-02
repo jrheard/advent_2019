@@ -71,10 +71,12 @@ struct ShipMap {
 }
 
 impl ShipMap {
+    /// Returns true if (x, y) is within the bounds of the ship, false otherwise.
     fn spot_is_on_ship(&self, x: i32, y: i32) -> bool {
         x >= 0 && x < self.width as i32 && y >= 0 && y < self.height as i32
     }
 
+    /// Returns an Iterator over each (Position, Spot) pair on the ship map.
     fn walk_map<'a>(&'a self) -> impl Iterator<Item = (Position, Spot)> + 'a {
         let width = self.width;
         self.map
@@ -84,6 +86,7 @@ impl ShipMap {
     }
 
     #[cfg(not(tarpaulin_include))]
+    /// Draws the ship and robot to the screen.
     fn _draw(&self, robot: &Robot) {
         for ((x, y), spot) in self.walk_map() {
             if x == 0 {
@@ -104,6 +107,7 @@ impl ShipMap {
         }
     }
 
+    /// Returns the Spot at (x, y).
     fn get(&self, x: usize, y: usize) -> Spot {
         self.map[y * self.width + x]
     }
@@ -121,7 +125,6 @@ fn load_level() -> (ShipMap, Robot) {
     let mut robot = None;
 
     while let Some(output) = computer.pop_output() {
-        //print!("{}", output as u8 as char);
         match output as u8 as char {
             '#' => map.push(Spot::Scaffold),
             '.' => map.push(Spot::Empty),
@@ -161,6 +164,8 @@ fn load_level() -> (ShipMap, Robot) {
     )
 }
 
+/// Returns a Vec of all of the intersections of scaffold lines in `ship`.
+/// Consumes Robot in the process.
 fn find_intersections(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
@@ -191,6 +196,7 @@ fn find_intersections(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
     intersections
 }
 
+/// "What is the sum of the alignment parameters for the scaffold intersections?"
 pub fn seventeen_a() -> i32 {
     let (ship, robot) = load_level();
     let intersections = find_intersections(&ship, robot);

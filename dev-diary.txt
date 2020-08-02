@@ -1877,3 +1877,18 @@ ok also lol
 we need to figure out how to keep the robot from just turning around back and forth forever
 ok ez
 17a done!
+
+17b looks pretty nutty!!!!
+
+TODO
+1. accumulate a master vec of of (Turn, distance) tuples that describes the path from the start to the finish
+2. break it into chunks of size 2..<something reasonable  like 6>
+3. build a hashmap of <path_chunk -> occurrences>
+4. turn that into a vec of (chunk, occurrences) tuples, sort by (occurrences * chunk_size) descending
+5. print out the top 5-10 or something
+
+then after that i'll write tests to demonstrate that i have code that can find these commonly-occurring chunks
+
+NOTE i can _only_ use a, b, and c in my main movement code!!!!!!!!
+so TODO i think i'm gonna have to write a function that takes three path_chunks
+and tries to paint the whole path with them, returning true if it's possible, false otherwise
