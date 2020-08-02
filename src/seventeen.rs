@@ -274,7 +274,6 @@ fn path_to_segments(path: &[(Option<Turn>, Position)]) -> Vec<Segment> {
 fn most_popular_segment_chunks(segments: &[Segment]) -> Vec<Vec<Segment>> {
     let mut window_frequencies = HashMap::new();
 
-    // TODO tweak range
     for window_size in 2..5 {
         for window in segments.windows(window_size) {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
@@ -287,8 +286,7 @@ fn most_popular_segment_chunks(segments: &[Segment]) -> Vec<Vec<Segment>> {
         .sorted_by_key(|(window, count)| window.len() * count)
         .map(|(chunk, _)| chunk)
         .rev()
-        // TODO tweak
-        .take(50)
+        .take(20)
         .collect::<Vec<_>>()
 }
 

@@ -1919,3 +1919,7 @@ and it sure looks like that's true
 those distances are obviously incorrect
 oh, i see!!!!
 if a distance is eg 12, it needs to be represented by two different ascii chars
+
+ok sick it works :) :) :)
+
+TODO clean 17b the heck up!!
