@@ -1922,4 +1922,72 @@ if a distance is eg 12, it needs to be represented by two different ascii chars
 
 ok sick it works :) :) :)
 
-TODO clean 17b the heck up!!
+DONE clean 17b the heck up!!
+
+ok 18a looks really fun :)
+
+vague ideas:
+* dependency graph
+* flow field / precomputed distances
+
+...hrm
+maybe that's overcomplicating things
+maybe not
+
+they give this example:
+
+########################
+#f.D.E.e.............@.#
+######################.#
+#d.....................#
+########################
+
+you could pick up `e` because it's closer
+but `d` will be faster in the long run!
+
+ok so like
+this is pretty interesting
+how can my program know that d will be faster in the long run?
+
+so, we know that we have to get to f
+    and we know that doors D and E are in the way of f
+    and right now, keys d and e are available to us
+
+    it seems to me like we need to fully plan out the route in advance somehow
+    like, recursively try both branches and compare them
+
+    that might be the main idea here
+
+so to recap
+whenever we reach a decision point, i.e. a situation where we have multiple keys available to us
+then we try each option, run the simulation from there, and go with the option that ends up in the cheapest overall result
+
+some more detail:
+    * at each step, we can do a flood fill to compute everything's distance from us
+    * each recursive path keeps track of the distance traveled along it so far
+    * each recursive path ends if keys is empty
+    * TODO if a recursive path bails, we'll have to put the correpsonding key/door back where it was!!
+
+enums:
+    spot
+        wall
+        empty
+        door
+    direction
+        north
+        south
+        east
+        west
+
+type Position = (usize, usize)
+
+structs:
+    vault
+        keys: hashmap<char, Position>
+        doors: hashmap<char, Position>
+        map: Vec<spot>
+
+whenever we pick up a key:
+    * we remove it from keys
+    * we remove the door from doors
+    * we turn the coresponding `vault.map` entry from a `door` into an `empty`
