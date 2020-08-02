@@ -140,8 +140,14 @@ fn find_available_keys(vault: &Vault) -> Vec<(char, Position, u32)> {
         .collect()
 }
 
-fn find_shortest_path(vault: &mut Vault, distance_so_far: u32) -> u32 {
+fn find_shortest_path(vault: &mut Vault, distance_so_far: u32, depth: u32) -> u32 {
+    //println!("{:?}", vault.keys.keys());
     if vault.keys.is_empty() {
+        println!(
+            "{}> bottoming out at {}",
+            (0..depth).map(|_| "=").collect::<String>(),
+            distance_so_far
+        );
         return distance_so_far;
     }
 
@@ -157,9 +163,20 @@ fn find_shortest_path(vault: &mut Vault, distance_so_far: u32) -> u32 {
         }
         vault.player = position;
 
+        //println!("{}, {}", key, distance_so_far + key_distance);
+        println!(
+            "{}> {} trying {}",
+            (0..depth).map(|_| "=").collect::<String>(),
+            distance_so_far,
+            key
+        );
+
         // See if the path from here is shorter than the paths we've seen so far.
-        shortest_path =
-            shortest_path.min(find_shortest_path(vault, distance_so_far + key_distance));
+        shortest_path = shortest_path.min(find_shortest_path(
+            vault,
+            distance_so_far + key_distance,
+            depth + 1,
+        ));
 
         // Put things back the way they were before we tried this key.
         vault.player = player_position;
@@ -174,9 +191,8 @@ fn find_shortest_path(vault: &mut Vault, distance_so_far: u32) -> u32 {
 }
 
 pub fn eighteen_a() -> u32 {
-    let vault = Vault::new("src/inputs/18.txt");
-
-    5
+    let mut vault = Vault::new("src/inputs/18.txt");
+    find_shortest_path(&mut vault, 0, 0)
 }
 
 #[cfg(test)]
@@ -204,5 +220,17 @@ mod tests {
             .iter()
             .collect::<HashSet<_>>()
         );
+    }
+
+    #[test]
+    fn test_find_shortest_path() {
+        //let mut vault = Vault::new("src/inputs/18_sample_1.txt");
+        //assert_eq!(find_shortest_path(&mut vault, 0), 8);
+
+        let mut vault = Vault::new("src/inputs/18_sample_3.txt");
+        assert_eq!(find_shortest_path(&mut vault, 0, 0), 86);
+
+        //let mut vault = Vault::new("src/inputs/18_sample_2.txt");
+        //assert_eq!(find_shortest_path(&mut vault, 0), 136);
     }
 }
