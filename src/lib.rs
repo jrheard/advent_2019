@@ -52,6 +52,7 @@ pub fn run_all_solutions() {
     println!("16a: {}", sixteen::sixteen_a());
     println!("16b: {}", sixteen::sixteen_b());
     println!("17a: {}", seventeen::seventeen_a());
+    println!("17b: {}", seventeen::seventeen_b());
 }
 
 #[cfg(test)]

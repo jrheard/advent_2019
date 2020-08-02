@@ -1906,3 +1906,16 @@ NOTE: there are only 34 (turn, distance) segments in the whole path
 
 ok let's get back to it
 so itertools .combinations() is going to be what i want here
+
+ok cool so i worked for a while and got stuff working!
+i figured out how to paint the path, and how to figure out which functions to choose for a, b, and c
+but now i'm not getting the results i want from the computer
+i've been poking and prodding at it
+i'm hoping that the problem is just that my input-feeding code isn't quite right
+and it sure looks like that's true
+
+[src/seventeen.rs:401] str = "A,A,B,C,B,C,B,C,B,A\nR,:,L,<,R,6\nR,6,R,:,R,<,R,6\nR,:,L,<,L,<\nn\n"
+
+those distances are obviously incorrect
+oh, i see!!!!
+if a distance is eg 12, it needs to be represented by two different ascii chars

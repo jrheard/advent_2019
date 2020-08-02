@@ -280,8 +280,6 @@ fn most_popular_segment_chunks(segments: &Vec<Segment>) -> Vec<Vec<Segment>> {
             let entry = window_frequencies.entry(window.to_vec()).or_insert(0);
             *entry += 1;
         }
-
-        dbg!(window_frequencies.len());
     }
 
     window_frequencies
@@ -360,9 +358,11 @@ pub fn seventeen_b() -> i64 {
     // routine may only call the movement functions: A, B, or C. Supply the
     // movement functions to use as ASCII text, separating them with commas (,
     // ASCII code 44), and ending the list with a newline (ASCII code 10)."
-    for index in main_routine {
+    for (i, &index) in main_routine.iter().enumerate() {
         computer.push_input(index as i64 + 65);
-        computer.push_input(44);
+        if i != main_routine.len() - 1 {
+            computer.push_input(44);
+        }
     }
     computer.push_input(10);
 
@@ -372,11 +372,17 @@ pub fn seventeen_b() -> i64 {
     // functions. Again, separate the actions with commas and end the list with
     // a newline."
     for function in movement_functions {
-        for (turn, distance) in function {
+        for (i, &(turn, distance)) in function.iter().enumerate() {
             computer.push_input(if turn == Turn::Left { 76 } else { 82 });
             computer.push_input(44);
-            computer.push_input(distance as i64 + 48);
-            computer.push_input(44);
+
+            for digit in distance.to_string().chars() {
+                computer.push_input(digit as i64);
+            }
+
+            if i != function.len() - 1 {
+                computer.push_input(44);
+            }
         }
         computer.push_input(10);
     }
@@ -388,7 +394,11 @@ pub fn seventeen_b() -> i64 {
 
     computer.run(HaltReason::Exit);
 
-    computer.pop_output().unwrap()
+    let mut last_output = computer.pop_output().unwrap();
+    while let Some(output) = computer.pop_output() {
+        last_output = output;
+    }
+    last_output
 }
 
 #[cfg(test)]
@@ -398,6 +408,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(seventeen_a(), 7816);
-        assert_eq!(seventeen_b(), 0);
+        assert_eq!(seventeen_b(), 952010);
     }
 }
