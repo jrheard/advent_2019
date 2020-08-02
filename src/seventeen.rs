@@ -1,6 +1,6 @@
 use crate::computer;
 use crate::computer::{Computer, HaltReason};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 type Position = (i32, i32);
 
@@ -164,9 +164,7 @@ fn load_level() -> (ShipMap, Robot) {
     )
 }
 
-/// Returns a Vec of all of the intersections of scaffold lines in `ship`.
-/// Consumes Robot in the process.
-fn find_intersections(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
+fn find_path(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
         .filter_map(|(position, spot)| {
@@ -177,23 +175,43 @@ fn find_intersections(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
             }
         })
         .collect();
-    let mut visited_scaffolds = HashSet::new();
-    let mut intersections = vec![];
 
     unvisited_scaffolds.remove(&robot.position);
+    let mut path = vec![robot.position];
 
     while !unvisited_scaffolds.is_empty() {
         robot.walk_forward(&ship);
         unvisited_scaffolds.remove(&robot.position);
-
-        if visited_scaffolds.contains(&robot.position) {
-            intersections.push(robot.position);
-        } else {
-            visited_scaffolds.insert(robot.position);
-        }
+        path.push(robot.position);
     }
 
-    intersections
+    path
+}
+
+/// Returns a Vec of all of the intersections of scaffold lines in `ship`.
+/// Consumes Robot in the process.
+fn find_intersections(ship: &ShipMap, robot: Robot) -> Vec<Position> {
+    let path = find_path(ship, robot);
+
+    let mut position_counts = HashMap::new();
+
+    for position in path {
+        let entry = position_counts.entry(position).or_insert(0);
+        *entry += 1;
+    }
+
+    position_counts
+        .iter()
+        .filter_map(
+            |(&position, count)| {
+                if *count > 1 {
+                    Some(position)
+                } else {
+                    None
+                }
+            },
+        )
+        .collect()
 }
 
 /// "What is the sum of the alignment parameters for the scaffold intersections?"
@@ -201,6 +219,17 @@ pub fn seventeen_a() -> i32 {
     let (ship, robot) = load_level();
     let intersections = find_intersections(&ship, robot);
     intersections.iter().fold(0, |acc, &(x, y)| acc + x * y)
+}
+
+enum Turn {
+    Left,
+    Right,
+}
+
+pub fn seventeen_b() -> i64 {
+    let (ship, robot) = load_level();
+    let intersections = find_intersections(&ship, robot);
+    5
 }
 
 #[cfg(test)]

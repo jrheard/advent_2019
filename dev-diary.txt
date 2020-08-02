@@ -1892,3 +1892,5 @@ then after that i'll write tests to demonstrate that i have code that can find t
 NOTE i can _only_ use a, b, and c in my main movement code!!!!!!!!
 so TODO i think i'm gonna have to write a function that takes three path_chunks
 and tries to paint the whole path with them, returning true if it's possible, false otherwise
+
+ok, let's start
