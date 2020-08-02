@@ -25,33 +25,49 @@ struct Robot {
 }
 
 impl Robot {
-    fn walk_forward(&mut self, ship: &ShipMap) {
+    fn walk_forward(&mut self, ship: &ShipMap) -> Option<Turn> {
         let (try_x, try_y) = one_position_ahead(&self.direction, &self.position);
+        let mut turn_taken = None;
 
         if !ship.spot_is_on_ship(try_x, try_y)
             || ship.get(try_x as usize, try_y as usize) == Spot::Empty
         {
             // If we keep going forward, we'll fall off of a scaffold or off of the ship entirely. Time to turn.
             // Find the first direction that'll take us to a scaffold.
-            let directions_to_try: [Direction; 2] = match self.direction {
-                Direction::North => [Direction::East, Direction::West],
-                Direction::East => [Direction::North, Direction::South],
-                Direction::South => [Direction::East, Direction::West],
-                Direction::West => [Direction::North, Direction::South],
+            let directions_to_try: [(Turn, Direction); 2] = match self.direction {
+                Direction::North => [
+                    (Turn::Left, Direction::West),
+                    (Turn::Right, Direction::East),
+                ],
+                Direction::East => [
+                    (Turn::Left, Direction::North),
+                    (Turn::Right, Direction::South),
+                ],
+                Direction::South => [
+                    (Turn::Left, Direction::East),
+                    (Turn::Right, Direction::West),
+                ],
+                Direction::West => [
+                    (Turn::Left, Direction::South),
+                    (Turn::Right, Direction::North),
+                ],
             };
 
-            self.direction = *directions_to_try
-                .iter()
-                .find(|&direction| {
-                    let (new_x, new_y) = one_position_ahead(direction, &self.position);
-                    ship.spot_is_on_ship(new_x, new_y)
-                        && ship.get(new_x as usize, new_y as usize) == Spot::Scaffold
-                })
-                .unwrap();
+            for &(turn, direction) in directions_to_try.iter() {
+                let (new_x, new_y) = one_position_ahead(&direction, &self.position);
+                if ship.spot_is_on_ship(new_x, new_y)
+                    && ship.get(new_x as usize, new_y as usize) == Spot::Scaffold
+                {
+                    self.direction = direction;
+                    turn_taken = Some(turn);
+                }
+            }
         }
 
         // Now that we're sure we're pointing in a valid direction, we can safely walk forward!
         self.position = one_position_ahead(&self.direction, &self.position);
+
+        turn_taken
     }
 }
 
@@ -164,7 +180,8 @@ fn load_level() -> (ShipMap, Robot) {
     )
 }
 
-fn find_path(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
+// TODO return a vec of (Option<Turn>, Position)
+fn find_path(ship: &ShipMap, mut robot: Robot) -> Vec<(Option<Turn>, Position)> {
     let mut unvisited_scaffolds: HashSet<Position> = ship
         .walk_map()
         .filter_map(|(position, spot)| {
@@ -177,12 +194,12 @@ fn find_path(ship: &ShipMap, mut robot: Robot) -> Vec<Position> {
         .collect();
 
     unvisited_scaffolds.remove(&robot.position);
-    let mut path = vec![robot.position];
+    let mut path = vec![];
 
     while !unvisited_scaffolds.is_empty() {
-        robot.walk_forward(&ship);
+        let turn_taken = robot.walk_forward(&ship);
         unvisited_scaffolds.remove(&robot.position);
-        path.push(robot.position);
+        path.push((turn_taken, robot.position));
     }
 
     path
@@ -195,7 +212,7 @@ fn find_intersections(ship: &ShipMap, robot: Robot) -> Vec<Position> {
 
     let mut position_counts = HashMap::new();
 
-    for position in path {
+    for (_, position) in path {
         let entry = position_counts.entry(position).or_insert(0);
         *entry += 1;
     }
@@ -221,14 +238,19 @@ pub fn seventeen_a() -> i32 {
     intersections.iter().fold(0, |acc, &(x, y)| acc + x * y)
 }
 
+#[derive(Clone, Copy)]
 enum Turn {
     Left,
     Right,
 }
 
+type Segment = (Turn, usize);
+
+fn path_to_segments(path: Vec<i32>) {}
+
 pub fn seventeen_b() -> i64 {
     let (ship, robot) = load_level();
-    let intersections = find_intersections(&ship, robot);
+    let path = find_path(&ship, robot);
     5
 }
 
