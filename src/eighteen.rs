@@ -63,7 +63,8 @@ impl Vault {
                             Space::Key(character)
                         }
                         (character, _, true) => {
-                            doors.insert(character.to_lowercase().next().unwrap(), (x, y));
+                            let character = character.to_lowercase().next().unwrap();
+                            doors.insert(character, (x, y));
                             Space::Door(character)
                         }
                         _ => unreachable!(),
@@ -129,7 +130,9 @@ fn populate_key_distances_and_doors(
             }
             Space::Key(character) => {
                 // Found a key!
-                key_distances_and_doors.insert(character, (distance + 1, doors_needed.clone()));
+                if character != '@' {
+                    key_distances_and_doors.insert(character, (distance + 1, doors_needed.clone()));
+                }
             }
             Space::Empty => {}
         };
@@ -163,7 +166,6 @@ fn find_available_keys_from_position(
     let mut doors_needed = HashSet::new();
 
     let mut key_distances_and_doors = HashMap::new();
-    key_distances_and_doors.insert(key, (0, HashSet::new()));
 
     populate_key_distances_and_doors(
         &mut key_distances_and_doors,
@@ -177,7 +179,6 @@ fn find_available_keys_from_position(
     key_distances_and_doors
 }
 
-// TODO tear this all down
 fn find_shortest_path(
     vault: &Vault,
     key_distances: &HashMap<char, HashMap<char, (u32, HashSet<char>)>>,
@@ -186,15 +187,23 @@ fn find_shortest_path(
     key: char,
     distance_so_far: u32,
 ) -> u32 {
+    //println!("{:?}", keys_left);
+    //println!("{:?}", doors_opened);
     if keys_left.is_empty() {
         // We've bottomed out!
+        //println!("BOTTOMED OUT");
         return distance_so_far;
     }
 
     let mut shortest_path = u32::MAX;
 
     for (&other_key, (distance_to_key, doors_needed)) in &key_distances[&key] {
-        if doors_needed.is_subset(doors_opened) {
+        //println!(
+        //"trying {}, {}, {:?}",
+        //other_key, distance_to_key, doors_needed
+        //);
+        if keys_left.contains(&other_key) && doors_needed.is_subset(doors_opened) {
+            //println!("trying {}", other_key);
             keys_left.remove(&other_key);
             doors_opened.insert(other_key);
 
@@ -209,14 +218,16 @@ fn find_shortest_path(
 
             doors_opened.remove(&key);
             keys_left.insert(key);
+        } else {
+            //println!("not relevant");
         }
     }
 
     shortest_path
 }
 
-pub fn eighteen_a() -> u32 {
-    let vault = Vault::new("src/inputs/18.txt");
+fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
+    let vault = Vault::new(filename);
 
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
@@ -226,7 +237,7 @@ pub fn eighteen_a() -> u32 {
         );
     }
 
-    let mut keys_left = vault.keys.keys().cloned().collect();
+    let mut keys_left = vault.keys.keys().filter(|&&x| x != '@').cloned().collect();
     let mut doors_opened = HashSet::new();
 
     find_shortest_path(
@@ -239,10 +250,24 @@ pub fn eighteen_a() -> u32 {
     )
 }
 
+pub fn eighteen_a() -> u32 {
+    shortest_path_to_get_all_keys("src/inputs/18.txt")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
-    fn test_foo() {}
+    fn test_samples() {
+        assert_eq!(
+            shortest_path_to_get_all_keys("src/inputs/18_sample_1.txt"),
+            8
+        );
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(eighteen_a(), 0);
+    }
 }
