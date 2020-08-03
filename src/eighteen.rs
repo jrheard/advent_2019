@@ -98,9 +98,9 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
 
 /// Populates a map of {key -> (distance_to_key, doors_needed)}.
 fn populate_key_distances_and_doors(
-    key_distances_and_doors: &mut HashMap<char, (u32, Vec<char>)>,
+    key_distances_and_doors: &mut HashMap<char, (u32, HashSet<char>)>,
     visited: &mut HashSet<Position>,
-    doors_needed: &mut Vec<char>,
+    doors_needed: &mut HashSet<char>,
     position: Position,
     distance: u32,
     vault: &Vault,
@@ -125,7 +125,7 @@ fn populate_key_distances_and_doors(
             Space::Wall => continue,
             Space::Door(character) => {
                 // The player will need to open this door in order to continue down this path.
-                doors_needed.push(character);
+                doors_needed.insert(character);
             }
             Space::Key(character) => {
                 // Found a key!
@@ -147,23 +147,23 @@ fn populate_key_distances_and_doors(
 
         if let Space::Door(character) = next_space {
             // We don't need this door any more!
-            doors_needed.pop();
+            doors_needed.remove(&character);
         }
     }
 }
 
-/// Returns a HashMap of {key_character: (distance_to_key, vec_of_doors_needed)}.
+/// Returns a HashMap of {key_character: (distance_to_key, hashset_of_doors_needed)}.
 fn find_available_keys_from_position(
     vault: &Vault,
     key: char,
     position: Position,
-) -> HashMap<char, (u32, Vec<char>)> {
+) -> HashMap<char, (u32, HashSet<char>)> {
     let mut visited = HashSet::new();
     visited.insert(position);
-    let mut doors_needed = vec![];
+    let mut doors_needed = HashSet::new();
 
     let mut key_distances_and_doors = HashMap::new();
-    key_distances_and_doors.insert(key, (0, vec![]));
+    key_distances_and_doors.insert(key, (0, HashSet::new()));
 
     populate_key_distances_and_doors(
         &mut key_distances_and_doors,
@@ -178,57 +178,65 @@ fn find_available_keys_from_position(
 }
 
 // TODO tear this all down
-fn find_shortest_path(vault: &mut Vault, distance_so_far: u32, depth: u32) -> u32 {
-    if vault.keys.is_empty() {
+fn find_shortest_path(
+    vault: &Vault,
+    key_distances: &HashMap<char, HashMap<char, (u32, HashSet<char>)>>,
+    keys_left: &mut HashSet<char>,
+    doors_opened: &mut HashSet<char>,
+    key: char,
+    distance_so_far: u32,
+) -> u32 {
+    if keys_left.is_empty() {
+        // We've bottomed out!
         return distance_so_far;
     }
 
     let mut shortest_path = u32::MAX;
 
-    for (key, position, key_distance) in find_available_keys(vault) {
-        // Remove the key, open the door, and move the player to the key's position.
-        vault.keys.remove(&key);
-        let door = vault.doors.remove(&key);
-        if let Some(door_position) = door {
-            vault.map[door_position.0 + door_position.1 * vault.width] = Space::Empty;
-        }
-        let player_position = vault.player;
-        vault.player = position;
+    for (&other_key, (distance_to_key, doors_needed)) in &key_distances[&key] {
+        if doors_needed.is_subset(doors_opened) {
+            keys_left.remove(&other_key);
+            doors_opened.insert(other_key);
 
-        // See if the path from here is shorter than the paths we've seen so far.
-        shortest_path = shortest_path.min(find_shortest_path(
-            vault,
-            distance_so_far + key_distance,
-            depth + 1,
-        ));
+            shortest_path = shortest_path.min(find_shortest_path(
+                vault,
+                key_distances,
+                keys_left,
+                doors_opened,
+                other_key,
+                distance_so_far + distance_to_key,
+            ));
 
-        // Put things back the way they were before we tried this key.
-        vault.player = player_position;
-        if let Some(door_position) = door {
-            vault.map[door_position.0 + door_position.1 * vault.width] = Space::Door;
-            vault.doors.insert(key, door_position);
+            doors_opened.remove(&key);
+            keys_left.insert(key);
         }
-        vault.keys.insert(key, position);
     }
 
     shortest_path
 }
 
 pub fn eighteen_a() -> u32 {
-    let mut vault = Vault::new("src/inputs/18.txt");
+    let vault = Vault::new("src/inputs/18.txt");
 
     let mut key_distance_maps = HashMap::new();
-    for (key, position) in vault.keys {
+    for (&key, &position) in &vault.keys {
         key_distance_maps.insert(
             key,
             find_available_keys_from_position(&vault, key, position),
         );
     }
 
-    // TODO at this point i have a map of {key_char -> {other_key_char -> (distance, doors_needed)}}
-    // so we can get to work
+    let mut keys_left = vault.keys.keys().cloned().collect();
+    let mut doors_opened = HashSet::new();
 
-    find_shortest_path(&mut vault, 0, 0)
+    find_shortest_path(
+        &vault,
+        &key_distance_maps,
+        &mut keys_left,
+        &mut doors_opened,
+        '@',
+        0,
+    )
 }
 
 #[cfg(test)]
@@ -236,37 +244,5 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_find_available_keys() {
-        let vault = Vault::new("src/inputs/18_sample_1.txt");
-        assert_eq!(find_available_keys(&vault), vec![('a', (7, 1), 2)]);
-
-        let vault = Vault::new("src/inputs/18_sample_2.txt");
-        assert_eq!(
-            find_available_keys(&vault).iter().collect::<HashSet<_>>(),
-            vec![
-                ('h', (10, 7), 7),
-                ('f', (10, 3), 3),
-                ('c', (6, 1), 5),
-                ('e', (10, 1), 5),
-                ('b', (6, 3), 3),
-                ('a', (6, 5), 5),
-                ('g', (10, 5), 5),
-                ('d', (6, 7), 7)
-            ]
-            .iter()
-            .collect::<HashSet<_>>()
-        );
-    }
-
-    #[test]
-    fn test_find_shortest_path() {
-        let mut vault = Vault::new("src/inputs/18_sample_1.txt");
-        assert_eq!(find_shortest_path(&mut vault, 0, 0), 8);
-
-        let mut vault = Vault::new("src/inputs/18_sample_3.txt");
-        assert_eq!(find_shortest_path(&mut vault, 0, 0), 86);
-
-        let mut vault = Vault::new("src/inputs/18_sample_2.txt");
-        assert_eq!(find_shortest_path(&mut vault, 0, 0), 136);
-    }
+    fn test_foo() {}
 }
