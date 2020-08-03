@@ -1997,3 +1997,17 @@ so, i got the basics working
 right now my solution's too slow tho
 also it was buggy for a bit but i fixed the bug - my mistake was that i forgot to put (player.position, 0)
 in the flood-fill distances map before running the flood fill. whoops!
+
+okay, so yeah my solution is definitely way too slow
+bc in the worst case it's o(n!)
+and 26! is 4.0329146e+26
+so, not a chance :)
+
+let's try some other stuff
+i looked at reddit for hints
+
+one random post i saw:
+"My basic idea was to precompute the way from the start and all possible keys
+to each other key and store the length and needed keys to pass doors in the way."
+
+interesting idea!
