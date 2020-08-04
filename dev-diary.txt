@@ -2014,3 +2014,27 @@ interesting idea!
 
 DONE keep a mutable buffer of path_so_far, and print it out to the screen whenever we bottom out
 so it prints stuff like `126: [('a', 25), ('e', 2), etc]`
+
+ok so i have 18a somewhat working again
+still way too slow though
+TODO what can be cached??
+
+find_shortest_path looks like this
+
+fn find_shortest_path(
+    key_distances: &HashMap<char, HashMap<char, (u32, HashSet<char>)>>,
+    keys_left: &mut HashSet<char>,
+    doors_opened: &mut HashSet<char>,
+    key: char,
+    distance_so_far: u32,
+) -> u32 {
+
+if keys_left and doors_opened were bitfields,
+then we could add a cache arg like...
+what exactly?
+
+===
+
+8/4/20
+
+well, let's try the bitfield thing just for fun anyway
