@@ -198,8 +198,8 @@ fn char_to_shifted_bit(c: char) -> u32 {
 
 fn find_shortest_path(
     key_distances: &HashMap<char, HashMap<char, (u32, Bitfield)>>,
-    mut keys_left: Bitfield,
-    mut doors_opened: Bitfield,
+    keys_left: Bitfield,
+    doors_opened: Bitfield,
     key: char,
     distance_so_far: u32,
     cache: &mut HashMap<(char, Bitfield), u32>,
@@ -221,20 +221,14 @@ fn find_shortest_path(
 
     for (&other_key, (distance_to_key, doors_needed)) in &key_distances[&key] {
         if keys_left.contains_char(other_key) && doors_opened.contains_all(*doors_needed) {
-            keys_left.0 -= char_to_shifted_bit(other_key);
-            doors_opened.0 |= char_to_shifted_bit(other_key);
-
             shortest_path = shortest_path.min(find_shortest_path(
                 key_distances,
-                keys_left,
-                doors_opened,
+                Bitfield(keys_left.0 - char_to_shifted_bit(other_key)),
+                Bitfield(doors_opened.0 | char_to_shifted_bit(other_key)),
                 other_key,
                 distance_so_far + distance_to_key,
                 cache,
             ));
-
-            doors_opened.0 -= char_to_shifted_bit(other_key);
-            keys_left.0 |= char_to_shifted_bit(other_key);
         }
     }
 
