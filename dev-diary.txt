@@ -2038,3 +2038,6 @@ what exactly?
 8/4/20
 
 well, let's try the bitfield thing just for fun anyway
+
+ok cool so i got bitfields working
+now what can i cache, and where?

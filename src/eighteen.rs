@@ -202,10 +202,19 @@ fn find_shortest_path(
     mut doors_opened: Bitfield,
     key: char,
     distance_so_far: u32,
+    cache: &mut HashMap<(char, Bitfield), u32>,
 ) -> u32 {
     if keys_left.0 == 0 {
         // We've bottomed out!
         return distance_so_far;
+    }
+
+    if let Some(&distance) = cache.get(&(key, keys_left)) {
+        //println!(
+        //"found one - the shortest path from {} with {:?} is {}",
+        //key, keys_left, distance
+        //);
+        return distance;
     }
 
     let mut shortest_path = u32::MAX;
@@ -221,12 +230,15 @@ fn find_shortest_path(
                 doors_opened,
                 other_key,
                 distance_so_far + distance_to_key,
+                cache,
             ));
 
             doors_opened.0 -= char_to_shifted_bit(other_key);
             keys_left.0 |= char_to_shifted_bit(other_key);
         }
     }
+
+    cache.insert((key, keys_left), shortest_path);
 
     shortest_path
 }
@@ -247,7 +259,16 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         }
     }));
 
-    find_shortest_path(&key_distance_maps, keys_left, Bitfield(0), '@', 0)
+    let mut cache = HashMap::new();
+
+    find_shortest_path(
+        &key_distance_maps,
+        keys_left,
+        Bitfield(0),
+        '@',
+        0,
+        &mut cache,
+    )
 }
 
 pub fn eighteen_a() -> u32 {
@@ -268,10 +289,10 @@ mod tests {
             shortest_path_to_get_all_keys("src/inputs/18_sample_3.txt"),
             86
         );
-        //assert_eq!(
-        //shortest_path_to_get_all_keys("src/inputs/18_sample_2.txt"),
-        //136
-        //);
+        assert_eq!(
+            shortest_path_to_get_all_keys("src/inputs/18_sample_2.txt"),
+            136
+        );
     }
 
     #[test]
