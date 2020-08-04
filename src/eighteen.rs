@@ -158,7 +158,6 @@ fn populate_key_distances_and_doors(
 /// Returns a HashMap of {key_character: (distance_to_key, hashset_of_doors_needed)}.
 fn find_available_keys_from_position(
     vault: &Vault,
-    key: char,
     position: Position,
 ) -> HashMap<char, (u32, HashSet<char>)> {
     let mut visited = HashSet::new();
@@ -187,23 +186,15 @@ fn find_shortest_path(
     key: char,
     distance_so_far: u32,
 ) -> u32 {
-    //println!("{:?}", keys_left);
-    //println!("{:?}", doors_opened);
     if keys_left.is_empty() {
         // We've bottomed out!
-        //println!("BOTTOMED OUT");
         return distance_so_far;
     }
 
     let mut shortest_path = u32::MAX;
 
     for (&other_key, (distance_to_key, doors_needed)) in &key_distances[&key] {
-        //println!(
-        //"trying {}, {}, {:?}",
-        //other_key, distance_to_key, doors_needed
-        //);
         if keys_left.contains(&other_key) && doors_needed.is_subset(doors_opened) {
-            //println!("trying {}", other_key);
             keys_left.remove(&other_key);
             doors_opened.insert(other_key);
 
@@ -216,10 +207,8 @@ fn find_shortest_path(
                 distance_so_far + distance_to_key,
             ));
 
-            doors_opened.remove(&key);
-            keys_left.insert(key);
-        } else {
-            //println!("not relevant");
+            doors_opened.remove(&other_key);
+            keys_left.insert(other_key);
         }
     }
 
@@ -231,10 +220,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
 
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
-        key_distance_maps.insert(
-            key,
-            find_available_keys_from_position(&vault, key, position),
-        );
+        key_distance_maps.insert(key, find_available_keys_from_position(&vault, position));
     }
 
     let mut keys_left = vault.keys.keys().filter(|&&x| x != '@').cloned().collect();
@@ -263,6 +249,14 @@ mod tests {
         assert_eq!(
             shortest_path_to_get_all_keys("src/inputs/18_sample_1.txt"),
             8
+        );
+        assert_eq!(
+            shortest_path_to_get_all_keys("src/inputs/18_sample_3.txt"),
+            86
+        );
+        assert_eq!(
+            shortest_path_to_get_all_keys("src/inputs/18_sample_2.txt"),
+            136
         );
     }
 

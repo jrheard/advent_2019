@@ -2011,3 +2011,6 @@ one random post i saw:
 to each other key and store the length and needed keys to pass doors in the way."
 
 interesting idea!
+
+DONE keep a mutable buffer of path_so_far, and print it out to the screen whenever we bottom out
+so it prints stuff like `126: [('a', 25), ('e', 2), etc]`
