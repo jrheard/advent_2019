@@ -2041,3 +2041,30 @@ well, let's try the bitfield thing just for fun anyway
 
 ok cool so i got bitfields working
 now what can i cache, and where?
+
+DONE i'm not automatically tracking keys that you get for free by walking _through_ stuff
+
+ok now i'm tracking that
+but it doesn't look like my tracking logic is getting used correctly
+ok i think it is now
+
+
+===
+
+
+#################
+#i.G..c...e..H.p#
+########.########
+#j.A..b...f..D.o#
+########@########
+#k.E..a...g..B.n#
+########.########
+#l.F..d...h..C.m#
+#################
+
+[('a', 3), ('g', 4), ('h', 6), ('d', 4), ('f', 8), ('b', 4), ('j', 5), ('c',
+11), ('e', 4), ('p', 5), ('i', 14), ('o', 16), ('k', 16), ('n', 14), ('l',
+16), ('m', 14)]
+
+why c, e, p, i?
+why not c, i, e, p?

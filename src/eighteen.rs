@@ -1,3 +1,4 @@
+use itertools::Itertools;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -111,11 +112,12 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     }
 }
 
-/// Populates a map of {key -> (distance_to_key, doors_needed)}.
+/// Populates a map of {key -> (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
 fn populate_key_distances_and_doors(
-    key_distances_and_doors: &mut HashMap<char, (u32, Bitfield)>,
+    key_distances_and_doors: &mut HashMap<char, (u32, Bitfield, Bitfield)>,
     visited: &mut HashSet<Position>,
     mut doors_needed: Bitfield,
+    mut keys_picked_up: Bitfield,
     position: Position,
     distance: u32,
     vault: &Vault,
@@ -135,17 +137,23 @@ fn populate_key_distances_and_doors(
         }
 
         let next_space = vault.get(position_ahead.0, position_ahead.1);
+        let mut door_found = None;
+
+        // TODO am i handling doors_needed correctly?
 
         match next_space {
             Space::Wall => continue,
             Space::Door(character) => {
                 // The player will need to open this door in order to continue down this path.
-                doors_needed.0 |= char_to_shifted_bit(character);
+                doors_needed = Bitfield(doors_needed.0 | char_to_shifted_bit(character));
+                door_found = Some(character);
             }
             Space::Key(character) => {
                 // Found a key!
                 if character != '@' {
-                    key_distances_and_doors.insert(character, (distance + 1, doors_needed));
+                    key_distances_and_doors
+                        .insert(character, (distance + 1, doors_needed, keys_picked_up));
+                    keys_picked_up = Bitfield(keys_picked_up.0 | char_to_shifted_bit(character));
                 }
             }
             Space::Empty => {}
@@ -157,23 +165,23 @@ fn populate_key_distances_and_doors(
             key_distances_and_doors,
             visited,
             doors_needed,
+            keys_picked_up,
             position_ahead,
             distance + 1,
             vault,
         );
 
-        if let Space::Door(character) = next_space {
-            // We don't need this door any more!
-            doors_needed.0 -= char_to_shifted_bit(character);
+        if let Some(character) = door_found {
+            doors_needed = Bitfield(doors_needed.0 - char_to_shifted_bit(character));
         }
     }
 }
 
-/// Returns a HashMap of {key_character: (distance_to_key, bitfield_of_doors_needed)}.
+/// Returns a HashMap of {key_character: (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
 fn find_available_keys_from_position(
     vault: &Vault,
     position: Position,
-) -> HashMap<char, (u32, Bitfield)> {
+) -> HashMap<char, (u32, Bitfield, Bitfield)> {
     let mut visited = HashSet::new();
     visited.insert(position);
 
@@ -182,6 +190,8 @@ fn find_available_keys_from_position(
     populate_key_distances_and_doors(
         &mut key_distances_and_doors,
         &mut visited,
+        Bitfield(0),
+        // TODO might be able to get rid of this once i get my solution working
         Bitfield(0),
         position,
         0,
@@ -197,15 +207,17 @@ fn char_to_shifted_bit(c: char) -> u32 {
 }
 
 fn find_shortest_path(
-    key_distances: &HashMap<char, HashMap<char, (u32, Bitfield)>>,
+    key_distances: &HashMap<char, HashMap<char, (u32, Bitfield, Bitfield)>>,
     keys_left: Bitfield,
     doors_opened: Bitfield,
     key: char,
     distance_so_far: u32,
+    path: &mut Vec<(char, u32)>,
     cache: &mut HashMap<(char, Bitfield), u32>,
 ) -> u32 {
     if keys_left.0 == 0 {
         // We've bottomed out!
+        println!("bottomed out at {} via {:?}", distance_so_far, path);
         return distance_so_far;
     }
 
@@ -219,16 +231,33 @@ fn find_shortest_path(
 
     let mut shortest_path = u32::MAX;
 
-    for (&other_key, (distance_to_key, doors_needed)) in &key_distances[&key] {
+    for (&other_key, (distance_to_key, doors_needed, keys_picked_up)) in key_distances[&key]
+        .iter()
+        .sorted_by_key(|(_, (distance, _, _))| distance)
+    {
+        if keys_picked_up.0 > 0 {
+            //println!(
+            //"{}->{}, picked up keys {} along the way",
+            //key, other_key, keys_picked_up.0
+            //);
+        }
+        let keys_left = Bitfield(keys_left.0 - (keys_left.0 & keys_picked_up.0));
+        let doors_opened = Bitfield(doors_opened.0 | keys_picked_up.0);
+
         if keys_left.contains_char(other_key) && doors_opened.contains_all(*doors_needed) {
+            path.push((other_key, *distance_to_key));
+
             shortest_path = shortest_path.min(find_shortest_path(
                 key_distances,
                 Bitfield(keys_left.0 - char_to_shifted_bit(other_key)),
                 Bitfield(doors_opened.0 | char_to_shifted_bit(other_key)),
                 other_key,
                 distance_so_far + distance_to_key,
+                path,
                 cache,
             ));
+
+            path.pop();
         }
     }
 
@@ -253,6 +282,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         }
     }));
 
+    let mut path = vec![];
     let mut cache = HashMap::new();
 
     find_shortest_path(
@@ -261,6 +291,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         Bitfield(0),
         '@',
         0,
+        &mut path,
         &mut cache,
     )
 }
