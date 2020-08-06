@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 type Position = (usize, usize);
@@ -112,100 +112,87 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     }
 }
 
-/// Populates a map of {key -> (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
-fn populate_key_distances_and_doors(
-    key_distances_and_doors: &mut HashMap<char, (u32, Bitfield, Bitfield)>,
-    visited: &mut HashSet<Position>,
-    mut doors_needed: Bitfield,
-    mut keys_picked_up: Bitfield,
+struct BfsNode {
     position: Position,
     distance: u32,
-    vault: &Vault,
-) {
-    for direction in [
-        Direction::North,
-        Direction::East,
-        Direction::South,
-        Direction::West,
-    ]
-    .iter()
-    {
-        let position_ahead = one_position_ahead(direction, &position);
+    doors_needed: Bitfield,
+    keys_picked_up: Bitfield,
+}
 
-        if visited.contains(&position_ahead) {
+/// Returns a map of {key -> (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
+fn populate_key_distances_and_doors(
+    starting_position: Position,
+    vault: &Vault,
+) -> HashMap<char, (u32, Bitfield, Bitfield)> {
+    let self_key = match vault.get(starting_position.0, starting_position.1) {
+        Space::Key(character) => character,
+        _ => unreachable!(),
+    };
+
+    let mut distances_and_doors_by_key = HashMap::new();
+
+    let mut seen = HashSet::new();
+
+    let mut queue = VecDeque::new();
+    queue.push_back(BfsNode {
+        position: starting_position,
+        distance: 0,
+        doors_needed: Bitfield(0),
+        keys_picked_up: Bitfield(0),
+    });
+
+    while !queue.is_empty() {
+        let BfsNode {
+            position,
+            mut doors_needed,
+            mut keys_picked_up,
+            distance,
+        } = queue.pop_front().expect("queue is non-empty");
+
+        if seen.contains(&position) {
             continue;
+        } else {
+            seen.insert(position);
         }
 
-        let next_space = vault.get(position_ahead.0, position_ahead.1);
-        let mut door_found = None;
-        let mut key_found = None;
-
-        match next_space {
-            Space::Wall => continue,
+        match vault.get(position.0, position.1) {
             Space::Door(character) => {
                 // The player will need to open this door in order to continue down this path.
                 doors_needed = Bitfield(doors_needed.0 | char_to_shifted_bit(character));
-                door_found = Some(character);
             }
             Space::Key(character) => {
                 // Found a key!
-                if character != '@' {
-                    key_distances_and_doors
-                        .insert(character, (distance + 1, doors_needed, keys_picked_up));
+                if character != '@' && character != self_key {
+                    distances_and_doors_by_key
+                        .insert(character, (distance, doors_needed, keys_picked_up));
                     keys_picked_up = Bitfield(keys_picked_up.0 | char_to_shifted_bit(character));
                 }
-                key_found = Some(character);
             }
+            Space::Wall => continue,
             Space::Empty => {}
         };
 
-        visited.insert(position_ahead);
-
-        populate_key_distances_and_doors(
-            key_distances_and_doors,
-            visited,
-            doors_needed,
-            keys_picked_up,
-            position_ahead,
-            distance + 1,
-            vault,
-        );
-
-        if let Some(character) = door_found {
-            doors_needed = Bitfield(doors_needed.0 - char_to_shifted_bit(character));
-        }
-        if let Some(character) = key_found {
-            if character != '@' {
-                keys_picked_up = Bitfield(keys_picked_up.0 - char_to_shifted_bit(character));
-            }
+        for direction in [
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ]
+        .iter()
+        {
+            queue.push_back(BfsNode {
+                position: one_position_ahead(direction, &position),
+                distance: distance + 1,
+                doors_needed,
+                keys_picked_up,
+            });
         }
     }
+
+    distances_and_doors_by_key
 }
 
 /// Returns a HashMap of {key_character: (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
-fn find_available_keys_from_position(
-    vault: &Vault,
-    position: Position,
-) -> HashMap<char, (u32, Bitfield, Bitfield)> {
-    let mut visited = HashSet::new();
-    visited.insert(position);
-
-    let mut key_distances_and_doors = HashMap::new();
-
-    populate_key_distances_and_doors(
-        &mut key_distances_and_doors,
-        &mut visited,
-        Bitfield(0),
-        // TODO might be able to get rid of this once i get my solution working
-        Bitfield(0),
-        position,
-        0,
-        vault,
-    );
-
-    key_distances_and_doors
-}
-
 // Maps a to 1 << 0, n to 1 << 13, and so on.
 fn char_to_shifted_bit(c: char) -> u32 {
     1 << (c as u32 - 97)
@@ -267,7 +254,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
 
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
-        key_distance_maps.insert(key, find_available_keys_from_position(&vault, position));
+        key_distance_maps.insert(key, populate_key_distances_and_doors(position, &vault));
     }
 
     let keys_left = Bitfield(vault.keys.keys().fold(0, |acc, &key| {

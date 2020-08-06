@@ -2051,6 +2051,8 @@ ok i think it is now
 
 ===
 
+8/5/20
+
 
 #################
 #i.G..c...e..H.p#
@@ -2068,3 +2070,7 @@ ok i think it is now
 
 why c, e, p, i?
 why not c, i, e, p?
+
+hrm
+i want to just toss my code and start over
+i'll keep the outer stuff but nuke the inner stuff
