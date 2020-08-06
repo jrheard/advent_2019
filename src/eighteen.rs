@@ -3,6 +3,10 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 type Position = (usize, usize);
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+struct Key(u32);
+
+static STARTING_KEY: Key = Key(2147483648); // 2^31
 
 #[derive(Debug, PartialEq, Clone, Copy)]
 enum Direction {
@@ -102,6 +106,11 @@ impl Bitfield {
     }
 }
 
+// Maps a to 1 << 0, n to 1 << 13, and so on.
+fn char_to_shifted_bit(c: char) -> u32 {
+    1 << (c as u32 - 97)
+}
+
 /// Returns the Position that's one step ahead of `position` in `direction`.
 fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     match direction {
@@ -123,7 +132,7 @@ struct BfsNode {
 fn populate_key_distances_and_doors(
     starting_position: Position,
     vault: &Vault,
-) -> HashMap<char, (u32, Bitfield, Bitfield)> {
+) -> HashMap<Key, (u32, Bitfield, Bitfield)> {
     let self_key = match vault.get(starting_position.0, starting_position.1) {
         Space::Key(character) => character,
         _ => unreachable!(),
@@ -163,8 +172,10 @@ fn populate_key_distances_and_doors(
             Space::Key(character) => {
                 // Found a key!
                 if character != '@' && character != self_key {
-                    distances_and_doors_by_key
-                        .insert(character, (distance, doors_needed, keys_picked_up));
+                    distances_and_doors_by_key.insert(
+                        Key(char_to_shifted_bit(character)),
+                        (distance, doors_needed, keys_picked_up),
+                    );
                     keys_picked_up = Bitfield(keys_picked_up.0 | char_to_shifted_bit(character));
                 }
             }
@@ -192,10 +203,73 @@ fn populate_key_distances_and_doors(
     distances_and_doors_by_key
 }
 
-/// Returns a HashMap of {key_character: (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
-// Maps a to 1 << 0, n to 1 << 13, and so on.
-fn char_to_shifted_bit(c: char) -> u32 {
-    1 << (c as u32 - 97)
+struct SearchNode {
+    distance: u32,
+    key: Key,
+    keys_acquired: Bitfield,
+    keys_left: Bitfield,
+}
+
+fn find_shortest_path_2(
+    starting_key: Key,
+    keys_to_find: Bitfield,
+    key_distances: &HashMap<Key, HashMap<Key, (u32, Bitfield, Bitfield)>>,
+) -> u32 {
+    let mut shortest_path = u32::MAX;
+
+    // TODO some people talk about using a heap but i don't see the point??
+    let mut queue = VecDeque::new();
+
+    // TODO use a cache?
+
+    for (&other_key, (distance, doors_needed, keys_along_the_way)) in &key_distances[&starting_key]
+    {
+        if doors_needed.0 == 0 {
+            queue.push_back(SearchNode {
+                distance: *distance,
+                key: other_key,
+                keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
+                keys_left: Bitfield(keys_to_find.0 - other_key.0),
+            });
+        }
+    }
+
+    while !queue.is_empty() {
+        let SearchNode {
+            distance,
+            key,
+            keys_acquired,
+            keys_left,
+        } = queue.pop_front().expect("queue is non-empty");
+        println!(
+            "{}, {}, {}, {}",
+            distance, key.0, keys_acquired.0, keys_left.0
+        );
+
+        if keys_left.0 == 0 {
+            // TODO return early?
+            shortest_path = shortest_path.min(distance);
+            continue;
+        }
+
+        for (&other_key, (distance_to_other_key, doors_needed, keys_along_the_way)) in
+            &key_distances[&key]
+        {
+            if keys_left.0 & other_key.0 == other_key.0 && keys_acquired.contains_all(*doors_needed)
+            {
+                queue.push_back(SearchNode {
+                    distance: distance + distance_to_other_key,
+                    key: other_key,
+                    keys_acquired: Bitfield(keys_acquired.0 | keys_along_the_way.0),
+                    keys_left: Bitfield(
+                        keys_left.0 - (keys_left.0 & keys_along_the_way.0) - other_key.0,
+                    ),
+                })
+            }
+        }
+    }
+
+    shortest_path
 }
 
 fn find_shortest_path(
@@ -254,7 +328,14 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
 
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
-        key_distance_maps.insert(key, populate_key_distances_and_doors(position, &vault));
+        key_distance_maps.insert(
+            if key == '@' {
+                STARTING_KEY
+            } else {
+                Key(char_to_shifted_bit(key))
+            },
+            populate_key_distances_and_doors(position, &vault),
+        );
     }
 
     let keys_left = Bitfield(vault.keys.keys().fold(0, |acc, &key| {
@@ -265,18 +346,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         }
     }));
 
-    let mut path = vec![];
-    let mut cache = HashMap::new();
-
-    find_shortest_path(
-        &key_distance_maps,
-        keys_left,
-        Bitfield(0),
-        '@',
-        0,
-        &mut path,
-        &mut cache,
-    )
+    find_shortest_path_2(STARTING_KEY, keys_left, &key_distance_maps)
 }
 
 pub fn eighteen_a() -> u32 {
