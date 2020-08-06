@@ -2074,3 +2074,16 @@ why not c, i, e, p?
 hrm
 i want to just toss my code and start over
 i'll keep the outer stuff but nuke the inner stuff
+
+seen on reddit:
+
+    There is one very important way to prune nodes, by noticing that some of them
+    are actually the same node. For example, if you collect a,b,c,d (and end up
+    in location of key d), your state is exactly the same as if you collected
+    b,c,a,d - so really, only the last key collected matters for the node; this
+    makes the search space orders of magnitude smaller. This was actually the
+    only optimization I needed to make my Dijkstra implementation in Python find
+    the result in under 10 seconds.
+
+        I think you mean the order of the previous collected keys doesn't matter.
+        Because the a,c is the same as b,c which isn't actually true

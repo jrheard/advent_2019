@@ -1,9 +1,10 @@
 use itertools::Itertools;
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::cmp::Ordering;
+use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
 use std::fs;
 
 type Position = (usize, usize);
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, PartialOrd)]
 struct Key(u32);
 
 static STARTING_KEY: Key = Key(2147483648); // 2^31
@@ -92,7 +93,7 @@ impl Vault {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
 struct Bitfield(u32);
 
 impl Bitfield {
@@ -203,11 +204,18 @@ fn populate_key_distances_and_doors(
     distances_and_doors_by_key
 }
 
+#[derive(PartialOrd, Eq, PartialEq)]
 struct SearchNode {
     distance: u32,
     key: Key,
     keys_acquired: Bitfield,
     keys_left: Bitfield,
+}
+
+impl Ord for SearchNode {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.distance.cmp(&other.distance)
+    }
 }
 
 fn find_shortest_path_2(
@@ -217,15 +225,24 @@ fn find_shortest_path_2(
 ) -> u32 {
     let mut shortest_path = u32::MAX;
 
-    // TODO some people talk about using a heap but i don't see the point??
-    let mut queue = VecDeque::new();
+    let mut queue = BinaryHeap::new();
 
-    // TODO use a cache?
+    let mut submitted_already = HashSet::new();
+
+    // how - and what - do i cache?
+    // TODO consider not putting things in the queue if their `keys_acquired` has already been seen
+    // hrm that doens't seem quite right
+
+    // xxxxx
+
+    // so what were they saying
+    // they were saying that if you're about to submit a node with keys_acquired 1234 and key 5
+    // you don't need to do it if you've already submitted keys_acquired 4321 and key 5
 
     for (&other_key, (distance, doors_needed, keys_along_the_way)) in &key_distances[&starting_key]
     {
         if doors_needed.0 == 0 {
-            queue.push_back(SearchNode {
+            queue.push(SearchNode {
                 distance: *distance,
                 key: other_key,
                 keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
@@ -240,27 +257,38 @@ fn find_shortest_path_2(
             key,
             keys_acquired,
             keys_left,
-        } = queue.pop_front().expect("queue is non-empty");
+        } = queue.pop().expect("queue is non-empty");
 
         if keys_left.0 == 0 {
-            // TODO return early?
+            println!("bottomed out at {}", distance);
             shortest_path = shortest_path.min(distance);
+            // TODO do i populate the cache _here_?
             continue;
         }
 
         for (&other_key, (distance_to_other_key, doors_needed, keys_along_the_way)) in
             &key_distances[&key]
         {
+            if distance + distance_to_other_key >= shortest_path {
+                continue;
+            }
+
+            if submitted_already.contains(&(keys_acquired, other_key)) {
+                continue;
+            }
+
             if keys_left.0 & other_key.0 == other_key.0 && keys_acquired.contains_all(*doors_needed)
             {
-                queue.push_back(SearchNode {
+                queue.push(SearchNode {
                     distance: distance + distance_to_other_key,
                     key: other_key,
                     keys_acquired: Bitfield(keys_acquired.0 | keys_along_the_way.0 | other_key.0),
                     keys_left: Bitfield(
                         keys_left.0 - (keys_left.0 & keys_along_the_way.0) - other_key.0,
                     ),
-                })
+                });
+
+                submitted_already.insert((keys_acquired, other_key));
             }
         }
     }
