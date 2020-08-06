@@ -220,7 +220,7 @@ fn find_shortest_path_2(
 ) -> u32 {
     let mut shortest_path = u32::MAX;
     let mut queue = BinaryHeap::new();
-    let mut submitted_already = HashSet::new();
+    let mut smallest_distance_for_path = HashMap::new();
 
     // Seed the queue.
     for (&other_key, (distance, doors_needed, keys_along_the_way)) in &key_distances[&starting_key]
@@ -249,14 +249,19 @@ fn find_shortest_path_2(
             continue;
         }
 
+        let entry = smallest_distance_for_path
+            .entry(keys_acquired)
+            .or_insert(distance);
+        if distance > *entry {
+            continue;
+        } else {
+            *entry = distance;
+        }
+
         for (&other_key, (distance_to_other_key, doors_needed, keys_along_the_way)) in
             &key_distances[&key]
         {
             if distance + distance_to_other_key >= shortest_path {
-                continue;
-            }
-
-            if submitted_already.contains(&(keys_acquired, keys_left, other_key)) {
                 continue;
             }
 
@@ -270,8 +275,6 @@ fn find_shortest_path_2(
                         keys_left.0 - (keys_left.0 & keys_along_the_way.0) - other_key.0,
                     ),
                 });
-
-                submitted_already.insert((keys_acquired, keys_left, other_key));
             }
         }
     }
