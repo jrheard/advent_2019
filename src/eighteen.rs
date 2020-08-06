@@ -97,11 +97,6 @@ impl Vault {
 struct Bitfield(u32);
 
 impl Bitfield {
-    fn contains_char(&self, other: char) -> bool {
-        let other_shifted = char_to_shifted_bit(other);
-        self.0 & other_shifted == other_shifted
-    }
-
     fn contains_all(&self, other: Bitfield) -> bool {
         (other.0 & !self.0) == 0
     }
@@ -292,57 +287,6 @@ fn find_shortest_path_2(
             }
         }
     }
-
-    shortest_path
-}
-
-fn find_shortest_path(
-    key_distances: &HashMap<char, HashMap<char, (u32, Bitfield, Bitfield)>>,
-    keys_left: Bitfield,
-    doors_opened: Bitfield,
-    key: char,
-    distance_so_far: u32,
-    path: &mut Vec<(char, u32)>,
-    cache: &mut HashMap<(char, Bitfield), u32>,
-) -> u32 {
-    if keys_left.0 == 0 {
-        // We've bottomed out!
-        println!("bottomed out at {} via {:?}", distance_so_far, path);
-        return distance_so_far;
-    }
-
-    if let Some(&distance) = cache.get(&(key, keys_left)) {
-        //println!(
-        //"found one - the shortest path from {} with {:?} is {}",
-        //key, keys_left, distance
-        //);
-        return distance;
-    }
-
-    let mut shortest_path = u32::MAX;
-
-    for (&other_key, (distance_to_key, doors_needed, keys_picked_up)) in &key_distances[&key] {
-        let keys_left = Bitfield(keys_left.0 - (keys_left.0 & keys_picked_up.0));
-        let doors_opened = Bitfield(doors_opened.0 | keys_picked_up.0);
-
-        if keys_left.contains_char(other_key) && doors_opened.contains_all(*doors_needed) {
-            path.push((other_key, *distance_to_key));
-
-            shortest_path = shortest_path.min(find_shortest_path(
-                key_distances,
-                Bitfield(keys_left.0 - char_to_shifted_bit(other_key)),
-                Bitfield(doors_opened.0 | char_to_shifted_bit(other_key)),
-                other_key,
-                distance_so_far + distance_to_key,
-                path,
-                cache,
-            ));
-
-            path.pop();
-        }
-    }
-
-    cache.insert((key, keys_left), shortest_path);
 
     shortest_path
 }
