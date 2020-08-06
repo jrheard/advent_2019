@@ -219,21 +219,10 @@ fn find_shortest_path_2(
     key_distances: &HashMap<Key, HashMap<Key, (u32, Bitfield, Bitfield)>>,
 ) -> u32 {
     let mut shortest_path = u32::MAX;
-
     let mut queue = BinaryHeap::new();
-
     let mut submitted_already = HashSet::new();
 
-    // how - and what - do i cache?
-    // TODO consider not putting things in the queue if their `keys_acquired` has already been seen
-    // hrm that doens't seem quite right
-
-    // xxxxx
-
-    // so what were they saying
-    // they were saying that if you're about to submit a node with keys_acquired 1234 and key 5
-    // you don't need to do it if you've already submitted keys_acquired 4321 and key 5
-
+    // Seed the queue.
     for (&other_key, (distance, doors_needed, keys_along_the_way)) in &key_distances[&starting_key]
     {
         if doors_needed.0 == 0 {
@@ -241,7 +230,7 @@ fn find_shortest_path_2(
                 distance: *distance,
                 key: other_key,
                 keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
-                keys_left: Bitfield(keys_to_find.0 - other_key.0),
+                keys_left: Bitfield(keys_to_find.0 - other_key.0 - keys_along_the_way.0),
             });
         }
     }
@@ -257,7 +246,6 @@ fn find_shortest_path_2(
         if keys_left.0 == 0 {
             println!("bottomed out at {}", distance);
             shortest_path = shortest_path.min(distance);
-            // TODO do i populate the cache _here_?
             continue;
         }
 
@@ -268,7 +256,7 @@ fn find_shortest_path_2(
                 continue;
             }
 
-            if submitted_already.contains(&(keys_acquired, other_key)) {
+            if submitted_already.contains(&(keys_acquired, keys_left, other_key)) {
                 continue;
             }
 
@@ -283,7 +271,7 @@ fn find_shortest_path_2(
                     ),
                 });
 
-                submitted_already.insert((keys_acquired, other_key));
+                submitted_already.insert((keys_acquired, keys_left, other_key));
             }
         }
     }
