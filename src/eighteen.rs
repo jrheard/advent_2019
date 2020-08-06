@@ -1,4 +1,3 @@
-use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
@@ -204,12 +203,6 @@ struct SearchNode {
     key: Key,
     keys_acquired: Bitfield,
     keys_left: Bitfield,
-}
-
-impl Ord for SearchNode {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.distance.cmp(&other.distance)
-    }
 }
 
 fn find_shortest_path_2(
