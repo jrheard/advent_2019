@@ -2,7 +2,8 @@ use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 type Position = (usize, usize);
-#[derive(Eq, PartialEq, Hash, Copy, Clone, PartialOrd)]
+
+#[derive(Eq, PartialEq, Hash, Copy, Clone)]
 struct Key(u32);
 
 static STARTING_KEY: Key = Key(2147483648); // 2^31
@@ -91,7 +92,7 @@ impl Vault {
     }
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
 struct Bitfield(u32);
 
 impl Bitfield {
@@ -197,7 +198,6 @@ fn populate_key_distances_and_doors(
     distances_and_doors_by_key
 }
 
-#[derive(PartialOrd, Eq, PartialEq)]
 struct SearchNode {
     distance: u32,
     key: Key,
@@ -205,7 +205,7 @@ struct SearchNode {
     keys_left: Bitfield,
 }
 
-fn find_shortest_path_2(
+fn find_shortest_path(
     starting_key: Key,
     keys_to_find: Bitfield,
     key_distances: &HashMap<Key, HashMap<Key, (u32, Bitfield, Bitfield)>>,
@@ -290,7 +290,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         );
     }
 
-    let keys_left = Bitfield(vault.keys.keys().fold(0, |acc, &key| {
+    let keys_to_find = Bitfield(vault.keys.keys().fold(0, |acc, &key| {
         if key == '@' {
             acc
         } else {
@@ -298,7 +298,7 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
         }
     }));
 
-    find_shortest_path_2(STARTING_KEY, keys_left, &key_distance_maps)
+    find_shortest_path(STARTING_KEY, keys_to_find, &key_distance_maps)
 }
 
 pub fn eighteen_a() -> u32 {
