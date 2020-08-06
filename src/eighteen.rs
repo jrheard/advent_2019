@@ -1,6 +1,5 @@
-use itertools::Itertools;
 use std::cmp::Ordering;
-use std::collections::{BinaryHeap, HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 type Position = (usize, usize);
@@ -219,14 +218,14 @@ fn find_shortest_path_2(
     key_distances: &HashMap<Key, HashMap<Key, (u32, Bitfield, Bitfield)>>,
 ) -> u32 {
     let mut shortest_path = u32::MAX;
-    let mut queue = BinaryHeap::new();
+    let mut queue = VecDeque::new();
     let mut smallest_distance_for_path = HashMap::new();
 
     // Seed the queue.
     for (&other_key, (distance, doors_needed, keys_along_the_way)) in &key_distances[&starting_key]
     {
         if doors_needed.0 == 0 {
-            queue.push(SearchNode {
+            queue.push_back(SearchNode {
                 distance: *distance,
                 key: other_key,
                 keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
@@ -241,21 +240,22 @@ fn find_shortest_path_2(
             key,
             keys_acquired,
             keys_left,
-        } = queue.pop().expect("queue is non-empty");
+        } = queue.pop_front().expect("queue is non-empty");
+
+        if distance >= shortest_path {
+            continue;
+        }
 
         if keys_left.0 == 0 {
-            println!("bottomed out at {}", distance);
             shortest_path = shortest_path.min(distance);
             continue;
         }
 
-        let entry = smallest_distance_for_path
-            .entry(keys_acquired)
-            .or_insert(distance);
-        if distance > *entry {
+        let path_has_been_seen = smallest_distance_for_path.contains_key(&(keys_acquired, key));
+        if path_has_been_seen && smallest_distance_for_path[&(keys_acquired, key)] <= distance {
             continue;
         } else {
-            *entry = distance;
+            smallest_distance_for_path.insert((keys_acquired, key), distance);
         }
 
         for (&other_key, (distance_to_other_key, doors_needed, keys_along_the_way)) in
@@ -267,7 +267,7 @@ fn find_shortest_path_2(
 
             if keys_left.0 & other_key.0 == other_key.0 && keys_acquired.contains_all(*doors_needed)
             {
-                queue.push(SearchNode {
+                queue.push_back(SearchNode {
                     distance: distance + distance_to_other_key,
                     key: other_key,
                     keys_acquired: Bitfield(keys_acquired.0 | keys_along_the_way.0 | other_key.0),
@@ -330,10 +330,14 @@ mod tests {
             shortest_path_to_get_all_keys("src/inputs/18_sample_2.txt"),
             136
         );
+        assert_eq!(
+            shortest_path_to_get_all_keys("src/inputs/18_sample_4.txt"),
+            81
+        );
     }
 
     #[test]
     fn test_solutions() {
-        assert_eq!(eighteen_a(), 0);
+        assert_eq!(eighteen_a(), 5102);
     }
 }

@@ -5,7 +5,7 @@ pub fn criterion_benchmark(c: &mut Criterion) {
     let mut group = c.benchmark_group("individual");
     group.sample_size(10);
     group.bench_function("individual", |b| {
-        b.iter(|| advent_2019::sixteen::sixteen_b());
+        b.iter(|| advent_2019::eighteen::eighteen_a());
     });
     group.finish();
 }
