@@ -241,10 +241,6 @@ fn find_shortest_path_2(
             keys_acquired,
             keys_left,
         } = queue.pop_front().expect("queue is non-empty");
-        println!(
-            "{}, {}, {}, {}",
-            distance, key.0, keys_acquired.0, keys_left.0
-        );
 
         if keys_left.0 == 0 {
             // TODO return early?
@@ -260,7 +256,7 @@ fn find_shortest_path_2(
                 queue.push_back(SearchNode {
                     distance: distance + distance_to_other_key,
                     key: other_key,
-                    keys_acquired: Bitfield(keys_acquired.0 | keys_along_the_way.0),
+                    keys_acquired: Bitfield(keys_acquired.0 | keys_along_the_way.0 | other_key.0),
                     keys_left: Bitfield(
                         keys_left.0 - (keys_left.0 & keys_along_the_way.0) - other_key.0,
                     ),
