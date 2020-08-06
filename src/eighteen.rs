@@ -138,8 +138,7 @@ fn populate_key_distances_and_doors(
 
         let next_space = vault.get(position_ahead.0, position_ahead.1);
         let mut door_found = None;
-
-        // TODO am i handling doors_needed correctly?
+        let mut key_found = None;
 
         match next_space {
             Space::Wall => continue,
@@ -155,6 +154,7 @@ fn populate_key_distances_and_doors(
                         .insert(character, (distance + 1, doors_needed, keys_picked_up));
                     keys_picked_up = Bitfield(keys_picked_up.0 | char_to_shifted_bit(character));
                 }
+                key_found = Some(character);
             }
             Space::Empty => {}
         };
@@ -173,6 +173,11 @@ fn populate_key_distances_and_doors(
 
         if let Some(character) = door_found {
             doors_needed = Bitfield(doors_needed.0 - char_to_shifted_bit(character));
+        }
+        if let Some(character) = key_found {
+            if character != '@' {
+                keys_picked_up = Bitfield(keys_picked_up.0 - char_to_shifted_bit(character));
+            }
         }
     }
 }
@@ -231,16 +236,7 @@ fn find_shortest_path(
 
     let mut shortest_path = u32::MAX;
 
-    for (&other_key, (distance_to_key, doors_needed, keys_picked_up)) in key_distances[&key]
-        .iter()
-        .sorted_by_key(|(_, (distance, _, _))| distance)
-    {
-        if keys_picked_up.0 > 0 {
-            //println!(
-            //"{}->{}, picked up keys {} along the way",
-            //key, other_key, keys_picked_up.0
-            //);
-        }
+    for (&other_key, (distance_to_key, doors_needed, keys_picked_up)) in &key_distances[&key] {
         let keys_left = Bitfield(keys_left.0 - (keys_left.0 & keys_picked_up.0));
         let doors_opened = Bitfield(doors_opened.0 | keys_picked_up.0);
 
