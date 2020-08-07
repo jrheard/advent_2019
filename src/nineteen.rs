@@ -21,9 +21,10 @@ pub fn nineteen_a() -> u32 {
     let mut num_affected_points = 0;
     let memory = load_program("src/inputs/19.txt");
 
-    for x in 0..50 {
-        for y in 0..50 {
+    for y in 0..50 {
+        for x in 0..50 {
             if position_is_in_beam(x, y, &memory) {
+                //println!("{}, {}", x, y);
                 num_affected_points += 1;
             }
         }
@@ -47,6 +48,10 @@ fn step_right_cursor(position: Position, memory: &[i64]) -> Position {
     let y = position.1 + 1;
     let mut x = position.0;
 
+    while !position_is_in_beam(x, y, memory) {
+        x += 1;
+    }
+
     while position_is_in_beam(x, y, memory) {
         x += 1;
     }
@@ -57,18 +62,28 @@ fn step_right_cursor(position: Position, memory: &[i64]) -> Position {
 pub fn nineteen_b() -> u32 {
     let memory = load_program("src/inputs/19.txt");
 
-    let mut left_cursor = Position(0, 0);
-    let mut right_cursor = Position(0, 0);
+    let mut left_cursor = Position(12, 33);
+    let mut right_cursor = Position(16, 33);
 
-    let mut right_line = vec![0];
+    let mut right_line = vec![0; 33];
 
     loop {
+        if left_cursor.1 % 100 == 0 {
+            dbg!(left_cursor, right_cursor);
+        }
+
+        //println!("stepping left {:?}, right {:?}", left_cursor, right_cursor);
+
         left_cursor = step_left_cursor(left_cursor, &memory);
         right_cursor = step_right_cursor(right_cursor, &memory);
-        right_line[right_cursor.1 as usize] = right_cursor.0;
+        right_line.push(right_cursor.0);
 
-        if left_cursor.1 > 100 && right_line[left_cursor.0 as usize - 100] - left_cursor.0 >= 100 {
-            break;
+        if left_cursor.1 > 200 {
+            let right_x_100_steps_up = right_line[left_cursor.1 as usize - 100];
+
+            if right_x_100_steps_up > left_cursor.0 && right_x_100_steps_up - left_cursor.0 >= 100 {
+                break;
+            }
         }
     }
 
