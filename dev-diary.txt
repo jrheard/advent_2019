@@ -2262,3 +2262,55 @@ it definitely slowed 18a down
 i can deal with that later if i care about it
 hopefully i don't care!
 anyway 18b down!!!
+
+ok so 19b is interesting
+at first i was like, can we just calculate the slopes of the two lines?
+but i don't think it's going to be that easy
+
+i think we need to basically walk the beam with two cursors, one on each side of the beam
+the nice thing about this approach is that:
+if the cursor moves away from the center of the beam and encounters empty space, it doesn't need to walk any farther in that direction
+if the cursor moves toward the center of the beam and encounters beam, it doesn't need to walk any farther in that direction
+
+interesting
+
+ok so here's a sketch
+
+#...........
+.#..........
+..##........
+...###......
+....###.....
+.....####...
+......#####.
+......######
+
+make two cursors
+one hugs the left side of the beam, one hugs the right side of the beam
+maybe each one has, like, an x-axis direction, -1 or 1?
+
+and so in order to move one step away from the beam, you inc your y coordinate, and then
+
+    if you're the left cursor:
+        if you're now in empty space:
+            move right until you're in the beam
+
+    if you're the right cursor:
+        if you're now in the beam:
+            move right until you're in empty space, then move left one step
+
+so, that algorithm seems pretty simple and like something that should work
+how do we know when to stop?
+
+i think i'm on to something here:
+    you keep track of each point visited along the two lines in two vecs
+    each vec maps y-coordinate to x-coordinate
+
+    and so after stepping both cursors at least 100 (could tune this to be higher i'm sure) times, you could do:
+        call the left cursor's position (l_x, l_y)
+        let r_x = right_line[l_y - 100];
+            if r_x - l_x >= 100 {
+                ding ding ding you're done!!
+            }
+
+    TODO i don't think you even need to keep track of the left line's coordinates
