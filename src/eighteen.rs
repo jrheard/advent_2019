@@ -121,7 +121,7 @@ struct BfsNode {
     keys_picked_up: Bitfield,
 }
 
-/// Returns a map of {key -> (distance_to_key, doors_needed, keys_picked_up_on_the_way)}.
+/// Returns a map of {key -> (distance_to_key_from_starting_position, doors_needed, keys_picked_up_on_the_way)}.
 fn populate_key_distances_and_doors(
     starting_position: Position,
     vault: &Vault,
@@ -274,9 +274,9 @@ fn find_shortest_path(
     shortest_path
 }
 
-fn shortest_path_to_get_all_keys(vault_contents: String) -> u32 {
-    let vault = Vault::new(vault_contents);
-
+fn key_distance_maps_for_each_key_in_vault(
+    vault: &Vault,
+) -> HashMap<Key, HashMap<Key, (u32, Bitfield, Bitfield)>> {
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
         key_distance_maps.insert(
@@ -289,13 +289,24 @@ fn shortest_path_to_get_all_keys(vault_contents: String) -> u32 {
         );
     }
 
-    let keys_to_find = Bitfield(vault.keys.keys().fold(0, |acc, &key| {
+    key_distance_maps
+}
+
+fn keys_in_vault(vault: &Vault) -> Bitfield {
+    Bitfield(vault.keys.keys().fold(0, |acc, &key| {
         if key == '@' {
             acc
         } else {
             acc | char_to_shifted_bit(key)
         }
-    }));
+    }))
+}
+
+fn shortest_path_to_get_all_keys(vault_contents: String) -> u32 {
+    let vault = Vault::new(vault_contents);
+
+    let key_distance_maps = key_distance_maps_for_each_key_in_vault(&vault);
+    let keys_to_find = keys_in_vault(&vault);
 
     find_shortest_path(STARTING_KEY, keys_to_find, &key_distance_maps)
 }
@@ -303,6 +314,41 @@ fn shortest_path_to_get_all_keys(vault_contents: String) -> u32 {
 pub fn eighteen_a() -> u32 {
     let contents = fs::read_to_string("src/inputs/18.txt").unwrap();
     shortest_path_to_get_all_keys(contents)
+}
+
+pub fn eighteen_b() -> u32 {
+    let contents = fs::read_to_string("src/inputs/18b.txt").unwrap();
+    let topleft: String = contents
+        .lines()
+        .take(41)
+        .map(|line| line.chars().take(41).collect::<String>())
+        .collect();
+    let bottomleft: String = contents
+        .lines()
+        .skip(40)
+        .take(41)
+        .map(|line| line.chars().take(41).collect::<String>())
+        .collect();
+    let topright: String = contents
+        .lines()
+        .take(41)
+        .map(|line| line.chars().skip(40).take(41).collect::<String>())
+        .collect();
+    let bottomright: String = contents
+        .lines()
+        .skip(40)
+        .take(41)
+        .map(|line| line.chars().skip(40).take(41).collect::<String>())
+        .collect();
+
+    let vaults: Vec<Vault> = [topleft, bottomleft, topright, bottomright]
+        .iter()
+        .map(|contents| Vault::new(contents.clone()))
+        .collect();
+
+    //dbg!(vaults.iter().map(|vault| &vault.keys).collect::<Vec<_>>());
+
+    5
 }
 
 #[cfg(test)]
@@ -340,5 +386,10 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(eighteen_a(), 5102);
+    }
+
+    #[test]
+    fn test_foo() {
+        assert_eq!(eighteen_b(), 5)
     }
 }

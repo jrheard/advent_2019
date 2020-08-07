@@ -2105,3 +2105,7 @@ hopefully the main difference is just that:
 
 let's start with the first
 what's the sanest way to parse the file into four vaults
+
+ok, looks like i got my four vaults
+and my four floodfills
+now, to adapt the search alg
