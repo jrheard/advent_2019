@@ -7,6 +7,7 @@ mod five;
 mod four;
 mod fourteen;
 mod nine;
+mod nineteen;
 mod one;
 mod seven;
 mod seventeen;
@@ -55,6 +56,8 @@ pub fn run_all_solutions() {
     println!("17a: {}", seventeen::seventeen_a());
     println!("17b: {}", seventeen::seventeen_b());
     println!("18a: {}", eighteen::eighteen_a());
+    println!("18b: {}", eighteen::eighteen_b());
+    println!("19a: {}", nineteen::nineteen_a());
 }
 
 #[cfg(test)]
