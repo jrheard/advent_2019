@@ -2089,3 +2089,19 @@ seen on reddit:
         Because the a,c is the same as b,c which isn't actually true
 
 hrggggggg
+
+ok i did it :)
+
+===
+
+8/7/20
+
+let's look at 18b
+
+hopefully the main difference is just that:
+* i'll need to parse the file into four different vaults
+* i'll need to floodfill each vault separately
+* i'll need to adapt the main search alg to use the four floodfill maps instead of a single one
+
+let's start with the first
+what's the sanest way to parse the file into four vaults

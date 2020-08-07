@@ -42,14 +42,12 @@ impl Vault {
     /// ########################
     ///
     /// into a Vault.
-    pub fn new(filename: &str) -> Self {
-        let contents = fs::read_to_string(filename).unwrap();
-
+    pub fn new(vault_contents: String) -> Self {
         let mut map = vec![];
         let mut doors = HashMap::new();
         let mut keys = HashMap::new();
 
-        for (y, line) in contents.lines().enumerate() {
+        for (y, line) in vault_contents.lines().enumerate() {
             for (x, character) in line.chars().enumerate() {
                 map.push(
                     match (
@@ -82,7 +80,7 @@ impl Vault {
             doors,
             keys,
             map,
-            width: contents.lines().next().unwrap().len(),
+            width: vault_contents.lines().next().unwrap().len(),
         }
     }
 
@@ -205,6 +203,7 @@ struct SearchNode {
     keys_left: Bitfield,
 }
 
+/// Returns the smallest distance that is necessary to travel while acquiring all of the keys in `keys_to_find`.
 fn find_shortest_path(
     starting_key: Key,
     keys_to_find: Bitfield,
@@ -275,8 +274,8 @@ fn find_shortest_path(
     shortest_path
 }
 
-fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
-    let vault = Vault::new(filename);
+fn shortest_path_to_get_all_keys(vault_contents: String) -> u32 {
+    let vault = Vault::new(vault_contents);
 
     let mut key_distance_maps = HashMap::new();
     for (&key, &position) in &vault.keys {
@@ -302,7 +301,8 @@ fn shortest_path_to_get_all_keys(filename: &str) -> u32 {
 }
 
 pub fn eighteen_a() -> u32 {
-    shortest_path_to_get_all_keys("src/inputs/18.txt")
+    let contents = fs::read_to_string("src/inputs/18.txt").unwrap();
+    shortest_path_to_get_all_keys(contents)
 }
 
 #[cfg(test)]
@@ -312,19 +312,27 @@ mod tests {
     #[test]
     fn test_samples() {
         assert_eq!(
-            shortest_path_to_get_all_keys("src/inputs/18_sample_1.txt"),
+            shortest_path_to_get_all_keys(
+                fs::read_to_string("src/inputs/18_sample_1.txt").unwrap()
+            ),
             8
         );
         assert_eq!(
-            shortest_path_to_get_all_keys("src/inputs/18_sample_3.txt"),
+            shortest_path_to_get_all_keys(
+                fs::read_to_string("src/inputs/18_sample_3.txt").unwrap()
+            ),
             86
         );
         assert_eq!(
-            shortest_path_to_get_all_keys("src/inputs/18_sample_2.txt"),
+            shortest_path_to_get_all_keys(
+                fs::read_to_string("src/inputs/18_sample_2.txt").unwrap()
+            ),
             136
         );
         assert_eq!(
-            shortest_path_to_get_all_keys("src/inputs/18_sample_4.txt"),
+            shortest_path_to_get_all_keys(
+                fs::read_to_string("src/inputs/18_sample_4.txt").unwrap()
+            ),
             81
         );
     }
