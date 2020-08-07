@@ -2318,23 +2318,29 @@ i think i'm on to something here:
 ok so i got that down but immediately ran into issues - stepping the left cursor never terminated
 a println in 19a shows why
 
-0, 0 is in beam
-2, 5 is in beam
-3, 7 is in beam
-3, 8 is in beam
-4, 9 is in beam
-4, 10 is in beam
-4, 11 is in beam
-5, 11 is in beam
-5, 12 is in beam
-5, 13 is in beam
-5, 14 is in beam
-6, 13 is in beam
-6, 14 is in beam
-6, 15 is in beam
-6, 16 is in beam
-6, 17 is in beam
+0, 0
+2, 5
+3, 7
+3, 8
+4, 9
+4, 10
+4, 11
+5, 11
+5, 12
+5, 13
+6, 13
+5, 14
+6, 14
+6, 15
+7, 15
+6, 16
+7, 16
+6, 17
+7, 17
+8, 17
+7, 18
 
 early on, the beam is so sparse that it skips some x, y positions!!
 
 hr hrm hrm
+

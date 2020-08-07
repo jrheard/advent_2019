@@ -24,7 +24,7 @@ pub fn nineteen_a() -> u32 {
     for y in 0..50 {
         for x in 0..50 {
             if position_is_in_beam(x, y, &memory) {
-                //println!("{}, {}", x, y);
+                println!("{}, {}", x, y);
                 num_affected_points += 1;
             }
         }
@@ -62,10 +62,10 @@ fn step_right_cursor(position: Position, memory: &[i64]) -> Position {
 pub fn nineteen_b() -> u32 {
     let memory = load_program("src/inputs/19.txt");
 
-    let mut left_cursor = Position(12, 33);
-    let mut right_cursor = Position(16, 33);
+    let mut left_cursor = Position(5, 13);
+    let mut right_cursor = Position(6, 13);
 
-    let mut right_line = vec![0; 33];
+    let mut right_line = vec![0, 0, 0, 0, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5];
 
     loop {
         if left_cursor.1 % 100 == 0 {
