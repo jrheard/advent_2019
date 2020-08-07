@@ -6,7 +6,7 @@ type Position = (usize, usize);
 /// A map of {key -> (distance_to_key_from_starting_position, doors_needed, keys_picked_up_on_the_way)}.
 type KeyDistanceMap = HashMap<Key, (u32, Bitfield, Bitfield)>;
 
-#[derive(Eq, PartialEq, Hash, Copy, Clone)]
+#[derive(Eq, PartialEq, Hash, Copy, Clone, Debug)]
 struct Key(u32);
 
 static STARTING_KEY: Key = Key(2147483648); // 2^31
@@ -199,7 +199,7 @@ fn populate_key_distances_and_doors(starting_position: Position, vault: &Vault) 
 
 struct SearchNode {
     distance: u32,
-    key: Key,
+    current_positions: Vec<Key>,
     keys_acquired: Bitfield,
     keys_left: Bitfield,
 }
@@ -213,60 +213,64 @@ fn find_shortest_path(
     let mut queue = VecDeque::new();
     let mut smallest_distance_for_path = HashMap::new();
 
-    // Seed the queue.
-    for key_distances in key_distances_per_vault {
-        for (&other_key, (distance, doors_needed, keys_along_the_way)) in
-            &key_distances[&STARTING_KEY]
-        {
-            if doors_needed.0 == 0 {
-                queue.push_back(SearchNode {
-                    distance: *distance,
-                    key: other_key,
-                    keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
-                    keys_left: Bitfield(keys_to_find.0 - other_key.0 - keys_along_the_way.0),
-                });
-            }
-        }
+    let mut current_positions = Vec::new();
+    for _ in 0..key_distances_per_vault.len() {
+        current_positions.push(STARTING_KEY);
     }
+
+    queue.push_back(SearchNode {
+        distance: 0,
+        current_positions,
+        keys_acquired: Bitfield(0),
+        keys_left: keys_to_find,
+    });
 
     while !queue.is_empty() {
         let SearchNode {
             distance,
-            key,
+            current_positions,
             keys_acquired,
             keys_left,
         } = queue.pop_front().expect("queue is non-empty");
 
         if distance >= shortest_path {
+            // Bail, this path is known-non-optimal.
             continue;
         }
 
         if keys_left.0 == 0 {
+            // We've bottomed out! Hooray!
             shortest_path = shortest_path.min(distance);
             continue;
         }
 
-        let path_has_been_seen = smallest_distance_for_path.contains_key(&(keys_acquired, key));
-        if path_has_been_seen && smallest_distance_for_path[&(keys_acquired, key)] <= distance {
-            continue;
-        } else {
-            smallest_distance_for_path.insert((keys_acquired, key), distance);
-        }
+        for (i, &key) in current_positions.iter().enumerate() {
+            let path_has_been_seen = smallest_distance_for_path.contains_key(&(keys_acquired, key));
+            if path_has_been_seen && smallest_distance_for_path[&(keys_acquired, key)] <= distance {
+                // Bail, this path is known-non-optimal.
+                continue;
+            } else {
+                // Record our best-seen-so-far distance on this path.
+                smallest_distance_for_path.insert((keys_acquired, key), distance);
+            }
 
-        for key_distances in key_distances_per_vault {
             for (&other_key, (distance_to_other_key, doors_needed, keys_along_the_way)) in
-                &key_distances[&key]
+                &key_distances_per_vault[i][&key]
             {
                 if distance + distance_to_other_key >= shortest_path {
+                    // Bail, this path is known-non-optimal.
                     continue;
                 }
 
                 if keys_left.0 & other_key.0 == other_key.0
                     && keys_acquired.contains_all(*doors_needed)
                 {
+                    // We still need this key, and we can open all the doors between us and it, so let's grab it.
+                    let mut new_positions = current_positions.clone();
+                    new_positions[i] = other_key;
                     queue.push_back(SearchNode {
                         distance: distance + distance_to_other_key,
-                        key: other_key,
+                        current_positions: new_positions,
                         keys_acquired: Bitfield(
                             keys_acquired.0 | keys_along_the_way.0 | other_key.0,
                         ),
@@ -327,7 +331,6 @@ pub fn eighteen_b() -> u32 {
     let topleft: String = contents
         .lines()
         .take(41)
-        // TODO join with newlines
         .map(|line| line.chars().take(41).collect::<String>())
         .collect::<Vec<String>>()
         .join("\n");
@@ -358,7 +361,9 @@ pub fn eighteen_b() -> u32 {
         .map(|vault| key_distance_maps_for_each_key_in_vault(&vault))
         .collect();
 
-    5
+    let keys_to_find = Bitfield(('a'..'{').fold(0, |acc, c| acc | char_to_shifted_bit(c)));
+
+    find_shortest_path(keys_to_find, &distance_maps_per_vault)
 }
 
 #[cfg(test)]
@@ -396,10 +401,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(eighteen_a(), 5102);
-    }
-
-    #[test]
-    fn test_foo() {
-        assert_eq!(eighteen_b(), 5)
+        assert_eq!(eighteen_b(), 2282);
     }
 }

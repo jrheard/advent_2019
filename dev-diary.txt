@@ -1681,7 +1681,7 @@ so i think there are gonna be two passes here
 1) explore the whole zone until you find the oxygen system
 2) starting over from scratch, and armed with the filled-out map from step 1, what's the shortest path to the oxygen system
 
-TODO i'm probably gonna want to make some sort of print_map() function
+DONE i'm probably gonna want to make some sort of print_map() function
 
 okay, so we make a robot
 and we load the program and make a Computer
@@ -1889,12 +1889,12 @@ DONE print out the top 5-10 or something
 then after that i'll write tests to demonstrate that i have code that can find these commonly-occurring windowss
 
 NOTE i can _only_ use a, b, and c in my main movement code!!!!!!!!
-so TODO i think i'm gonna have to write a function that takes three path_windows
+so DONE i think i'm gonna have to write a function that takes three path_windows
 and tries to paint the whole path with them, returning true if it's possible, false otherwise
 
 ok, let's start
 
-TODO catch up
+DONE catch up
 
 ok so i've gotten most of the above working
 
@@ -1966,7 +1966,7 @@ some more detail:
     * at each step, we can do a flood fill to compute everything's distance from us
     * each recursive path keeps track of the distance traveled along it so far
     * each recursive path ends if keys is empty
-    * TODO if a recursive path bails, we'll have to put the correpsonding key/door back where it was!!
+    * DONE if a recursive path bails, we'll have to put the correpsonding key/door back where it was!!
 
 enums:
     spot
@@ -2017,7 +2017,7 @@ so it prints stuff like `126: [('a', 25), ('e', 2), etc]`
 
 ok so i have 18a somewhat working again
 still way too slow though
-TODO what can be cached??
+DONE what can be cached??
 
 find_shortest_path looks like this
 
@@ -2109,3 +2109,156 @@ what's the sanest way to parse the file into four vaults
 ok, looks like i got my four vaults
 and my four floodfills
 now, to adapt the search alg
+
+DONE i'm partway through doing that but it's total trash atm
+i need to sit down and actually think about it
+
+ok so let's sit and think
+at the start of the search, we seed the queue
+which means - starting at each @,
+we add a
+
+    queue.push_back(SearchNode {
+        distance: *distance,
+        key: other_key,
+        keys_acquired: Bitfield(keys_along_the_way.0 | other_key.0),
+        keys_left: Bitfield(keys_to_find.0 - other_key.0 - keys_along_the_way.0),
+    });
+
+for each door that's reachable from @ without requiring any doors.
+this seems sane so far.
+
+then, the main search loop begins.
+while the queue isn't empty, we pop the first item off.
+we record a shortest path if we're out of keys to get.
+we also do some continues to bail early if we're on a known-non-optimal path.
+
+next, we loop over each of the four key-distance maps.
+if the key-distance map doesn't contain the current key that we're at, we skip this map
+if it _does_, then:
+    for each other key reachable from the current search node's key:
+        if we need that key and have all the necessary doors opened:
+            we do
+                queue.push_back(SearchNode {
+                    distance: distance + distance_to_other_key,
+                    key: other_key,
+                    keys_acquired: Bitfield(
+                        keys_acquired.0 | keys_along_the_way.0 | other_key.0,
+                    ),
+                    keys_left: Bitfield(
+                        keys_left.0 - (keys_left.0 & keys_along_the_way.0) - other_key.0,
+                    ),
+                });
+
+this seems reasonble to me.
+but when i ran the alg, it bailed immediately without finding a path, so it must have one or more bugs!
+let's add prints that show how far we make it in the search before bailing.
+
+we actually make it decently far:
+    let SearchNode {
+        distance,
+        key,
+        keys_acquired,
+        keys_left,
+    } = queue.pop_front().expect("queue is non-empty");
+
+    println!(
+        "{}: {:?}, {:?}, {:?}",
+        distance, key, keys_acquired, keys_left
+    );
+
+    yields
+
+    16: Key(4), Bitfield(4), Bitfield(67108859)
+    46: Key(2048), Bitfield(2048), Bitfield(67106815)
+    32: Key(131072), Bitfield(131072), Bitfield(66977791)
+    62: Key(4194304), Bitfield(4194304), Bitfield(62914559)
+    142: Key(262144), Bitfield(4456448), Bitfield(62652415)
+    164: Key(16777216), Bitfield(16777216), Bitfield(50331647)
+    212: Key(256), Bitfield(16785664), Bitfield(50323199)
+    192: Key(8192), Bitfield(16785408), Bitfield(50323455)
+    82: Key(4194304), Bitfield(4325376), Bitfield(62783487)
+    162: Key(262144), Bitfield(4587520), Bitfield(62521343)
+    112: Key(131072), Bitfield(4325376), Bitfield(62783487)
+    142: Key(262144), Bitfield(4456448), Bitfield(62652415)
+    272: Key(131072), Bitfield(4587520), Bitfield(62521343)
+    212: Key(256), Bitfield(16785664), Bitfield(50323199)
+    192: Key(8192), Bitfield(16785408), Bitfield(50323455)
+    212: Key(256), Bitfield(16785664), Bitfield(50323199)
+    162: Key(262144), Bitfield(4587520), Bitfield(62521343)
+    242: Key(262144), Bitfield(4587520), Bitfield(62521343)
+
+i added some more prints
+
+seed: pushing 'd'
+seed: pushing 'm'
+seed: pushing 'x'
+seed: pushing 's'
+seed: pushing 't'
+seed: pushing 'j'
+seed: pushing 'o'
+seed: pushing 'z'
+16: 'd', Bitfield(4), Bitfield(67108859)
+46: 'm', Bitfield(2048), Bitfield(67106815)
+62: 'x', Bitfield(4194304), Bitfield(62914559)
+pushing 't'
+pushing 's'
+32: 's', Bitfield(131072), Bitfield(66977791)
+pushing 'x'
+pushing 't'
+142: 't', Bitfield(4456448), Bitfield(62652415)
+pushing 's'
+212: 'j', Bitfield(16785664), Bitfield(50323199)
+192: 'o', Bitfield(16785408), Bitfield(50323455)
+pushing 'j'
+164: 'z', Bitfield(16777216), Bitfield(50331647)
+pushing 'j'
+pushing 'o'
+142: 't', Bitfield(4456448), Bitfield(62652415)
+112: 's', Bitfield(4325376), Bitfield(62783487)
+pushing 't'
+82: 'x', Bitfield(4325376), Bitfield(62783487)
+pushing 't'
+162: 't', Bitfield(4587520), Bitfield(62521343)
+272: 's', Bitfield(4587520), Bitfield(62521343)
+212: 'j', Bitfield(16785664), Bitfield(50323199)
+212: 'j', Bitfield(16785664), Bitfield(50323199)
+192: 'o', Bitfield(16785408), Bitfield(50323455)
+242: 't', Bitfield(4587520), Bitfield(62521343)
+162: 't', Bitfield(4587520), Bitfield(62521343)
+
+why isn't it working :)
+
+hrm
+we never seem to evaluate a node that isn't in the seeds
+
+hrm hrm hrm
+ok i think i see the issue
+right now, my SearchNode looks like this
+
+struct SearchNode {
+    distance: u32,
+    key: Key,
+    keys_acquired: Bitfield,
+    keys_left: Bitfield,
+}
+
+but i think instead it needs to look like this
+
+struct SearchNode {
+    distance: u32,
+    current_keys: Vec<Key>,
+    keys_acquired: Bitfield,
+    keys_left: Bitfield,
+}
+
+i'm not in love with putting a vec there bc i think it'll cause lots of allocations
+bc i'm gonna have to clone the vec a lot
+that'll prob be ok for 18b, but i imagine it'll make 18a really bad
+we'll see tho
+
+ok it worked :))))
+it definitely slowed 18a down
+i can deal with that later if i care about it
+hopefully i don't care!
+anyway 18b down!!!
