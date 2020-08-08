@@ -2423,3 +2423,6 @@ struct DonutCave {
 }
 
 ya i think something like that would do the trick!!
+
+TODO NOTE: AA and ZZ are special cases
+TODO use a binaryheap, sort by distance
