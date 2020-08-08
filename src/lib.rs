@@ -1,13 +1,13 @@
 mod computer;
 mod eight;
-pub mod eighteen;
+mod eighteen;
 mod eleven;
 mod fifteen;
 mod five;
 mod four;
 mod fourteen;
 mod nine;
-mod nineteen;
+pub mod nineteen;
 mod one;
 mod seven;
 mod seventeen;

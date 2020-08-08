@@ -4,8 +4,8 @@ use crate::computer::{Computer, HaltReason};
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 struct Position(u32, u32);
 
-fn position_is_in_beam(x: u32, y: u32, memory: &[i64]) -> bool {
-    let mut computer = Computer::new(memory.to_vec());
+fn position_is_in_beam(x: u32, y: u32, computer: &mut Computer, original_memory: &[i64]) -> bool {
+    reset_computer(computer, original_memory);
     computer.push_input(x as i64);
     computer.push_input(y as i64);
     computer.run(HaltReason::Output);
@@ -17,13 +17,21 @@ fn position_is_in_beam(x: u32, y: u32, memory: &[i64]) -> bool {
     }
 }
 
+fn reset_computer(computer: &mut Computer, original_memory: &[i64]) {
+    computer.state.memory.copy_from_slice(&original_memory);
+    computer.state.instruction_pointer = 0;
+    computer.state.relative_base = 0;
+}
+
 pub fn nineteen_a() -> u32 {
     let mut num_affected_points = 0;
     let memory = load_program("src/inputs/19.txt");
+    let mut computer = Computer::new(memory);
+    let original_memory = computer.state.memory.clone();
 
     for y in 0..50 {
         for x in 0..50 {
-            if position_is_in_beam(x, y, &memory) {
+            if position_is_in_beam(x, y, &mut computer, &original_memory) {
                 num_affected_points += 1;
             }
         }
@@ -32,26 +40,34 @@ pub fn nineteen_a() -> u32 {
     num_affected_points
 }
 
-fn step_left_cursor(position: Position, memory: &[i64]) -> Position {
+fn step_left_cursor(
+    position: Position,
+    computer: &mut Computer,
+    original_memory: &[i64],
+) -> Position {
     let y = position.1 + 1;
     let mut x = position.0;
 
-    while !position_is_in_beam(x, y, memory) {
+    while !position_is_in_beam(x, y, computer, original_memory) {
         x += 1;
     }
 
     Position(x, y)
 }
 
-fn step_right_cursor(position: Position, memory: &[i64]) -> Position {
+fn step_right_cursor(
+    position: Position,
+    computer: &mut Computer,
+    original_memory: &[i64],
+) -> Position {
     let y = position.1 + 1;
     let mut x = position.0;
 
-    while !position_is_in_beam(x, y, memory) {
+    while !position_is_in_beam(x, y, computer, original_memory) {
         x += 1;
     }
 
-    while position_is_in_beam(x, y, memory) {
+    while position_is_in_beam(x, y, computer, original_memory) {
         x += 1;
     }
 
@@ -60,6 +76,8 @@ fn step_right_cursor(position: Position, memory: &[i64]) -> Position {
 
 fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position {
     let memory = load_program(filename);
+    let mut computer = Computer::new(memory.to_vec());
+    let original_memory = computer.state.memory.clone();
 
     let mut left_cursor = Position(0, 0);
     let mut right_cursor = Position(0, 0);
@@ -70,7 +88,7 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
         let mut farthest_right = 0;
 
         for x in 0..20 {
-            if position_is_in_beam(x, y, &memory) {
+            if position_is_in_beam(x, y, &mut computer, &original_memory) {
                 beam_exists_at_this_y_position = true;
                 if farthest_left == 0 {
                     farthest_left = x;
@@ -86,12 +104,12 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
     }
 
     for _ in 0..(box_size - 1) {
-        left_cursor = step_left_cursor(left_cursor, &memory);
+        left_cursor = step_left_cursor(left_cursor, &mut computer, &original_memory);
     }
 
     loop {
-        left_cursor = step_left_cursor(left_cursor, &memory);
-        right_cursor = step_right_cursor(right_cursor, &memory);
+        left_cursor = step_left_cursor(left_cursor, &mut computer, &original_memory);
+        right_cursor = step_right_cursor(right_cursor, &mut computer, &original_memory);
 
         if right_cursor.0 > left_cursor.0 && right_cursor.0 - left_cursor.0 >= box_size - 1 {
             break;

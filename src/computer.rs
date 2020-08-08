@@ -33,8 +33,8 @@ pub(crate) struct State {
     pub memory: Memory,
     pub input: Vec<i64>,
     pub output: VecDeque<i64>,
-    instruction_pointer: usize,
-    relative_base: i64,
+    pub(crate) instruction_pointer: usize,
+    pub(crate) relative_base: i64,
 }
 
 impl Computer {

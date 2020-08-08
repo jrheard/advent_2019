@@ -2351,3 +2351,25 @@ so i suspect that the bug is in my calculation of when to break
 ===
 
 8/8/20
+
+ok i got 19b to work!
+couple of off-by-ones, fun
+
+it's pretty slow, gonna profile and benchmark
+pretty sure it's bc i spend so much time making new computers
+
+ok actually nvm it's reasonably fast in release mode
+but even so let's take a quick look
+
+individual/individual   time:   [52.312 ms 58.459 ms 62.067 ms]
+
+yeah, profiling shows that we spend half our time in computer::new
+can we instead do some sort of mem::set() shenanigans?
+
+looks like you can just do copy_from_slice() and it does memcpy stuff under the hood
+
+individual/individual   time:   [30.381 ms 30.583 ms 30.880 ms]
+                        change: [-48.302% -45.351% -41.956%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+neat!
