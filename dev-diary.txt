@@ -2424,9 +2424,13 @@ struct DonutCave {
 
 ya i think something like that would do the trick!!
 
-TODO NOTE: AA and ZZ are special cases
+DONE NOTE: AA and ZZ are special cases
 TODO use a binaryheap, sort by distance
 
 ok urgh
 the width thing was too simplistic
 it's a donut
+
+ok cool i came up with a match that i think should work
+gonna take a break but i think that we've made some progress
+i haven't tried to run any of this yet though :)

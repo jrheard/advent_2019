@@ -24,7 +24,7 @@ struct Portal {
 
 /// Returns Some(a_portal) if a and b are neighbors, None otherwise.
 /// NOTE: Assumes that `partial_portal` precedes `(other_position, other_letter)` in the input maze file.
-fn try_to_make_portal(
+fn try_to_make_portal_from_partial(
     partial_portal: &PartialPortal,
     other_position: Position,
     other_letter: char,
@@ -88,6 +88,30 @@ fn try_to_make_portal(
     }
 }
 
+/// Returns Some((index_of_relevant_partial_portal, portal)) if (position, letter) can be successfully combined
+/// with any of the entries in `partial_portals`, None otherwise.
+fn try_to_make_portal(
+    partial_portals: &[PartialPortal],
+    position: Position,
+    letter: char,
+    width: usize,
+    height: usize,
+) -> Option<(usize, Portal)> {
+    partial_portals
+        .iter()
+        .enumerate()
+        .find_map(|(i, partial_portal): (usize, &PartialPortal)| {
+            let possible_portal =
+                try_to_make_portal_from_partial(&partial_portal, position, letter, width, height);
+
+            if let Some(portal) = possible_portal {
+                Some((i, portal))
+            } else {
+                None
+            }
+        })
+}
+
 struct DonutCave {
     spaces: Vec<Space>,
     portals: HashMap<Position, Position>,
@@ -115,21 +139,8 @@ impl DonutCave {
                     '.' => Space::Empty,
                     ' ' => Space::Nowhere,
                     _ => {
-                        let position = Position(x, y);
-
-                        let possible_portal_and_index = partial_portals
-                            .iter()
-                            .enumerate()
-                            .find_map(|(i, partial_portal): (usize, &PartialPortal)| {
-                                let possible_portal =
-                                    try_to_make_portal(&partial_portal, position, c, width, height);
-
-                                if let Some(portal) = possible_portal {
-                                    Some((i, portal))
-                                } else {
-                                    None
-                                }
-                            });
+                        let possible_portal_and_index =
+                            try_to_make_portal(&partial_portals, Position(x, y), c, width, height);
 
                         if let Some((i, portal)) = possible_portal_and_index {
                             partial_portals.remove(i);
@@ -164,6 +175,8 @@ impl DonutCave {
             finish: finish.unwrap(),
         }
     }
+
+    // TODO add .get(x, y)
 }
 
 pub fn twenty_a() -> u32 {
