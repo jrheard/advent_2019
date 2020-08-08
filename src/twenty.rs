@@ -19,7 +19,27 @@ struct PartialPortal {
 
 struct Portal {
     label: String,
-    position: Position
+    position: Position,
+}
+
+impl Portal {
+    pub fn new(
+        partial_portal: PartialPortal,
+        position: Position,
+        c: char,
+        width: usize,
+        height: usize,
+    ) -> Self {
+        // TODO make actual portal
+        // TODO we now have access to a direction
+        // TODO note that we'll need to take direction into account when creating label and determinig position
+        // TODO argh fuck we're gonna need to take x and y and width and height into account too!!!!
+        // TODO make helper function that takes these million little variables and makes a Portal
+        Portal {
+            label: "foo".to_string(),
+            position: Position(0, 0),
+        }
+    }
 }
 
 struct DonutCave {
@@ -34,25 +54,18 @@ enum Direction {
     West,
 }
 
-/// Returns the Direction from a to b if a and b are neighbors, None otherwise.
-fn positions_are_neighbors(a: Position, b: Position) -> Option<Direction> {
-    if a.0 == b.0 && a.1 + 1 == b.1 {
-        Some(Direction::South)
-    } else if a.0 == b.0 && a.1 - 1 == b.1 {
-        Some(Direction::North)
-    } else if a.0 + 1 == b.0 && a.1 == b.1 {
-        Some(Direction::East)
-    } else if a.0 - 1 == b.0 && a.1 == b.1 {
-        Some(Direction::West)
-    } else {
-        None
-    }
+fn positions_are_neighbors(a: Position, b: Position) -> bool {
+    (a.0 == b.0 && a.1 + 1 == b.1)
+        || (a.0 == b.0 && a.1 - 1 == b.1)
+        || (a.0 + 1 == b.0 && a.1 == b.1)
+        || (a.0 - 1 == b.0 && a.1 == b.1)
 }
 
 impl DonutCave {
     pub fn new(filename: &str) -> Self {
         let mut spaces = Vec::new();
         let mut partial_portals = Vec::new();
+        let mut portals = Vec::new();
 
         let contents = fs::read_to_string(filename).unwrap();
         let width = contents.lines().next().unwrap().len();
@@ -70,23 +83,19 @@ impl DonutCave {
                         let existing_partial_portal_index_and_direction = partial_portals
                             .iter()
                             .enumerate()
-                            .find_map(|(i, partial_portal): (usize, &PartialPortal)| {
-                                let direction = positions_are_neighbors(position, partial_portal.position)
-                                if let Some(direction) = direction {
-                                    Some((i, direction))
-                                } else {
-                                    None
-                                }
+                            .find(|(_, partial_portal): &(usize, &PartialPortal)| {
+                                positions_are_neighbors(position, partial_portal.position)
                             });
 
-                        if let Some((i, direction)) = existing_partial_portal_index_and_direction
+                        if let Some((i, partial_portal)) =
+                            existing_partial_portal_index_and_direction
                         {
+                            // XXX argh fuck
+                            // arghhhhh
                             partial_portals.remove(i);
-                            // TODO make actual portal
-                            // TODO we now have access to a direction
-                            // TODO note that we'll need to take direction into account when creating label and determinig position
-                            // TODO argh fuck we're gonna need to take x and y and width and height into account too!!!!
-                            // TODO make helper function that takes these million little variables and makes a Portal
+
+                            // TODO special case aa and zz, don't make portals for those
+                            portals.push(Portal::new(*partial_portal, position, c, width, height));
                         } else {
                             partial_portals.push(PartialPortal {
                                 position: Position(x, y),
@@ -94,17 +103,19 @@ impl DonutCave {
                             });
                         }
 
-                        // TODO
                         Space::Nowhere
                     }
                 });
             }
         }
 
+        // TODO merge portals
+
         DonutCave {
             spaces,
             // TODO
             portals: HashMap::new(),
+            // TODO add fields start and end
         }
     }
 }
