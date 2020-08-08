@@ -1,5 +1,6 @@
 TODOs
     * try out proptest
+    * read through https://github.com/Aidiakapi/advent_of_code_2019 for interesting rust tidbits
 
 
 ====
@@ -2344,3 +2345,9 @@ early on, the beam is so sparse that it skips some x, y positions!!
 
 hr hrm hrm
 
+ok so i think my cursor-stepping looks ok (haven't 100% confirmed tho)
+so i suspect that the bug is in my calculation of when to break
+
+===
+
+8/8/20
