@@ -22,43 +22,75 @@ struct Portal {
     position: Position,
 }
 
-impl Portal {
-    pub fn new(
-        partial_portal: PartialPortal,
-        position: Position,
-        c: char,
-        width: usize,
-        height: usize,
-    ) -> Self {
-        // TODO make actual portal
-        // TODO we now have access to a direction
-        // TODO note that we'll need to take direction into account when creating label and determinig position
-        // TODO argh fuck we're gonna need to take x and y and width and height into account too!!!!
-        // TODO make helper function that takes these million little variables and makes a Portal
-        Portal {
-            label: "foo".to_string(),
-            position: Position(0, 0),
-        }
-    }
-}
-
 struct DonutCave {
     spaces: Vec<Space>,
     portals: HashMap<Position, Position>,
 }
 
-enum Direction {
-    North,
-    East,
-    South,
-    West,
-}
+/// Returns Some(a_portal) if a and b are neighbors, None otherwise.
+/// NOTE: Assumes that `partial_portal` precedes `(other_position, other_letter)` in the input maze file.
+fn try_to_make_portal(
+    partial_portal: &PartialPortal,
+    other_position: Position,
+    other_letter: char,
+    width: usize,
+    height: usize,
+) -> Option<Portal> {
+    let label = format!("{}{}", partial_portal.letter, other_letter);
 
-fn positions_are_neighbors(a: Position, b: Position) -> bool {
-    (a.0 == b.0 && a.1 + 1 == b.1)
-        || (a.0 == b.0 && a.1 - 1 == b.1)
-        || (a.0 + 1 == b.0 && a.1 == b.1)
-        || (a.0 - 1 == b.0 && a.1 == b.1)
+    if partial_portal.position.0 == other_position.0
+        && partial_portal.position.1 + 1 == other_position.1
+    {
+        // We've found a portal, and partial_portal is above other_position.
+        match (
+            other_position.1 <= height / 4,
+            other_position.1 <= height / 2,
+            other_position.1 <= 3 * height / 4,
+        ) {
+            (true, true, true) | (false, false, true) => {
+                // This portal affects the position below other_position.
+                Some(Portal {
+                    label,
+                    position: Position(other_position.0, other_position.1 + 1),
+                })
+            }
+            (false, true, true) | (false, false, false) => {
+                // This portal affects the position above partial_portal.position.
+                Some(Portal {
+                    label,
+                    position: Position(other_position.0, partial_portal.position.1 - 1),
+                })
+            }
+            _ => unreachable!(),
+        }
+    } else if partial_portal.position.0 + 1 == other_position.0
+        && partial_portal.position.1 == other_position.1
+    {
+        // We've found a portal, and partial_portal is to the left of other_position.
+        match (
+            other_position.0 <= width / 4,
+            other_position.0 <= width / 2,
+            other_position.0 <= 3 * width / 4,
+        ) {
+            (true, true, true) | (false, false, true) => {
+                // This portal affects the position to the right of other_position.
+                Some(Portal {
+                    label,
+                    position: Position(other_position.0 + 1, other_position.1),
+                })
+            }
+            (false, true, true) | (false, false, false) => {
+                // This portal affects the position to the left of partial_portal.position.
+                Some(Portal {
+                    label,
+                    position: Position(partial_portal.position.0 - 1, other_position.1),
+                })
+            }
+            _ => unreachable!(),
+        }
+    } else {
+        None
+    }
 }
 
 impl DonutCave {
@@ -80,22 +112,25 @@ impl DonutCave {
                     _ => {
                         let position = Position(x, y);
 
-                        let existing_partial_portal_index_and_direction = partial_portals
+                        let possible_portal_and_index = partial_portals
                             .iter()
                             .enumerate()
-                            .find(|(_, partial_portal): &(usize, &PartialPortal)| {
-                                positions_are_neighbors(position, partial_portal.position)
+                            .find_map(|(i, partial_portal): (usize, &PartialPortal)| {
+                                let possible_portal =
+                                    try_to_make_portal(&partial_portal, position, c, width, height);
+
+                                if let Some(portal) = possible_portal {
+                                    Some((i, portal))
+                                } else {
+                                    None
+                                }
                             });
 
-                        if let Some((i, partial_portal)) =
-                            existing_partial_portal_index_and_direction
-                        {
-                            // XXX argh fuck
-                            // arghhhhh
+                        if let Some((i, portal)) = possible_portal_and_index {
                             partial_portals.remove(i);
 
                             // TODO special case aa and zz, don't make portals for those
-                            portals.push(Portal::new(*partial_portal, position, c, width, height));
+                            portals.push(portal);
                         } else {
                             partial_portals.push(PartialPortal {
                                 position: Position(x, y),
