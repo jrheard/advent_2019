@@ -2373,3 +2373,53 @@ individual/individual   time:   [30.381 ms 30.583 ms 30.880 ms]
                         Performance has improved.
 
 neat!
+
+ok looking at day 20
+looks like a straightforward bfs flood fill type approach
+i don't think i'll even need to do any sort of precomputing for a, just `return distance` the first time we get to the exit i think?
+
+but parsing this thing looks like it's gonna be a real pain
+let's think about what parsing is going to look like
+
+an input is split into lines() on line breaks
+so it will have a logical num_lines concept
+each line has the same width
+
+so, this donut concept is what makes it tricky to parse
+
+ok i think i'm getting there
+so what does a DonutCave look like?
+
+enum Cell {
+    Empty, // '.'
+    Wall, // '#'
+    OffGrid  // ' '
+}
+
+while we're parsing the donut cave, we maintain a vec of PartialPortals
+a PartialPortal is a tuple of (Position, char)
+
+and whenever we encounter a letter:
+    if `partial_portals` contains an element that's one position away from the letter's current position:
+        we pop that element off of `partial_portals` and create a Portal
+            a Portal looks like (label, position) - also maybe Direction?
+            NOTE we'll have to keep track of directionality to make sure that we get labels and positions right
+    else:
+        we add (current_position, current_letter) to `partial_portals
+
+so by doing this, we assemble a vec of Portals
+there will be two Portals per label -
+    so eg there'll be an "AB" portal at position (2, 5) and another "AB" portal at position (20, 10) or whatever
+
+once we've gotten all of _that_, we'll end up with a Vec of Cells
+and a Vec of Portals
+
+we can then run that vec of Portals through some sort of `combine_portals()` function
+that outputs a Dict of {Position -> Position}
+
+struct DonutCave {
+    cells: Vec<Cell>
+    portals: HashMap<Position, Position>
+}
+
+ya i think something like that would do the trick!!
