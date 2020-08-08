@@ -22,11 +22,6 @@ struct Portal {
     position: Position,
 }
 
-struct DonutCave {
-    spaces: Vec<Space>,
-    portals: HashMap<Position, Position>,
-}
-
 /// Returns Some(a_portal) if a and b are neighbors, None otherwise.
 /// NOTE: Assumes that `partial_portal` precedes `(other_position, other_letter)` in the input maze file.
 fn try_to_make_portal(
@@ -93,6 +88,13 @@ fn try_to_make_portal(
     }
 }
 
+struct DonutCave {
+    spaces: Vec<Space>,
+    portals: HashMap<Position, Position>,
+    start: Position,
+    finish: Position,
+}
+
 impl DonutCave {
     pub fn new(filename: &str) -> Self {
         let mut spaces = Vec::new();
@@ -102,6 +104,9 @@ impl DonutCave {
         let contents = fs::read_to_string(filename).unwrap();
         let width = contents.lines().next().unwrap().len();
         let height = contents.lines().count();
+
+        let mut start = None;
+        let mut finish = None;
 
         for (y, line) in contents.lines().enumerate() {
             for (x, c) in line.chars().enumerate() {
@@ -129,8 +134,13 @@ impl DonutCave {
                         if let Some((i, portal)) = possible_portal_and_index {
                             partial_portals.remove(i);
 
-                            // TODO special case aa and zz, don't make portals for those
-                            portals.push(portal);
+                            if portal.label == "AA" {
+                                start = Some(portal.position);
+                            } else if portal.label == "ZZ" {
+                                finish = Some(portal.position);
+                            } else {
+                                portals.push(portal);
+                            }
                         } else {
                             partial_portals.push(PartialPortal {
                                 position: Position(x, y),
@@ -150,7 +160,8 @@ impl DonutCave {
             spaces,
             // TODO
             portals: HashMap::new(),
-            // TODO add fields start and end
+            start: start.unwrap(),
+            finish: finish.unwrap(),
         }
     }
 }
