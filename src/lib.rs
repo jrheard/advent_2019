@@ -58,6 +58,7 @@ pub fn run_all_solutions() {
     println!("18a: {}", eighteen::eighteen_a());
     println!("18b: {}", eighteen::eighteen_b());
     println!("19a: {}", nineteen::nineteen_a());
+    println!("19b: {}", nineteen::nineteen_b());
 }
 
 #[cfg(test)]

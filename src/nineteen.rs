@@ -5,7 +5,6 @@ use crate::computer::{Computer, HaltReason};
 struct Position(u32, u32);
 
 fn position_is_in_beam(x: u32, y: u32, memory: &[i64]) -> bool {
-    // TODO is there really not a way to reuse computers??
     let mut computer = Computer::new(memory.to_vec());
     computer.push_input(x as i64);
     computer.push_input(y as i64);
@@ -25,7 +24,6 @@ pub fn nineteen_a() -> u32 {
     for y in 0..50 {
         for x in 0..50 {
             if position_is_in_beam(x, y, &memory) {
-                println!("{}, {}", x, y);
                 num_affected_points += 1;
             }
         }
@@ -87,17 +85,15 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
         }
     }
 
-    for _ in 0..box_size {
+    for _ in 0..(box_size - 1) {
         left_cursor = step_left_cursor(left_cursor, &memory);
     }
 
     loop {
-        println!("stepping left {:?}, right {:?}", left_cursor, right_cursor,);
-
         left_cursor = step_left_cursor(left_cursor, &memory);
         right_cursor = step_right_cursor(right_cursor, &memory);
 
-        if right_cursor.0 > left_cursor.0 && right_cursor.0 - left_cursor.0 >= box_size {
+        if right_cursor.0 > left_cursor.0 && right_cursor.0 - left_cursor.0 >= box_size - 1 {
             break;
         }
     }
@@ -117,7 +113,7 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(nineteen_a(), 166);
-        assert_eq!(nineteen_b(), 0);
+        assert_eq!(nineteen_b(), 3790981);
     }
 
     #[test]
