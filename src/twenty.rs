@@ -12,8 +12,8 @@ enum Direction {
     West,
 }
 
-#[derive(Debug, Copy, Clone)]
-enum Space {
+#[derive(Debug, Copy, Clone, PartialEq)]
+pub enum Space {
     Empty,   // '.'
     Wall,    // '#'
     Nowhere, // ' '
@@ -232,7 +232,7 @@ mod cave {
         }
 
         /// Returns the Space at (x, y).
-        fn get(&self, x: usize, y: usize) -> Space {
+        pub fn get(&self, x: usize, y: usize) -> Space {
             self.spaces[y * self.width + x]
         }
     }
@@ -272,6 +272,7 @@ fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
             break;
         }
 
+        // Walk into adjacent empty spaces.
         for direction in [
             Direction::North,
             Direction::East,
@@ -286,14 +287,24 @@ fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
                 continue;
             }
 
-            // TODO only move into empty spaces
-            // TODO follow portals
+            if cave.get(next_position.0, next_position.1) == Space::Empty {
+                frontier.push_back(SearchNode {
+                    position: next_position,
+                    distance: node.distance + 1,
+                });
+                seen.insert(next_position);
+            }
+        }
 
-            frontier.push_back(SearchNode {
-                position: next_position,
-                distance: node.distance + 1,
-            });
-            seen.insert(next_position);
+        // If we're at a portal, step through it.
+        if let Some(portal_position) = cave.portals.get(&node.position) {
+            if !seen.contains(portal_position) {
+                frontier.push_back(SearchNode {
+                    position: *portal_position,
+                    distance: node.distance + 1,
+                });
+                seen.insert(*portal_position);
+            }
         }
     }
 
@@ -301,7 +312,8 @@ fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
 }
 
 pub fn twenty_a() -> u32 {
-    5
+    let cave = cave::DonutCave::new("src/inputs/20.txt");
+    shortest_path_through_cave(&cave)
 }
 
 #[cfg(test)]
@@ -309,13 +321,16 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_foo() {
-        let x = cave::DonutCave::new("src/inputs/20_sample_1.txt");
-        dbg!(x);
+    fn test_solutions() {
+        assert_eq!(twenty_a(), 690);
     }
 
     #[test]
     fn test_samples() {
         let cave = cave::DonutCave::new("src/inputs/20_sample_1.txt");
+        assert_eq!(shortest_path_through_cave(&cave), 23);
+
+        let cave = cave::DonutCave::new("src/inputs/20_sample_2.txt");
+        assert_eq!(shortest_path_through_cave(&cave), 58);
     }
 }
