@@ -2465,9 +2465,9 @@ otherwise, AA and ZZ are off limits, portals work fine,
 inner portals take you one depth lower, and outer portals take you one depth up
 
 so i think i need to make these modifications:
-    * Portals need to have a .kind field whose value is Inner or Outer
-    * cave needs to have a .inner_portals field and a .outer_portals field
-        * i might need to rewrite/scrap merge_portals
+    DONE * Portals need to have a .kind field whose value is Inner or Outer
+    DONE * cave needs to have a .inner_portals field and a .outer_portals field
+        DONE * i might need to rewrite/scrap merge_portals
     * i'll need to rewrite the bfs search
         * i'm thinking about just copy-pasting it into another module and modifying it from there
 

@@ -68,7 +68,8 @@ mod cave {
             && partial_portal.position.1 + 1 == other_position.1
         {
             // We've found a portal, and partial_portal is above other_position.
-            match (
+
+            let (position, kind) = match (
                 other_position.1 <= height / 4,
                 other_position.1 <= height / 2,
                 other_position.1 <= 3 * height / 4,
@@ -78,47 +79,50 @@ mod cave {
                     // P
                     // O
                     // . <-- target
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0, other_position.1 + 1),
-                        kind: PortalKind::Outer,
-                    })
+                    (
+                        Position(other_position.0, other_position.1 + 1),
+                        PortalKind::Outer,
+                    )
                 }
 
                 (false, false, true) => {
                     // Same here.
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0, other_position.1 + 1),
-                        kind: PortalKind::Inner,
-                    })
+                    (
+                        Position(other_position.0, other_position.1 + 1),
+                        PortalKind::Inner,
+                    )
                 }
                 (false, true, true) => {
                     // This portal affects the position _above_ partial_portal.position.
                     // . <- target
                     // P
                     // O
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0, partial_portal.position.1 - 1),
-                        kind: PortalKind::Inner,
-                    })
+                    (
+                        Position(other_position.0, partial_portal.position.1 - 1),
+                        PortalKind::Inner,
+                    )
                 }
                 (false, false, false) => {
                     // Same here.
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0, partial_portal.position.1 - 1),
-                        kind: PortalKind::Outer,
-                    })
+                    (
+                        Position(other_position.0, partial_portal.position.1 - 1),
+                        PortalKind::Outer,
+                    )
                 }
                 _ => unreachable!(),
-            }
+            };
+
+            Some(Portal {
+                label,
+                kind,
+                position,
+            })
         } else if partial_portal.position.0 + 1 == other_position.0
             && partial_portal.position.1 == other_position.1
         {
             // We've found a portal, and partial_portal is to the left of other_position.
-            match (
+
+            let (position, kind) = match (
                 other_position.0 <= width / 4,
                 other_position.0 <= width / 2,
                 other_position.0 <= 3 * width / 4,
@@ -127,40 +131,42 @@ mod cave {
                     // This portal affects the position to the right of other_position.
                     // PO.
                     //   ^ target
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0 + 1, other_position.1),
-                        kind: PortalKind::Outer,
-                    })
+                    (
+                        Position(other_position.0 + 1, other_position.1),
+                        PortalKind::Outer,
+                    )
                 }
                 (false, false, true) => {
                     // Same here.
-                    Some(Portal {
-                        label,
-                        position: Position(other_position.0 + 1, other_position.1),
-                        kind: PortalKind::Inner,
-                    })
+                    (
+                        Position(other_position.0 + 1, other_position.1),
+                        PortalKind::Inner,
+                    )
                 }
                 (false, true, true) => {
                     // This portal affects the position to the left of partial_portal.position.
                     // .PO
                     // ^ target
-                    Some(Portal {
-                        label,
-                        position: Position(partial_portal.position.0 - 1, other_position.1),
-                        kind: PortalKind::Inner,
-                    })
+                    (
+                        Position(partial_portal.position.0 - 1, other_position.1),
+                        PortalKind::Inner,
+                    )
                 }
                 (false, false, false) => {
                     // Same here.
-                    Some(Portal {
-                        label,
-                        position: Position(partial_portal.position.0 - 1, other_position.1),
-                        kind: PortalKind::Outer,
-                    })
+                    (
+                        Position(partial_portal.position.0 - 1, other_position.1),
+                        PortalKind::Outer,
+                    )
                 }
                 _ => unreachable!(),
-            }
+            };
+
+            Some(Portal {
+                label,
+                position,
+                kind,
+            })
         } else {
             None
         }
