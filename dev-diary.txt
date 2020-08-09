@@ -2482,3 +2482,12 @@ ok i'm no longer sure that having a vec of seen sets is the right approach
 hrm
 although similarly it's hard to imagine a situation where visiting the same position
 twice at the same level would actually be helpful
+
+ok sick i rewrote seen-tracking to use a nice little PositionTracker struct
+and that cleaned the code up nicely
+and in the process it fixed whatever bug existed! probably a -1 instead of a +1 or something
+who knows
+anyway radddd that feels good
+
+runs kinda slow tho! let's try it in release mode to confirm
+naw, runs fine in release mode, nice :)

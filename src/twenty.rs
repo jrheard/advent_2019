@@ -403,6 +403,7 @@ mod search_b {
     }
 
     impl PositionTracker {
+        /// Tracks `(node.level, node.position)`.
         fn insert(&mut self, node: SearchNode) {
             if node.level as usize >= self.seen_sets.len() {
                 let mut set = HashSet::new();
@@ -413,6 +414,7 @@ mod search_b {
             }
         }
 
+        /// Returns true if `(node.level, node.position)` has been seen, false otherwise.
         fn contains(&self, node: &SearchNode) -> bool {
             if node.level as usize >= self.seen_sets.len() {
                 return false;
@@ -465,17 +467,16 @@ mod search_b {
                     level: node.level,
                 };
 
-                if tracker.contains(&next_node) {
-                    continue;
-                }
-
-                if cave.get(next_position.0, next_position.1) == Space::Empty {
+                if !tracker.contains(&next_node)
+                    && cave.get(next_position.0, next_position.1) == Space::Empty
+                {
+                    // We haven't been to this space before, and it's walkable! Let's go there!
                     frontier.push_back(next_node);
                     tracker.insert(next_node);
                 }
             }
 
-            // If we're at a portal, step through it.
+            // Now that we're done walking normally: if we're at a portal, step through it.
 
             // Inner portals are always accessible.
             if let Some(portal_position) = cave.inner_portals.get(&node.position) {
@@ -523,7 +524,7 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_a(), 690);
-        assert_eq!(twenty_b(), 0);
+        assert_eq!(twenty_b(), 7976);
     }
 
     #[test]
