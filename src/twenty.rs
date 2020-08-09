@@ -1,9 +1,9 @@
 use itertools::Itertools;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet, VecDeque};
 use std::fs;
 
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
-struct Position(usize, usize);
+pub struct Position(usize, usize);
 
 enum Direction {
     North,
@@ -12,7 +12,7 @@ enum Direction {
     West,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Space {
     Empty,   // '.'
     Wall,    // '#'
@@ -39,9 +39,10 @@ mod cave {
     #[derive(Debug)]
     pub struct DonutCave {
         spaces: Vec<Space>,
-        portals: HashMap<Position, Position>,
-        start: Position,
-        finish: Position,
+        pub portals: HashMap<Position, Position>,
+        pub start: Position,
+        pub finish: Position,
+        width: usize,
     }
 
     /// Returns Some(a_portal) if `partial_portal.position` and `other_position` are neighbors, None otherwise.
@@ -226,10 +227,14 @@ mod cave {
                 portals: merge_portals(&portals),
                 start: start.unwrap(),
                 finish: finish.unwrap(),
+                width,
             }
         }
 
-        // TODO add .get(x, y)
+        /// Returns the Space at (x, y).
+        fn get(&self, x: usize, y: usize) -> Space {
+            self.spaces[y * self.width + x]
+        }
     }
 }
 
@@ -243,11 +248,56 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     }
 }
 
-struct SearchNode {}
+struct SearchNode {
+    distance: u32,
+    position: Position,
+}
 
 fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
-    //
-    5
+    let mut frontier = VecDeque::new();
+    frontier.push_back(SearchNode {
+        distance: 0,
+        position: cave.start,
+    });
+
+    let mut seen = HashSet::new();
+    seen.insert(cave.start);
+
+    let mut shortest_path = 0;
+    while !frontier.is_empty() {
+        let node = frontier.pop_front().expect("frontier is non-empty");
+
+        if node.position == cave.finish {
+            shortest_path = node.distance;
+            break;
+        }
+
+        for direction in [
+            Direction::North,
+            Direction::East,
+            Direction::South,
+            Direction::West,
+        ]
+        .iter()
+        {
+            let next_position = one_position_ahead(direction, &node.position);
+
+            if seen.contains(&next_position) {
+                continue;
+            }
+
+            // TODO only move into empty spaces
+            // TODO follow portals
+
+            frontier.push_back(SearchNode {
+                position: next_position,
+                distance: node.distance + 1,
+            });
+            seen.insert(next_position);
+        }
+    }
+
+    shortest_path
 }
 
 pub fn twenty_a() -> u32 {
