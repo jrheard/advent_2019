@@ -2444,3 +2444,31 @@ implement portal merging
 
 ya, 20a implementation is looking good so far
 i put some dbg!()s in my work-in-progress DonutCave::new() and the output looks good
+
+done!
+
+ok, 20b looks interesting
+having a little trouble understanding the prompt though
+
+    "When you enter the maze, you are at the outermost level; when at the
+    outermost level, only the outer labels AA and ZZ function (as the start and
+    end, respectively); all other outer labeled tiles are effectively walls.
+    At any other level, AA and ZZ count as walls, but the other outer
+    labeled tiles bring you one level outward."
+
+that seems straightforward
+
+ok i think i see
+
+if we're at depth 0, AA and ZZ function but nothing else does
+otherwise, AA and ZZ are off limits, portals work fine,
+inner portals take you one depth lower, and outer portals take you one depth up
+
+so i think i need to make these modifications:
+    * Portals need to have a .kind field whose value is Inner or Outer
+    * cave needs to have a .inner_portals field and a .outer_portals field
+        * i might need to rewrite/scrap merge_portals
+    * i'll need to rewrite the bfs search
+        * i'm thinking about just copy-pasting it into another module and modifying it from there
+
+gonna start with those first bits bc they shouldn't interfere with 20a

@@ -29,17 +29,25 @@ mod cave {
         letter: char,
     }
 
+    #[derive(Debug, PartialEq)]
+    enum PortalKind {
+        Inner,
+        Outer,
+    }
+
     /// One end of a portal between two spaces.
     #[derive(Debug)]
     struct Portal {
         label: String,
         position: Position,
+        kind: PortalKind,
     }
 
     #[derive(Debug)]
     pub struct DonutCave {
         spaces: Vec<Space>,
-        pub portals: HashMap<Position, Position>,
+        pub inner_portals: HashMap<Position, Position>,
+        pub outer_portals: HashMap<Position, Position>,
         pub start: Position,
         pub finish: Position,
         width: usize,
@@ -65,7 +73,7 @@ mod cave {
                 other_position.1 <= height / 2,
                 other_position.1 <= 3 * height / 4,
             ) {
-                (true, true, true) | (false, false, true) => {
+                (true, true, true) => {
                     // This portal affects the position _below_ other_position.
                     // P
                     // O
@@ -73,9 +81,19 @@ mod cave {
                     Some(Portal {
                         label,
                         position: Position(other_position.0, other_position.1 + 1),
+                        kind: PortalKind::Outer,
                     })
                 }
-                (false, true, true) | (false, false, false) => {
+
+                (false, false, true) => {
+                    // Same here.
+                    Some(Portal {
+                        label,
+                        position: Position(other_position.0, other_position.1 + 1),
+                        kind: PortalKind::Inner,
+                    })
+                }
+                (false, true, true) => {
                     // This portal affects the position _above_ partial_portal.position.
                     // . <- target
                     // P
@@ -83,6 +101,15 @@ mod cave {
                     Some(Portal {
                         label,
                         position: Position(other_position.0, partial_portal.position.1 - 1),
+                        kind: PortalKind::Inner,
+                    })
+                }
+                (false, false, false) => {
+                    // Same here.
+                    Some(Portal {
+                        label,
+                        position: Position(other_position.0, partial_portal.position.1 - 1),
+                        kind: PortalKind::Outer,
                     })
                 }
                 _ => unreachable!(),
@@ -96,22 +123,40 @@ mod cave {
                 other_position.0 <= width / 2,
                 other_position.0 <= 3 * width / 4,
             ) {
-                (true, true, true) | (false, false, true) => {
+                (true, true, true) => {
                     // This portal affects the position to the right of other_position.
                     // PO.
                     //   ^ target
                     Some(Portal {
                         label,
                         position: Position(other_position.0 + 1, other_position.1),
+                        kind: PortalKind::Outer,
                     })
                 }
-                (false, true, true) | (false, false, false) => {
+                (false, false, true) => {
+                    // Same here.
+                    Some(Portal {
+                        label,
+                        position: Position(other_position.0 + 1, other_position.1),
+                        kind: PortalKind::Inner,
+                    })
+                }
+                (false, true, true) => {
                     // This portal affects the position to the left of partial_portal.position.
                     // .PO
                     // ^ target
                     Some(Portal {
                         label,
                         position: Position(partial_portal.position.0 - 1, other_position.1),
+                        kind: PortalKind::Inner,
+                    })
+                }
+                (false, false, false) => {
+                    // Same here.
+                    Some(Portal {
+                        label,
+                        position: Position(partial_portal.position.0 - 1, other_position.1),
+                        kind: PortalKind::Outer,
                     })
                 }
                 _ => unreachable!(),
@@ -149,11 +194,12 @@ mod cave {
         )
     }
 
-    /// Merges a slice of Portals into a map of
-    /// {portal_1_position -> portal_2_position, portal_2_position -> portal_1_position, etc}
-    /// for each matched pair of Portals in `portals`.
-    fn merge_portals(portals: &[Portal]) -> HashMap<Position, Position> {
-        let mut ret = HashMap::new();
+    /// Merges a slice of Portals into a tuple of (inner_portals, outer_portals).
+    fn merge_portals(
+        portals: &[Portal],
+    ) -> (HashMap<Position, Position>, HashMap<Position, Position>) {
+        let mut inner_portals = HashMap::new();
+        let mut outer_portals = HashMap::new();
 
         for (_, mut pair) in &portals
             .iter()
@@ -162,13 +208,23 @@ mod cave {
         {
             let first_half = pair.next().unwrap();
             let second_half = pair.next().unwrap();
+
             assert!(pair.next().is_none());
 
-            ret.insert(first_half.position, second_half.position);
-            ret.insert(second_half.position, first_half.position);
+            match first_half.kind {
+                // TODO are they always guaranteed to be one of each???
+                PortalKind::Inner => {
+                    inner_portals.insert(first_half.position, second_half.position);
+                    outer_portals.insert(second_half.position, first_half.position);
+                }
+                PortalKind::Outer => {
+                    outer_portals.insert(first_half.position, second_half.position);
+                    inner_portals.insert(second_half.position, first_half.position);
+                }
+            }
         }
 
-        ret
+        (inner_portals, outer_portals)
     }
 
     impl DonutCave {
@@ -222,9 +278,12 @@ mod cave {
                 }
             }
 
+            let (inner_portals, outer_portals) = merge_portals(&portals);
+
             DonutCave {
                 spaces,
-                portals: merge_portals(&portals),
+                inner_portals,
+                outer_portals,
                 start: start.unwrap(),
                 finish: finish.unwrap(),
                 width,
@@ -247,6 +306,8 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
         Direction::West => Position(position.0 - 1, position.1),
     }
 }
+
+// TODO two search mods - search_a and search_b
 
 struct SearchNode {
     distance: u32,
@@ -297,13 +358,15 @@ fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
         }
 
         // If we're at a portal, step through it.
-        if let Some(portal_position) = cave.portals.get(&node.position) {
-            if !seen.contains(portal_position) {
-                frontier.push_back(SearchNode {
-                    position: *portal_position,
-                    distance: node.distance + 1,
-                });
-                seen.insert(*portal_position);
+        for portals in [&cave.inner_portals, &cave.outer_portals].iter() {
+            if let Some(portal_position) = portals.get(&node.position) {
+                if !seen.contains(portal_position) {
+                    frontier.push_back(SearchNode {
+                        position: *portal_position,
+                        distance: node.distance + 1,
+                    });
+                    seen.insert(*portal_position);
+                }
             }
         }
     }
