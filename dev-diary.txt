@@ -2434,3 +2434,13 @@ it's a donut
 ok cool i came up with a match that i think should work
 gonna take a break but i think that we've made some progress
 i haven't tried to run any of this yet though :)
+
+i _think_ that all i have left before implementing bfs is:
+implement portal merging
+
+===
+
+9/9/20
+
+ya, 20a implementation is looking good so far
+i put some dbg!()s in my work-in-progress DonutCave::new() and the output looks good

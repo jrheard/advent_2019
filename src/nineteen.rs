@@ -79,9 +79,12 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
     let mut computer = Computer::new(memory.to_vec());
     let original_memory = computer.state.memory.clone();
 
+    // Cursors that hug the left and right side of the beam.
     let mut left_cursor = Position(0, 0);
     let mut right_cursor = Position(0, 0);
 
+    // The beam doesn't become coherent/continuous for a bit,
+    // so we do a full sweep over the area close to (0, 0) to calibrate our left and right cursor.
     for y in 1..15 {
         let mut beam_exists_at_this_y_position = false;
         let mut farthest_left = 0;
@@ -103,6 +106,8 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
         }
     }
 
+    // Step the left cursor forward so that it describes the bottom-left corner of a bounding box
+    // whose top-right corner is the right cursor.
     for _ in 0..(box_size - 1) {
         left_cursor = step_left_cursor(left_cursor, &mut computer, &original_memory);
     }
@@ -111,12 +116,11 @@ fn find_topleft_of_first_bounding_box(box_size: u32, filename: &str) -> Position
         left_cursor = step_left_cursor(left_cursor, &mut computer, &original_memory);
         right_cursor = step_right_cursor(right_cursor, &mut computer, &original_memory);
 
+        // We've found a bounding box of the right size!
         if right_cursor.0 > left_cursor.0 && right_cursor.0 - left_cursor.0 >= box_size - 1 {
-            break;
+            break Position(left_cursor.0, right_cursor.1);
         }
     }
-
-    Position(left_cursor.0, right_cursor.1)
 }
 
 pub fn nineteen_b() -> u32 {

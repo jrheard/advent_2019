@@ -1,9 +1,11 @@
+use itertools::Itertools;
 use std::collections::HashMap;
 use std::fs;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, Hash)]
 struct Position(usize, usize);
 
+#[derive(Debug)]
 enum Space {
     Empty,   // '.'
     Wall,    // '#'
@@ -11,18 +13,20 @@ enum Space {
 }
 
 /// A half-parsed Portal.
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 struct PartialPortal {
     position: Position,
     letter: char,
 }
 
+/// One end of a portal between two spaces.
+#[derive(Debug)]
 struct Portal {
     label: String,
     position: Position,
 }
 
-/// Returns Some(a_portal) if a and b are neighbors, None otherwise.
+/// Returns Some(a_portal) if `partial_portal.position` and `other_position` are neighbors, None otherwise.
 /// NOTE: Assumes that `partial_portal` precedes `(other_position, other_letter)` in the input maze file.
 fn try_to_make_portal_from_partial(
     partial_portal: &PartialPortal,
@@ -43,14 +47,20 @@ fn try_to_make_portal_from_partial(
             other_position.1 <= 3 * height / 4,
         ) {
             (true, true, true) | (false, false, true) => {
-                // This portal affects the position below other_position.
+                // This portal affects the position _below_ other_position.
+                // P
+                // O
+                // . <-- target
                 Some(Portal {
                     label,
                     position: Position(other_position.0, other_position.1 + 1),
                 })
             }
             (false, true, true) | (false, false, false) => {
-                // This portal affects the position above partial_portal.position.
+                // This portal affects the position _above_ partial_portal.position.
+                // . <- target
+                // P
+                // O
                 Some(Portal {
                     label,
                     position: Position(other_position.0, partial_portal.position.1 - 1),
@@ -69,6 +79,8 @@ fn try_to_make_portal_from_partial(
         ) {
             (true, true, true) | (false, false, true) => {
                 // This portal affects the position to the right of other_position.
+                // PO.
+                //   ^ target
                 Some(Portal {
                     label,
                     position: Position(other_position.0 + 1, other_position.1),
@@ -76,6 +88,8 @@ fn try_to_make_portal_from_partial(
             }
             (false, true, true) | (false, false, false) => {
                 // This portal affects the position to the left of partial_portal.position.
+                // .PO
+                // ^ target
                 Some(Portal {
                     label,
                     position: Position(partial_portal.position.0 - 1, other_position.1),
@@ -112,6 +126,29 @@ fn try_to_make_portal(
         })
 }
 
+/// Merges a slice of Portals into a map of
+/// {portal_1_position -> portal_2_position, portal_2_position -> portal_1_position, etc}
+/// for each matched pair of Portals in `portals`.
+fn merge_portals(portals: &[Portal]) -> HashMap<Position, Position> {
+    let mut ret = HashMap::new();
+
+    for (_, mut pair) in &portals
+        .iter()
+        .sorted_by_key(|portal| &portal.label)
+        .group_by(|portal| &portal.label)
+    {
+        let first_half = pair.next().unwrap();
+        let second_half = pair.next().unwrap();
+        assert!(pair.next().is_none());
+
+        ret.insert(first_half.position, second_half.position);
+        ret.insert(second_half.position, first_half.position);
+    }
+
+    ret
+}
+
+#[derive(Debug)]
 struct DonutCave {
     spaces: Vec<Space>,
     portals: HashMap<Position, Position>,
@@ -165,12 +202,9 @@ impl DonutCave {
             }
         }
 
-        // TODO merge portals
-
         DonutCave {
             spaces,
-            // TODO
-            portals: HashMap::new(),
+            portals: merge_portals(&portals),
             start: start.unwrap(),
             finish: finish.unwrap(),
         }
@@ -181,4 +215,15 @@ impl DonutCave {
 
 pub fn twenty_a() -> u32 {
     5
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_foo() {
+        let x = DonutCave::new("src/inputs/20_sample_1.txt");
+        dbg!(x);
+    }
 }
