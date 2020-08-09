@@ -123,9 +123,9 @@ mod cave {
             // We've found a portal, and partial_portal is to the left of other_position.
 
             let (position, kind) = match (
-                other_position.0 <= width / 4,
+                other_position.0 <= width / 5,
                 other_position.0 <= width / 2,
-                other_position.0 <= 3 * width / 4,
+                other_position.0 <= 4 * width / 5,
             ) {
                 (true, true, true) => {
                     // This portal affects the position to the right of other_position.
@@ -515,5 +515,14 @@ mod tests {
 
         let cave = cave::DonutCave::new("src/inputs/20_sample_2.txt");
         assert_eq!(search_a::shortest_path_through_cave(&cave), 58);
+    }
+
+    #[test]
+    fn test_samples_part_b() {
+        let cave = cave::DonutCave::new("src/inputs/20_sample_1.txt");
+        assert_eq!(search_b::shortest_path_through_cave(&cave), 26);
+
+        let cave = cave::DonutCave::new("src/inputs/20_sample_3.txt");
+        assert_eq!(search_b::shortest_path_through_cave(&cave), 396);
     }
 }

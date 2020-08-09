@@ -2472,3 +2472,8 @@ so i think i need to make these modifications:
         * i'm thinking about just copy-pasting it into another module and modifying it from there
 
 gonna start with those first bits bc they shouldn't interfere with 20a
+
+ok i made some progress but i'm getting a really big answer
+i'm not confident that my seen-set logic is totally great
+gonna take a look at that next
+also, lots of copy pasting :/
