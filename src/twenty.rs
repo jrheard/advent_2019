@@ -388,6 +388,116 @@ pub fn twenty_a() -> u32 {
     search_a::shortest_path_through_cave(&cave)
 }
 
+mod search_b {
+    use super::*;
+
+    #[derive(Debug)]
+    struct SearchNode {
+        distance: u32,
+        position: Position,
+        level: i32,
+    }
+
+    pub fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
+        let mut frontier = VecDeque::new();
+        frontier.push_back(SearchNode {
+            distance: 0,
+            position: cave.start,
+            level: 0,
+        });
+
+        let mut seen = HashSet::new();
+        seen.insert(cave.start);
+
+        let mut seen_sets = vec![seen];
+
+        let mut shortest_path = 0;
+        while !frontier.is_empty() {
+            let node = frontier.pop_front().expect("frontier is non-empty");
+            println!("{}, {}", node.distance, node.level);
+
+            if node.position == cave.finish && node.level == 0 {
+                shortest_path = node.distance;
+                break;
+            }
+
+            // Walk into adjacent empty spaces.
+            for direction in [
+                Direction::North,
+                Direction::East,
+                Direction::South,
+                Direction::West,
+            ]
+            .iter()
+            {
+                let next_position = one_position_ahead(direction, &node.position);
+
+                if seen_sets[node.level as usize].contains(&next_position) {
+                    continue;
+                }
+
+                if cave.get(next_position.0, next_position.1) == Space::Empty {
+                    frontier.push_back(SearchNode {
+                        position: next_position,
+                        distance: node.distance + 1,
+                        level: node.level,
+                    });
+                    seen_sets[node.level as usize].insert(next_position);
+                }
+            }
+
+            // If we're at a portal, step through it.
+            // TODO clean this up, use an if statement to choose between two different arrays to forloop over
+
+            // Inner portals are always accessible.
+            if let Some(portal_position) = cave.inner_portals.get(&node.position) {
+                if !seen_sets[node.level as usize].contains(portal_position) {
+                    if (node.level + 1) as usize >= seen_sets.len() {
+                        let mut seen = HashSet::new();
+                        seen.insert(*portal_position);
+                        seen_sets.push(seen);
+
+                        frontier.push_back(SearchNode {
+                            position: *portal_position,
+                            distance: node.distance + 1,
+                            level: node.level + 1,
+                        });
+                    } else if !seen_sets[(node.level + 1) as usize].contains(portal_position) {
+                        frontier.push_back(SearchNode {
+                            position: *portal_position,
+                            distance: node.distance + 1,
+                            level: node.level + 1,
+                        });
+
+                        seen_sets[(node.level + 1) as usize].insert(*portal_position);
+                    }
+                }
+            }
+
+            // Outer portals are only accessible if you're down at least one level.
+            if node.level > 0 {
+                if let Some(portal_position) = cave.outer_portals.get(&node.position) {
+                    if !seen_sets[(node.level - 1) as usize].contains(portal_position) {
+                        frontier.push_back(SearchNode {
+                            position: *portal_position,
+                            distance: node.distance + 1,
+                            level: node.level - 1,
+                        });
+                        seen_sets[(node.level - 1) as usize].insert(*portal_position);
+                    }
+                }
+            }
+        }
+
+        shortest_path
+    }
+}
+
+pub fn twenty_b() -> u32 {
+    let cave = cave::DonutCave::new("src/inputs/20.txt");
+    search_b::shortest_path_through_cave(&cave)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -395,6 +505,7 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_a(), 690);
+        assert_eq!(twenty_b(), 0);
     }
 
     #[test]
