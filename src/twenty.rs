@@ -391,30 +391,58 @@ pub fn twenty_a() -> u32 {
 mod search_b {
     use super::*;
 
-    #[derive(Debug)]
+    #[derive(Debug, Copy, Clone)]
     struct SearchNode {
         distance: u32,
         position: Position,
         level: i32,
     }
 
+    struct PositionTracker {
+        seen_sets: Vec<HashSet<Position>>,
+    }
+
+    impl PositionTracker {
+        fn insert(&mut self, node: SearchNode) {
+            if node.level as usize >= self.seen_sets.len() {
+                let mut set = HashSet::new();
+                set.insert(node.position);
+                self.seen_sets.push(set);
+            } else {
+                self.seen_sets[node.level as usize].insert(node.position);
+            }
+        }
+
+        fn contains(&self, node: &SearchNode) -> bool {
+            if node.level as usize >= self.seen_sets.len() {
+                return false;
+            }
+
+            self.seen_sets[node.level as usize].contains(&node.position)
+        }
+
+        fn new() -> Self {
+            PositionTracker { seen_sets: vec![] }
+        }
+    }
+
     pub fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
-        let mut frontier = VecDeque::new();
-        frontier.push_back(SearchNode {
+        let starting_node = SearchNode {
             distance: 0,
             position: cave.start,
             level: 0,
-        });
+        };
 
-        let mut seen = HashSet::new();
-        seen.insert(cave.start);
+        let mut frontier = VecDeque::new();
+        frontier.push_back(starting_node);
 
-        let mut seen_sets = vec![seen];
+        let mut tracker = PositionTracker::new();
+        tracker.insert(starting_node);
 
         let mut shortest_path = 0;
         while !frontier.is_empty() {
             let node = frontier.pop_front().expect("frontier is non-empty");
-            println!("{}, {}", node.distance, node.level);
+            //println!("{}, {}", node.distance, node.level);
 
             if node.position == cave.finish && node.level == 0 {
                 shortest_path = node.distance;
@@ -431,59 +459,49 @@ mod search_b {
             .iter()
             {
                 let next_position = one_position_ahead(direction, &node.position);
+                let next_node = SearchNode {
+                    position: next_position,
+                    distance: node.distance + 1,
+                    level: node.level,
+                };
 
-                if seen_sets[node.level as usize].contains(&next_position) {
+                if tracker.contains(&next_node) {
                     continue;
                 }
 
                 if cave.get(next_position.0, next_position.1) == Space::Empty {
-                    frontier.push_back(SearchNode {
-                        position: next_position,
-                        distance: node.distance + 1,
-                        level: node.level,
-                    });
-                    seen_sets[node.level as usize].insert(next_position);
+                    frontier.push_back(next_node);
+                    tracker.insert(next_node);
                 }
             }
 
             // If we're at a portal, step through it.
-            // TODO clean this up, use an if statement to choose between two different arrays to forloop over
 
             // Inner portals are always accessible.
             if let Some(portal_position) = cave.inner_portals.get(&node.position) {
-                if !seen_sets[node.level as usize].contains(portal_position) {
-                    if (node.level + 1) as usize >= seen_sets.len() {
-                        let mut seen = HashSet::new();
-                        seen.insert(*portal_position);
-                        seen_sets.push(seen);
+                let node_through_portal = SearchNode {
+                    position: *portal_position,
+                    distance: node.distance + 1,
+                    level: node.level + 1,
+                };
 
-                        frontier.push_back(SearchNode {
-                            position: *portal_position,
-                            distance: node.distance + 1,
-                            level: node.level + 1,
-                        });
-                    } else if !seen_sets[(node.level + 1) as usize].contains(portal_position) {
-                        frontier.push_back(SearchNode {
-                            position: *portal_position,
-                            distance: node.distance + 1,
-                            level: node.level + 1,
-                        });
-
-                        seen_sets[(node.level + 1) as usize].insert(*portal_position);
-                    }
+                if !tracker.contains(&node_through_portal) {
+                    frontier.push_back(node_through_portal);
+                    tracker.insert(node_through_portal);
                 }
             }
 
             // Outer portals are only accessible if you're down at least one level.
             if node.level > 0 {
                 if let Some(portal_position) = cave.outer_portals.get(&node.position) {
-                    if !seen_sets[(node.level - 1) as usize].contains(portal_position) {
-                        frontier.push_back(SearchNode {
-                            position: *portal_position,
-                            distance: node.distance + 1,
-                            level: node.level - 1,
-                        });
-                        seen_sets[(node.level - 1) as usize].insert(*portal_position);
+                    let node_through_portal = SearchNode {
+                        position: *portal_position,
+                        distance: node.distance + 1,
+                        level: node.level - 1,
+                    };
+                    if !tracker.contains(&node_through_portal) {
+                        frontier.push_back(node_through_portal);
+                        tracker.insert(node_through_portal);
                     }
                 }
             }

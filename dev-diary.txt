@@ -2477,3 +2477,8 @@ ok i made some progress but i'm getting a really big answer
 i'm not confident that my seen-set logic is totally great
 gonna take a look at that next
 also, lots of copy pasting :/
+
+ok i'm no longer sure that having a vec of seen sets is the right approach
+hrm
+although similarly it's hard to imagine a situation where visiting the same position
+twice at the same level would actually be helpful
