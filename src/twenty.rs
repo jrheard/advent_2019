@@ -218,12 +218,13 @@ mod cave {
             assert!(pair.next().is_none());
 
             match first_half.kind {
-                // TODO are they always guaranteed to be one of each???
                 PortalKind::Inner => {
+                    assert_eq!(second_half.kind, PortalKind::Outer);
                     inner_portals.insert(first_half.position, second_half.position);
                     outer_portals.insert(second_half.position, first_half.position);
                 }
                 PortalKind::Outer => {
+                    assert_eq!(second_half.kind, PortalKind::Inner);
                     outer_portals.insert(first_half.position, second_half.position);
                     inner_portals.insert(second_half.position, first_half.position);
                 }
@@ -313,76 +314,78 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     }
 }
 
-// TODO two search mods - search_a and search_b
+pub mod search_a {
+    use super::*;
 
-struct SearchNode {
-    distance: u32,
-    position: Position,
-}
+    struct SearchNode {
+        distance: u32,
+        position: Position,
+    }
 
-fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
-    let mut frontier = VecDeque::new();
-    frontier.push_back(SearchNode {
-        distance: 0,
-        position: cave.start,
-    });
+    pub fn shortest_path_through_cave(cave: &cave::DonutCave) -> u32 {
+        let mut frontier = VecDeque::new();
+        frontier.push_back(SearchNode {
+            distance: 0,
+            position: cave.start,
+        });
 
-    let mut seen = HashSet::new();
-    seen.insert(cave.start);
+        let mut seen = HashSet::new();
+        seen.insert(cave.start);
 
-    let mut shortest_path = 0;
-    while !frontier.is_empty() {
-        let node = frontier.pop_front().expect("frontier is non-empty");
+        let mut shortest_path = 0;
+        while !frontier.is_empty() {
+            let node = frontier.pop_front().expect("frontier is non-empty");
 
-        if node.position == cave.finish {
-            shortest_path = node.distance;
-            break;
-        }
-
-        // Walk into adjacent empty spaces.
-        for direction in [
-            Direction::North,
-            Direction::East,
-            Direction::South,
-            Direction::West,
-        ]
-        .iter()
-        {
-            let next_position = one_position_ahead(direction, &node.position);
-
-            if seen.contains(&next_position) {
-                continue;
+            if node.position == cave.finish {
+                shortest_path = node.distance;
+                break;
             }
 
-            if cave.get(next_position.0, next_position.1) == Space::Empty {
-                frontier.push_back(SearchNode {
-                    position: next_position,
-                    distance: node.distance + 1,
-                });
-                seen.insert(next_position);
-            }
-        }
+            // Walk into adjacent empty spaces.
+            for direction in [
+                Direction::North,
+                Direction::East,
+                Direction::South,
+                Direction::West,
+            ]
+            .iter()
+            {
+                let next_position = one_position_ahead(direction, &node.position);
 
-        // If we're at a portal, step through it.
-        for portals in [&cave.inner_portals, &cave.outer_portals].iter() {
-            if let Some(portal_position) = portals.get(&node.position) {
-                if !seen.contains(portal_position) {
+                if seen.contains(&next_position) {
+                    continue;
+                }
+
+                if cave.get(next_position.0, next_position.1) == Space::Empty {
                     frontier.push_back(SearchNode {
-                        position: *portal_position,
+                        position: next_position,
                         distance: node.distance + 1,
                     });
-                    seen.insert(*portal_position);
+                    seen.insert(next_position);
+                }
+            }
+
+            // If we're at a portal, step through it.
+            for portals in [&cave.inner_portals, &cave.outer_portals].iter() {
+                if let Some(portal_position) = portals.get(&node.position) {
+                    if !seen.contains(portal_position) {
+                        frontier.push_back(SearchNode {
+                            position: *portal_position,
+                            distance: node.distance + 1,
+                        });
+                        seen.insert(*portal_position);
+                    }
                 }
             }
         }
-    }
 
-    shortest_path
+        shortest_path
+    }
 }
 
 pub fn twenty_a() -> u32 {
     let cave = cave::DonutCave::new("src/inputs/20.txt");
-    shortest_path_through_cave(&cave)
+    search_a::shortest_path_through_cave(&cave)
 }
 
 #[cfg(test)]
@@ -397,9 +400,9 @@ mod tests {
     #[test]
     fn test_samples() {
         let cave = cave::DonutCave::new("src/inputs/20_sample_1.txt");
-        assert_eq!(shortest_path_through_cave(&cave), 23);
+        assert_eq!(search_a::shortest_path_through_cave(&cave), 23);
 
         let cave = cave::DonutCave::new("src/inputs/20_sample_2.txt");
-        assert_eq!(shortest_path_through_cave(&cave), 58);
+        assert_eq!(search_a::shortest_path_through_cave(&cave), 58);
     }
 }
