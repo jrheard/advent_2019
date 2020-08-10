@@ -86,7 +86,7 @@ mod cave {
                 }
 
                 (false, false, true) => {
-                    // Same here.
+                    // Same here, but we're inside the donut.
                     (
                         Position(other_position.0, other_position.1 + 1),
                         PortalKind::Inner,
@@ -103,7 +103,7 @@ mod cave {
                     )
                 }
                 (false, false, false) => {
-                    // Same here.
+                    // Same here, but we're outside the donut.
                     (
                         Position(other_position.0, partial_portal.position.1 - 1),
                         PortalKind::Outer,
@@ -137,7 +137,7 @@ mod cave {
                     )
                 }
                 (false, false, true) => {
-                    // Same here.
+                    // Same here, but we're inside the donut.
                     (
                         Position(other_position.0 + 1, other_position.1),
                         PortalKind::Inner,
@@ -153,7 +153,7 @@ mod cave {
                     )
                 }
                 (false, false, false) => {
-                    // Same here.
+                    // Same here, but we're outside the donut.
                     (
                         Position(partial_portal.position.0 - 1, other_position.1),
                         PortalKind::Outer,
@@ -263,8 +263,12 @@ mod cave {
                             );
 
                             if let Some((i, portal)) = possible_portal_and_index {
+                                // `(x, y)` was the second half of a partially-processed portal!
+                                // We turned the two halves into a Portal; now let's use it.
                                 partial_portals.remove(i);
 
+                                // AA and ZZ are special markers -
+                                // they're not portals, they're the start and end of the maze.
                                 if portal.label == "AA" {
                                     start = Some(portal.position);
                                 } else if portal.label == "ZZ" {
@@ -314,6 +318,7 @@ fn one_position_ahead(direction: &Direction, position: &Position) -> Position {
     }
 }
 
+/// A BFS search implemented for the cave described by part A.
 pub mod search_a {
     use super::*;
 
@@ -388,6 +393,7 @@ pub fn twenty_a() -> u32 {
     search_a::shortest_path_through_cave(&cave)
 }
 
+/// A BFS search implemented for the "recursive" caves described by part B.
 mod search_b {
     use super::*;
 
@@ -444,7 +450,6 @@ mod search_b {
         let mut shortest_path = 0;
         while !frontier.is_empty() {
             let node = frontier.pop_front().expect("frontier is non-empty");
-            //println!("{}, {}", node.distance, node.level);
 
             if node.position == cave.finish && node.level == 0 {
                 shortest_path = node.distance;
