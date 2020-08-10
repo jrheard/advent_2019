@@ -2491,3 +2491,35 @@ anyway radddd that feels good
 
 runs kinda slow tho! let's try it in release mode to confirm
 naw, runs fine in release mode, nice :)
+
+let's try enabling lto for funsies
+here's the current benchmark of run_all_solutions
+
+individual/individual   time:   [831.95 ms 846.56 ms 861.37 ms]
+
+enabling lto didn't make any difference at all! interesting!
+well, i'm glad that my stuff is that fast already
+
+looks like we spend most of our time in 16b
+actually 20b has some room for optimization maybe
+let's take a look
+
+ok so we spend _tons_ of time in hashmap insert and hashmap make_hash
+
+ok, here's the current 20b baseline
+
+individual/individual   time:   [138.78 ms 139.41 ms 140.11 ms]
+
+what if i get rid of these hashsets and instead have them be flat vecs of booleans
+
+individual/individual   time:   [46.056 ms 46.578 ms 47.406 ms]
+                        change: [-66.918% -66.469% -66.039%] (p = 0.00 < 0.05)
+                        Performance has improved.
+
+nice :))))))
+
+still i'm seeing hashbrown map make_hash show up in profiles tho
+oh, that'll be inner_portals and outer_portals
+
+if i wanted to, i could replace them with a struct whose backing storage is a vec, similar strategy
+but i'm comfortable with 46ms for now! 100ms win heck yes

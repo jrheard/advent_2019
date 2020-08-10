@@ -7,7 +7,7 @@ mod five;
 mod four;
 mod fourteen;
 mod nine;
-pub mod nineteen;
+mod nineteen;
 mod one;
 mod seven;
 mod seventeen;
@@ -17,7 +17,7 @@ mod ten;
 mod thirteen;
 mod three;
 mod twelve;
-mod twenty;
+pub mod twenty;
 mod two;
 mod util;
 

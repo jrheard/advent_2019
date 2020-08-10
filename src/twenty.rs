@@ -45,12 +45,12 @@ mod cave {
 
     #[derive(Debug)]
     pub struct DonutCave {
-        spaces: Vec<Space>,
+        pub spaces: Vec<Space>,
         pub inner_portals: HashMap<Position, Position>,
         pub outer_portals: HashMap<Position, Position>,
         pub start: Position,
         pub finish: Position,
-        width: usize,
+        pub width: usize,
     }
 
     /// Returns Some(a_portal) if `partial_portal.position` and `other_position` are neighbors, None otherwise.
@@ -405,32 +405,43 @@ mod search_b {
     }
 
     struct PositionTracker {
-        seen_sets: Vec<HashSet<Position>>,
+        seen_vecs: Vec<Vec<bool>>,
+        cave_width: usize,
+        num_spaces: usize,
     }
 
     impl PositionTracker {
         /// Tracks `(node.level, node.position)`.
         fn insert(&mut self, node: SearchNode) {
-            if node.level as usize >= self.seen_sets.len() {
-                let mut set = HashSet::new();
-                set.insert(node.position);
-                self.seen_sets.push(set);
+            if node.level as usize >= self.seen_vecs.len() {
+                let mut vec = vec![false; self.num_spaces];
+                vec[self.position_to_index(node.position)] = true;
+                self.seen_vecs.push(vec);
             } else {
-                self.seen_sets[node.level as usize].insert(node.position);
+                let index = self.position_to_index(node.position);
+                self.seen_vecs[node.level as usize][index] = true;
             }
         }
 
         /// Returns true if `(node.level, node.position)` has been seen, false otherwise.
         fn contains(&self, node: &SearchNode) -> bool {
-            if node.level as usize >= self.seen_sets.len() {
+            if node.level as usize >= self.seen_vecs.len() {
                 return false;
             }
 
-            self.seen_sets[node.level as usize].contains(&node.position)
+            self.seen_vecs[node.level as usize][self.position_to_index(node.position)]
         }
 
-        fn new() -> Self {
-            PositionTracker { seen_sets: vec![] }
+        fn new(cave_width: usize, num_spaces: usize) -> Self {
+            PositionTracker {
+                seen_vecs: vec![],
+                cave_width,
+                num_spaces,
+            }
+        }
+
+        fn position_to_index(&self, position: Position) -> usize {
+            position.1 * self.cave_width + position.0
         }
     }
 
@@ -444,7 +455,7 @@ mod search_b {
         let mut frontier = VecDeque::new();
         frontier.push_back(starting_node);
 
-        let mut tracker = PositionTracker::new();
+        let mut tracker = PositionTracker::new(cave.width, cave.spaces.len());
         tracker.insert(starting_node);
 
         let mut shortest_path = 0;
