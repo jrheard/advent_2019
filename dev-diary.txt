@@ -2523,3 +2523,15 @@ oh, that'll be inner_portals and outer_portals
 
 if i wanted to, i could replace them with a struct whose backing storage is a vec, similar strategy
 but i'm comfortable with 46ms for now! 100ms win heck yes
+
+===
+
+8/10/20
+
+ok let's look at 21a
+
+so, first priority is getting a springdroid up and running
+how do we interact with this thing?
+we feed it a program
+and we read an outcome
+the outcome is either a Success(u32) or a Death(Vec<String>)
