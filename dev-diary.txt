@@ -2634,3 +2634,22 @@ NOT E T
 NOT T T
 AND T J
 OR H J
+
+ok cool neat i win!
+
+let's peek at 22b
+
+"deal into new stack" sounds like "reverse"
+
+"split at n" sounds like
+    if n > 0 {
+        let (left, deck) == deck.split_at_mut(n);
+        deck.append(left);
+    } else {
+        let (left, deck) == deck.split_at_mut(deck.len() + n);
+        deck.append(left);
+    }
+
+
+"deal with increment n" is interesting
+    is it just an easy while loop?
