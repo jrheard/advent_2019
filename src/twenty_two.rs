@@ -84,9 +84,11 @@ fn track_position_of_card_through_shuffle(
     for instruction in instructions {
         match instruction {
             Instruction::DealIntoNewStack => {
+                println!("a");
                 index = num_cards - index - 1;
             }
             Instruction::Cut(cut_index) => {
+                println!("b");
                 let cut_index = if *cut_index > 0 {
                     *cut_index as usize
                 } else {
@@ -100,6 +102,7 @@ fn track_position_of_card_through_shuffle(
                 };
             }
             Instruction::DealWithIncrement(step) => {
+                println!("c {} {}", step, index);
                 let mut index_in_old_deck = 0;
                 let mut index_in_new_deck = 0;
 
@@ -199,5 +202,20 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_two_a(), 7860);
+    }
+
+    #[test]
+    fn test_foo() {
+        let instructions = parse_instructions("src/inputs/22.txt");
+        let mut index = 2020;
+        dbg!(index);
+        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
+        dbg!(index);
+        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
+        dbg!(index);
+        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
+        dbg!(index);
+        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
+        dbg!(index);
     }
 }

@@ -2705,3 +2705,13 @@ after: 1
 [src/twenty_two.rs:85] instruction = DealIntoNewStack
 before: 1
 after: 9
+
+ok cool fixed it
+off-by-one
+
+so i'm trying to run a single shuffle and my deal-with-increment loop is taking forever
+bc my 2020 index immediately gets placed at 119314191427817
+and, like, looping that many times is too many
+
+so i need to destroy this loop and replace it with multiplications and divisions and mods and stuff after all
+oh well!!
