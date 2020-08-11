@@ -75,13 +75,49 @@ fn shuffle(num_cards: usize, instructions: &[Instruction]) -> Vec<usize> {
     deck
 }
 
-fn track_position_of_card_through_shuffles(
+/// Returns the final value of `index` after a single shuffle of `num_cards` per `instructions`.
+fn track_position_of_card_through_shuffle(
     num_cards: usize,
     mut index: usize,
     instructions: &[Instruction],
 ) -> usize {
-    let deck = shuffle(num_cards, instructions);
-    deck.iter().position(|&x| x == index).unwrap()
+    for instruction in instructions {
+        match instruction {
+            Instruction::DealIntoNewStack => {
+                index = num_cards - index - 1;
+            }
+            Instruction::Cut(cut_index) => {
+                let cut_index = if *cut_index > 0 {
+                    *cut_index as usize
+                } else {
+                    (*cut_index + num_cards as i32) as usize
+                };
+
+                index = if index >= cut_index {
+                    index - cut_index
+                } else {
+                    (num_cards - cut_index) + index
+                };
+            }
+            Instruction::DealWithIncrement(step) => {
+                let mut index_in_old_deck = 0;
+                let mut index_in_new_deck = 0;
+
+                loop {
+                    if index_in_old_deck == index {
+                        index = index_in_new_deck;
+                        break;
+                    }
+
+                    index_in_old_deck += 1;
+                    index_in_new_deck += step;
+                    index_in_new_deck %= num_cards;
+                }
+            }
+        }
+    }
+
+    index
 }
 
 pub fn twenty_two_a() -> usize {
@@ -143,19 +179,19 @@ mod tests {
     fn test_track_position() {
         let instructions = parse_instructions("src/inputs/22_sample_1.txt");
         assert_eq!(
-            track_position_of_card_through_shuffles(10, 9, &instructions),
+            track_position_of_card_through_shuffle(10, 9, &instructions),
             3
         );
 
         let instructions = parse_instructions("src/inputs/22_sample_2.txt");
         assert_eq!(
-            track_position_of_card_through_shuffles(10, 9, &instructions),
+            track_position_of_card_through_shuffle(10, 9, &instructions),
             8
         );
 
         let instructions = parse_instructions("src/inputs/22_sample_3.txt");
         assert_eq!(
-            track_position_of_card_through_shuffles(10, 9, &instructions),
+            track_position_of_card_through_shuffle(10, 9, &instructions),
             9
         );
     }

@@ -2687,3 +2687,21 @@ so here's the plan
     (starting_position + offset_per_shuffle * num_shuffles) % deck.len()
 
 we'll see tho!!
+
+ok so reverse is ez
+cut seems ok
+dealwithincrement - done but maybe buggy
+
+ok i'm seeing some failing tests, let's dig into em
+
+
+hm i think this might be the issue
+
+[src/twenty_two.rs:85] instruction = DealWithIncrement(
+    7,
+)
+before: 3
+after: 1
+[src/twenty_two.rs:85] instruction = DealIntoNewStack
+before: 1
+after: 9
