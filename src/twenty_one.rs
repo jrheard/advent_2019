@@ -14,15 +14,15 @@ fn input_line(computer: &mut Computer, line: &str) {
     computer.push_input('\n' as i64);
 }
 
-fn run_droid(program: &[&str]) -> DroidOutcome {
+fn run_droid(program: &str, run_command: &str) -> DroidOutcome {
     let memory = computer::load_program("src/inputs/21.txt");
     let mut computer = Computer::new(memory);
 
     // Program the droid.
-    for line in program {
+    for line in program.lines() {
         input_line(&mut computer, line);
     }
-    input_line(&mut computer, "WALK");
+    input_line(&mut computer, run_command);
 
     // Run the droid. Good luck, droid!
     computer.run(HaltReason::Exit);
@@ -48,12 +48,38 @@ fn run_droid(program: &[&str]) -> DroidOutcome {
     }
 }
 
-pub fn twenty_one_a() -> i64 {
-    let program = [
-        "NOT B J", "NOT A T", "OR T J", "NOT C T", "OR T J", "AND D J",
-    ];
+static PROGRAM_ONE: &str = "NOT B J
+NOT A T
+OR T J
+NOT C T
+OR T J
+AND D J";
 
-    let outcome = run_droid(&program);
+pub fn twenty_one_a() -> i64 {
+    let outcome = run_droid(PROGRAM_ONE, "WALK");
+
+    match outcome {
+        DroidOutcome::Success(hull_damage) => hull_damage,
+        DroidOutcome::Death(replay) => {
+            print!("{}", replay);
+            0
+        }
+    }
+}
+
+static PROGRAM_TWO: &str = "NOT B J
+NOT A T
+OR T J
+NOT C T
+OR T J
+AND D J
+NOT E T
+NOT T T
+AND T J
+OR H J";
+
+pub fn twenty_one_b() -> i64 {
+    let outcome = run_droid(PROGRAM_TWO, "RUN");
 
     match outcome {
         DroidOutcome::Success(hull_damage) => hull_damage,
@@ -71,5 +97,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_one_a(), 19352493);
+        assert_eq!(twenty_one_b(), 0);
     }
 }
