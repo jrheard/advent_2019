@@ -2650,6 +2650,10 @@ let's peek at 22b
         deck.append(left);
     }
 
-
 "deal with increment n" is interesting
     is it just an easy while loop?
+
+ok so i put something together
+it fails on sample 1
+
+oh it was just bc i didn't see that the samples run on decks of 10 cards
