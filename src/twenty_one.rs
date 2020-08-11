@@ -27,6 +27,12 @@ fn run_droid(program: &[&str]) -> DroidOutcome {
     // Run the droid. Good luck, droid!
     computer.run(HaltReason::Exit);
 
+    // Flush extraneous output.
+    let expected_output_str = "Input instructions:\n\nWalking...\n\n";
+    for _ in expected_output_str.chars() {
+        computer.pop_output();
+    }
+
     let first_output = computer.pop_output().unwrap();
 
     if first_output > 255 {
@@ -42,14 +48,20 @@ fn run_droid(program: &[&str]) -> DroidOutcome {
     }
 }
 
-pub fn twenty_one_a() -> u32 {
-    let outcome = run_droid(&["NOT D J"]);
+pub fn twenty_one_a() -> i64 {
+    let program = [
+        "NOT B J", "NOT A T", "OR T J", "NOT C T", "OR T J", "AND D J",
+    ];
 
-    if let DroidOutcome::Death(replay) = outcome {
-        print!("{}", replay);
+    let outcome = run_droid(&program);
+
+    match outcome {
+        DroidOutcome::Success(hull_damage) => hull_damage,
+        DroidOutcome::Death(replay) => {
+            print!("{}", replay);
+            0
+        }
     }
-
-    5
 }
 
 #[cfg(test)]
@@ -58,6 +70,6 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        twenty_one_a();
+        assert_eq!(twenty_one_a(), 19352493);
     }
 }

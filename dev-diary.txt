@@ -2535,3 +2535,39 @@ how do we interact with this thing?
 we feed it a program
 and we read an outcome
 the outcome is either a Success(u32) or a Death(Vec<String>)
+
+ok cool ez :)
+now let's write the program
+what characteristics do i want the program to have?
+
+* if there's empty space 4 ahead, DON'T jump
+* if there's empty space 1 ahead, DO jump
+* if there's empty space 2 ahead, DO jump
+
+so:
+
+// jump if there's a hole in one or both of the next two spaces
+NOT B J
+NOT A T
+OR T J
+// let J stay true iff there's ground 4 ahead
+AND D J
+
+ok, that didn't work because it caused us to fall in this hole:
+
+.................
+.................
+@................
+#####.#..########
+
+and a jump lets us skip the next three spots
+
+so we need to jump if there's a hole in the next 3 spots
+so how about
+
+NOT B J
+NOT A T
+OR T J
+NOT C T
+OR T J
+AND D J
