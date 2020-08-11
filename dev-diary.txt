@@ -2657,3 +2657,16 @@ ok so i put something together
 it fails on sample 1
 
 oh it was just bc i didn't see that the samples run on decks of 10 cards
+
+ok cool neat
+
+working on the full input now
+falls over on this instruction
+
+[src/twenty_two.rs:45] instruction = Cut(
+    -7558,
+)
+thread 'twenty_two::tests::test_solutions' panicked at 'index 18446744073709545065 out of range for slice of length 1007',
+
+overflow error, looks like
+oh i didn't put enough zeroes in the deck size

@@ -76,7 +76,9 @@ fn shuffle(num_cards: usize, instructions: &[Instruction]) -> Vec<usize> {
 }
 
 pub fn twenty_two_a() -> usize {
-    5
+    let instructions = parse_instructions("src/inputs/22.txt");
+    let deck = shuffle(10007, &instructions);
+    deck.iter().position(|&x| x == 2019).unwrap()
 }
 
 #[cfg(test)]
@@ -126,5 +128,10 @@ mod tests {
         let instructions = parse_instructions("src/inputs/22_sample_3.txt");
         let deck = shuffle(10, &instructions);
         assert_eq!(deck, vec![6, 3, 0, 7, 4, 1, 8, 5, 2, 9]);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(twenty_two_a(), 7860);
     }
 }
