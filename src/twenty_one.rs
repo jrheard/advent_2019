@@ -72,11 +72,12 @@ NOT A T
 OR T J
 NOT C T
 OR T J
-AND D J
+AND H J
 NOT E T
 NOT T T
-AND T J
-OR H J";
+OR T J
+AND D J
+";
 
 pub fn twenty_one_b() -> i64 {
     let outcome = run_droid(PROGRAM_TWO, "RUN");
@@ -97,6 +98,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_one_a(), 19352493);
-        assert_eq!(twenty_one_b(), 0);
+        assert_eq!(twenty_one_b(), 1141896219);
     }
 }
