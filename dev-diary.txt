@@ -2670,3 +2670,20 @@ thread 'twenty_two::tests::test_solutions' panicked at 'index 184467440737095450
 
 overflow error, looks like
 oh i didn't put enough zeroes in the deck size
+
+ok 22a done
+lol 22b
+
+ok so clearly, realizing an entire deck of this size (119315717514047) and shuffling it this many times (101741582076661)
+will be impossible
+
+i'm supposed to keep track of the card in position 2020
+
+so here's the plan
+* figure out how to move _just one card_ per the list of shuffling instructions
+* get 22a working with that new slimmer code
+* run the shuffle 5 times, printing out the card-of-interest's new offset each time, and hope to god there's a pattern
+* ideally then we can just do like
+    (starting_position + offset_per_shuffle * num_shuffles) % deck.len()
+
+we'll see tho!!

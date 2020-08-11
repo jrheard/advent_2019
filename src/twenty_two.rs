@@ -75,6 +75,15 @@ fn shuffle(num_cards: usize, instructions: &[Instruction]) -> Vec<usize> {
     deck
 }
 
+fn track_position_of_card_through_shuffles(
+    num_cards: usize,
+    mut index: usize,
+    instructions: &[Instruction],
+) -> usize {
+    let deck = shuffle(num_cards, instructions);
+    deck.iter().position(|&x| x == index).unwrap()
+}
+
 pub fn twenty_two_a() -> usize {
     let instructions = parse_instructions("src/inputs/22.txt");
     let deck = shuffle(10007, &instructions);
@@ -128,6 +137,27 @@ mod tests {
         let instructions = parse_instructions("src/inputs/22_sample_3.txt");
         let deck = shuffle(10, &instructions);
         assert_eq!(deck, vec![6, 3, 0, 7, 4, 1, 8, 5, 2, 9]);
+    }
+
+    #[test]
+    fn test_track_position() {
+        let instructions = parse_instructions("src/inputs/22_sample_1.txt");
+        assert_eq!(
+            track_position_of_card_through_shuffles(10, 9, &instructions),
+            3
+        );
+
+        let instructions = parse_instructions("src/inputs/22_sample_2.txt");
+        assert_eq!(
+            track_position_of_card_through_shuffles(10, 9, &instructions),
+            8
+        );
+
+        let instructions = parse_instructions("src/inputs/22_sample_3.txt");
+        assert_eq!(
+            track_position_of_card_through_shuffles(10, 9, &instructions),
+            9
+        );
     }
 
     #[test]
