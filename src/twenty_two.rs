@@ -75,58 +75,78 @@ fn shuffle(num_cards: usize, instructions: &[Instruction]) -> Vec<usize> {
     deck
 }
 
-/// Returns the final value of `index` after a single shuffle of `num_cards` per `instructions`.
-fn track_position_of_card_through_shuffle(
-    num_cards: usize,
-    mut index: usize,
-    instructions: &[Instruction],
-) -> usize {
-    for instruction in instructions {
-        match instruction {
-            Instruction::DealIntoNewStack => {
-                println!("a");
-                index = num_cards - index - 1;
-            }
-            Instruction::Cut(cut_index) => {
-                println!("b");
-                let cut_index = if *cut_index > 0 {
-                    *cut_index as usize
-                } else {
-                    (*cut_index + num_cards as i32) as usize
-                };
-
-                index = if index >= cut_index {
-                    index - cut_index
-                } else {
-                    (num_cards - cut_index) + index
-                };
-            }
-            Instruction::DealWithIncrement(step) => {
-                println!("c {} {}", step, index);
-                let mut index_in_old_deck = 0;
-                let mut index_in_new_deck = 0;
-
-                loop {
-                    if index_in_old_deck == index {
-                        index = index_in_new_deck;
-                        break;
-                    }
-
-                    index_in_old_deck += 1;
-                    index_in_new_deck += step;
-                    index_in_new_deck %= num_cards;
-                }
-            }
-        }
-    }
-
-    index
-}
-
 pub fn twenty_two_a() -> usize {
     let instructions = parse_instructions("src/inputs/22.txt");
     let deck = shuffle(10007, &instructions);
     deck.iter().position(|&x| x == 2019).unwrap()
+}
+
+fn modulus(n: i128, m: i128) -> i128 {
+    ((n % m) + m) % m
+}
+
+// Ripped straight from https://rob.co.bb/posts/2019-02-10-modular-exponentiation-in-rust/ .
+fn mod_pow(mut base: i128, mut exp: i128, m: i128) -> i128 {
+    if m == 1 {
+        return 0;
+    }
+
+    let mut result = 1;
+    base = modulus(base, m);
+
+    while exp > 0 {
+        if exp % 2 == 1 {
+            result = result * base % m;
+        }
+        exp >>= 1;
+        base = base * base % m
+    }
+    result
+}
+
+fn modular_inverse(n: i128, m: i128) -> i128 {
+    mod_pow(n, m - 2, m)
+}
+
+pub fn twenty_two_b() -> i128 {
+    let num_cards: i128 = 119315717514047;
+    let num_shuffles: i128 = 101741582076661;
+
+    let mut offset: i128 = 0;
+    let mut increment: i128 = 1;
+    let instructions = parse_instructions("src/inputs/22.txt");
+
+    for instruction in instructions {
+        match instruction {
+            Instruction::DealIntoNewStack => {
+                increment *= -1;
+                increment = modulus(increment, num_cards);
+                offset += increment;
+                offset = modulus(offset, num_cards);
+            }
+            Instruction::Cut(n) => {
+                offset += increment * n as i128;
+                offset = modulus(offset, num_cards);
+            }
+            Instruction::DealWithIncrement(n) => {
+                increment *= modular_inverse(n as i128, num_cards);
+                increment = modulus(increment, num_cards);
+            }
+        }
+    }
+
+    let final_increment = modulus(mod_pow(increment, num_shuffles, num_cards), num_cards);
+    //let final_offset = offset
+    //* (1 - mod_pow(final_increment, num_shuffles, num_cards))
+    //* modular_inverse(1 - final_increment, num_cards);
+    let final_offset = modulus(
+        offset
+            * (1 - final_increment)
+            * modular_inverse(modulus(1 - increment, num_cards), num_cards),
+        num_cards,
+    );
+
+    final_offset + modulus(2020 * final_increment, num_cards)
 }
 
 #[cfg(test)]
@@ -179,43 +199,8 @@ mod tests {
     }
 
     #[test]
-    fn test_track_position() {
-        let instructions = parse_instructions("src/inputs/22_sample_1.txt");
-        assert_eq!(
-            track_position_of_card_through_shuffle(10, 9, &instructions),
-            3
-        );
-
-        let instructions = parse_instructions("src/inputs/22_sample_2.txt");
-        assert_eq!(
-            track_position_of_card_through_shuffle(10, 9, &instructions),
-            8
-        );
-
-        let instructions = parse_instructions("src/inputs/22_sample_3.txt");
-        assert_eq!(
-            track_position_of_card_through_shuffle(10, 9, &instructions),
-            9
-        );
-    }
-
-    #[test]
     fn test_solutions() {
         assert_eq!(twenty_two_a(), 7860);
-    }
-
-    #[test]
-    fn test_foo() {
-        let instructions = parse_instructions("src/inputs/22.txt");
-        let mut index = 2020;
-        dbg!(index);
-        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
-        dbg!(index);
-        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
-        dbg!(index);
-        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
-        dbg!(index);
-        index = track_position_of_card_through_shuffle(119315717514047, index, &instructions);
-        dbg!(index);
+        assert_eq!(twenty_two_b(), 0);
     }
 }

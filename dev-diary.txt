@@ -2715,3 +2715,78 @@ and, like, looping that many times is too many
 
 so i need to destroy this loop and replace it with multiplications and divisions and mods and stuff after all
 oh well!!
+
+===
+
+8/12/20
+
+ok we're looking at 22b
+trying to find patterns in deal-with-increment
+i think that deal-with-increment only works if the increment has no factors that are divisors of num_cards
+
+let's try out some deals
+
+deal 10 cards
+
+increment 3
+0 741 852 963
+
+increment 7
+0 369 258 147
+
+increment 9
+0 9 8 7 6 5 4 3 2 1
+
+argh
+
+eff this
+https://github.com/mstksg/advent-of-code-2019/blob/master/reflections.md#day-22
+https://work.njae.me.uk/2020/01/12/advent-of-code-2019-day-22/
+https://github.com/Aidiakapi/advent_of_code_2019/blob/master/src/day22.rs
+
+dude FUCK this
+
+ok uh whoops so one thing is that
+someone on reddit points out that 22b asks for the number _in position 2020_ at the end
+as opposed to asking _what index the card 2020 ends up in_
+whoopssssss
+
+https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/
+
+https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/fbnkaju/
+
+    A key observation to make is that every possible deck can be encoded as a
+    pair of (first number of the deck, or offset AND difference between two
+    adjacent numbers, or increment). ALL numbers here are modulo (cards in
+    deck), or MOD. Then, getting the nth number in the sequence can be done
+    by calcuating offset + increment * n.
+
+===
+
+8/13/20
+
+ugh
+ok
+
+so i'm on board with
+    representing the deck as (offset, increment)
+    deal into new stack as
+        increment *= -1
+        offset += increment
+    cut n cards as
+        offset += increment * n
+    deal with offset as
+        increment *= inv(n)
+            where inv(n) = pow(n, MOD - 2, MOD)
+                see https://en.wikipedia.org/wiki/Modular_exponentiation#Right-to-left_binary_method for details on fast
+
+ok and then he says
+    Let (offset_diff, increment_mul) be the values of offset and increment
+    after one shuffle pass starting from (0, 1). Then, for any (offset,
+    increment), applying a single shuffle pass is equivalent to:
+        offset += increment * offset_diff
+        increment *= increment_mul
+
+ok and so then the final equation is
+    increment = pow(increment_mul, n, MOD)
+    offset = offset_diff * (1 - pow(increment_mul, iterations, MOD)) * inv(1 - increment_mul)
