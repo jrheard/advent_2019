@@ -2790,3 +2790,8 @@ ok and then he says
 ok and so then the final equation is
     increment = pow(increment_mul, n, MOD)
     offset = offset_diff * (1 - pow(increment_mul, iterations, MOD)) * inv(1 - increment_mul)
+
+dude fuck this problem
+
+https://github.com/AxlLind/AdventOfCode2019/blob/master/src/bin/22.rs is the way to go
+i'm going to move on with my life

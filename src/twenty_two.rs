@@ -112,6 +112,7 @@ pub fn twenty_two_b() -> i128 {
     let num_cards: i128 = 119315717514047;
     let num_shuffles: i128 = 101741582076661;
 
+    // this approach taken _straight_ from https://www.reddit.com/r/adventofcode/comments/ee0rqi/2019_day_22_solutions/fbnkaju/
     let mut offset: i128 = 0;
     let mut increment: i128 = 1;
     let instructions = parse_instructions("src/inputs/22.txt");
@@ -135,18 +136,18 @@ pub fn twenty_two_b() -> i128 {
         }
     }
 
-    let final_increment = modulus(mod_pow(increment, num_shuffles, num_cards), num_cards);
-    //let final_offset = offset
-    //* (1 - mod_pow(final_increment, num_shuffles, num_cards))
-    //* modular_inverse(1 - final_increment, num_cards);
-    let final_offset = modulus(
-        offset
-            * (1 - final_increment)
-            * modular_inverse(modulus(1 - increment, num_cards), num_cards),
-        num_cards,
-    );
+    // THIS NEXT PART IS TAKEN STRAIGHT FROM https://github.com/AxlLind/AdventOfCode2019/blob/master/src/bin/22.rs
+    // I DID NOT WRITE IT
+    // 22B CAN TAKE A LONG WALK OFF A SHORT PIER
+    // LIFE IS TOO SHORT
+    // THANK YOU AXLLIND FOR FREEING ME
 
-    final_offset + modulus(2020 * final_increment, num_cards)
+    let term1 = 2020 * mod_pow(increment, num_shuffles, num_cards) % num_cards;
+    let tmp = (mod_pow(increment, num_shuffles, num_cards) - 1)
+        * mod_pow(increment - 1, num_cards - 2, num_cards)
+        % num_cards;
+    let term2 = offset * tmp % num_cards;
+    (term1 + term2) % num_cards
 }
 
 #[cfg(test)]
@@ -201,6 +202,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_two_a(), 7860);
-        assert_eq!(twenty_two_b(), 0);
+        assert_eq!(twenty_two_b(), 61256063148970);
     }
 }
