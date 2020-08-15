@@ -2795,3 +2795,53 @@ dude fuck this problem
 
 https://github.com/AxlLind/AdventOfCode2019/blob/master/src/bin/22.rs is the way to go
 i'm going to move on with my life
+
+===
+
+8/14/20
+
+ok, looking at 23
+it looks potentially fun!
+
+am i gonna be spinning up 50 threads and having them communicate via a shared mutex of some sort?
+
+===
+
+8/15/20
+
+ok so yeah
+i'm thinking about putting a vec of 256 vecdeques in a mutex of some kind
+if a computer gets a message for computer 4, it does mutex.lock()[4].push(message) or something like that
+and a message is a tuple of (x, y)
+
+requiring threads is pretty unusual for aoc so i may be misunderstanding the prompt
+but let's try it and see what happens
+
+it'd be interesting to see if async/await is a better fit
+i'd guess not tho, bc iirc async/await is good for io-bound situations and threads are fine for cpu-bound
+
+ok so that went about as well as i expected, ie it didn't work
+
+TODO i think i need a different thread whose job it is to directly manipulate the computers' memory
+i'm not sure that that's actually possible though bc rust
+
+but basically i think the issue is that each computer enters a
+                computer.run(HaltReason::Output);
+line without having received an input, and then its loop never circles back around to the start to actually give that input to it
+
+hrm hrm hrm
+this is interesting
+gonna have to spend some time thinking about this
+
+NO do i make some sort of, like, AsyncComputer
+whose .state.input is an Arc<Mutex<Vec<i64>>>??
+
+hrm
+what about, like, two different state structs
+SyncState and AsyncState
+that both implement a shared State trait with a method like .get() or something?
+no man i don't like that
+i feel like it'll make me touch all the old computer code to turn it into using syncstate
+
+one thing i'm seeing in the solutions thread is adding a NeedsInput halt level
+TODO that's def the way to go

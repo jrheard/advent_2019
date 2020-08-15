@@ -56,7 +56,11 @@ pub(crate) fn load_operations() -> Vec<Option<Operation>> {
         num_arguments: 1,
         target_memory_location_arg: Some(0),
         run: Box::new(|state, args| {
-            state.memory[args[0] as usize] = state.input.remove(0);
+            state.memory[args[0] as usize] = if state.input.len() > 0 {
+                state.input.remove(0)
+            } else {
+                -1
+            };
             Default::default()
         }),
     });

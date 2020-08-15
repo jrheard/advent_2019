@@ -19,6 +19,7 @@ mod three;
 mod twelve;
 pub mod twenty;
 mod twenty_one;
+mod twenty_three;
 mod twenty_two;
 mod two;
 mod util;
@@ -68,6 +69,7 @@ pub fn run_all_solutions() {
     println!("21b: {}", twenty_one::twenty_one_b());
     println!("22a: {}", twenty_two::twenty_two_a());
     println!("22b: {}", twenty_two::twenty_two_b());
+    println!("23a: {}", twenty_three::twenty_three_a());
 }
 
 #[cfg(test)]
