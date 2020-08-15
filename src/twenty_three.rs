@@ -10,8 +10,7 @@ struct Message {
 struct Network {
     computers: Vec<Computer>,
     mailbox: Vec<VecDeque<Message>>,
-    last_nat_message: Option<Message>,
-    // TODO also a nat_history? should this instead just be a single vec?
+    nat_mailbox: Vec<Message>,
 }
 
 impl Network {
@@ -28,7 +27,7 @@ impl Network {
         Network {
             computers,
             mailbox,
-            last_nat_message: None,
+            nat_mailbox: vec![],
         }
     }
 
@@ -54,8 +53,7 @@ impl Network {
                 };
 
                 if message_address == 255 {
-                    // TODO revisit
-                    self.last_nat_message = Some(message);
+                    self.nat_mailbox.push(message);
                 } else {
                     self.mailbox[message_address].push_back(message);
                 }
@@ -68,11 +66,11 @@ pub fn twenty_three_a() -> i64 {
     let memory = load_program("src/inputs/23.txt");
     let mut network = Network::new(&memory);
 
-    while network.last_nat_message.is_none() {
+    while network.nat_mailbox.is_empty() {
         network.tick();
     }
 
-    network.last_nat_message.unwrap().y
+    network.nat_mailbox[0].y
 }
 
 #[cfg(test)]
