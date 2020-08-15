@@ -16,10 +16,12 @@ enum ParameterMode {
 /// Used for configuring the behavior of `Computer::run()`.
 /// HaltReason::Exit means: run the program until it reaches an EXIT instruction.
 /// HaltReason::Output means: run the program until it reaches a PUSH_OUTPUT instruction.
+/// HaltReason::NeedsInput means: run the program until it reaches a POP_INPUT instruction that it can't satisfy.
 #[derive(Debug, PartialEq, Clone, Copy)]
 pub enum HaltReason {
     Exit,
     Output,
+    NeedsInput,
 }
 
 /// A Computer.
@@ -89,7 +91,12 @@ impl Computer {
 
             // Halt if we're supposed to, otherwise carry on.
             match outcome.halt_reason {
-                Some(HaltReason::Output) if halt_level == HaltReason::Output => {
+                Some(HaltReason::NeedsInput) if halt_level == HaltReason::NeedsInput => {
+                    break HaltReason::NeedsInput
+                }
+                Some(HaltReason::Output)
+                    if halt_level == HaltReason::Output || halt_level == HaltReason::NeedsInput =>
+                {
                     break HaltReason::Output
                 }
                 Some(HaltReason::Exit) => break HaltReason::Exit,

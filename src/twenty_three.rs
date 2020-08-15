@@ -9,7 +9,7 @@ struct Message {
     y: i64,
 }
 
-pub fn twenty_three_a() -> u32 {
+pub fn twenty_three_a() -> i64 {
     let memory = load_program("src/inputs/23.txt");
 
     let mailbox = Arc::new(Mutex::new(vec![VecDeque::new(); 256]));
@@ -43,17 +43,19 @@ pub fn twenty_three_a() -> u32 {
                 }
 
                 println!("{} b", i);
-                computer.run(HaltReason::Output);
-                computer.run(HaltReason::Output);
-                computer.run(HaltReason::Output);
+                let halt_reason = computer.run(HaltReason::NeedsInput);
+                if halt_reason == HaltReason::Output {
+                    computer.run(HaltReason::Output);
+                    computer.run(HaltReason::Output);
 
-                let mut mailbox = mailbox.lock().unwrap();
-                println!("{} sending message", i);
-                mailbox[computer.pop_output().unwrap() as usize].push_back(Message {
-                    x: computer.pop_output().unwrap(),
-                    y: computer.pop_output().unwrap(),
-                });
-                println!("{} c", i);
+                    let mut mailbox = mailbox.lock().unwrap();
+                    println!("{} sending message", i);
+                    mailbox[computer.pop_output().unwrap() as usize].push_back(Message {
+                        x: computer.pop_output().unwrap(),
+                        y: computer.pop_output().unwrap(),
+                    });
+                    println!("{} c", i);
+                }
             }
         }));
     }
@@ -62,7 +64,8 @@ pub fn twenty_three_a() -> u32 {
         let _ = handle.join();
     }
 
-    5
+    let relevant_mailbox = &mailbox.lock().unwrap()[255];
+    relevant_mailbox[0].y
 }
 
 #[cfg(test)]
@@ -71,6 +74,6 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        twenty_three_a();
+        assert_eq!(twenty_three_a(), 0);
     }
 }
