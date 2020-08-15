@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -77,6 +78,8 @@ impl Grid {
     }
 
     fn tick(&self) -> Grid {
+        // TODO can i make an iterator and end up not having to allocate?
+
         let mut new_cells = Vec::with_capacity(self.cells.len());
 
         for y in 0..self.height {
@@ -119,8 +122,20 @@ fn biodiversity_rating(grid: &Grid) -> u64 {
         .sum()
 }
 
-pub fn twenty_four_a() -> u32 {
-    5
+pub fn twenty_four_a() -> u64 {
+    let mut grid = Grid::new("src/inputs/24.txt");
+    let mut seen_ratings = HashSet::new();
+
+    loop {
+        let rating = biodiversity_rating(&grid);
+        if seen_ratings.contains(&rating) {
+            break rating;
+        }
+
+        seen_ratings.insert(rating);
+
+        grid = grid.tick();
+    }
 }
 
 #[cfg(test)]
@@ -138,5 +153,10 @@ mod tests {
     fn test_biodiversity_rating() {
         let grid = Grid::new("src/inputs/24_sample_1.txt");
         assert_eq!(biodiversity_rating(&grid), 2129920);
+    }
+
+    #[test]
+    fn test_solutions() {
+        assert_eq!(twenty_four_a(), 18375063)
     }
 }
