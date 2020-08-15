@@ -70,6 +70,7 @@ pub fn run_all_solutions() {
     println!("22a: {}", twenty_two::twenty_two_a());
     println!("22b: {}", twenty_two::twenty_two_b());
     println!("23a: {}", twenty_three::twenty_three_a());
+    println!("23b: {}", twenty_three::twenty_three_b());
 }
 
 #[cfg(test)]

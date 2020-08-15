@@ -31,7 +31,11 @@ impl Network {
         }
     }
 
-    pub fn tick(&mut self) {
+    /// Advances the network one tick.
+    /// Returns true if all of the computers are waiting for input, false otherwise.
+    pub fn tick(&mut self) -> bool {
+        let mut all_machines_waiting_on_input = true;
+
         for (i, computer) in self.computers.iter_mut().enumerate() {
             // Check our own mail to see if we have any messages.
             if let Some(message) = self.mailbox[i as usize].pop_front() {
@@ -41,6 +45,8 @@ impl Network {
 
             let halt_reason = computer.run(HaltReason::NeedsInput);
             if halt_reason == HaltReason::Output {
+                all_machines_waiting_on_input = false;
+
                 // This computer has produced a message!
                 // Let's turn it into a Message and stuff it in the mailbox.
                 computer.run(HaltReason::Output);
@@ -59,6 +65,8 @@ impl Network {
                 }
             }
         }
+
+        all_machines_waiting_on_input
     }
 }
 
@@ -73,6 +81,43 @@ pub fn twenty_three_a() -> i64 {
     network.nat_mailbox[0].y
 }
 
+pub fn twenty_three_b() -> i64 {
+    let memory = load_program("src/inputs/23.txt");
+    let mut network = Network::new(&memory);
+
+    let mut last_restart_message = Message { x: 0, y: 0 };
+
+    loop {
+        if network.tick()
+            && network
+                .computers
+                .iter()
+                .all(|computer| computer.state.input.is_empty())
+            && !network.nat_mailbox.is_empty()
+        {
+            // "If all computers have empty incoming packet queues and are continuously
+            // trying to receive packets without sending packets, the network is considered idle."
+
+            // "Once the network is idle, the NAT sends only the last packet it
+            // received to address 0; this will cause the computers on the
+            // network to resume activity."
+            let restart_message = *network.nat_mailbox.last().unwrap();
+
+            if restart_message.y == last_restart_message.y {
+                // "Monitor packets released to the computer at address 0 by the
+                // NAT. What is the first Y value delivered by the NAT to the
+                // computer at address 0 twice in a row?"
+                break;
+            }
+
+            network.mailbox[0].push_back(restart_message);
+            last_restart_message = restart_message;
+        }
+    }
+
+    last_restart_message.y
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -80,5 +125,6 @@ mod tests {
     #[test]
     fn test_solutions() {
         assert_eq!(twenty_three_a(), 23886);
+        assert_eq!(twenty_three_b(), 18333);
     }
 }
