@@ -17,11 +17,11 @@ pub fn twenty_three_a() -> i64 {
         computers.push(computer);
     }
 
-    let mut mailbox: Vec<VecDeque<Message>> = vec![VecDeque::new(); 256];
+    let mut mailbox: Vec<VecDeque<Message>> = vec![VecDeque::new(); 50];
+    let mut final_message = None;
 
     loop {
-        if !mailbox[255].is_empty() {
-            // We're done!
+        if final_message.is_some() {
             break;
         }
 
@@ -39,17 +39,25 @@ pub fn twenty_three_a() -> i64 {
                 computer.run(HaltReason::Output);
                 computer.run(HaltReason::Output);
 
-                mailbox[computer.pop_output().unwrap() as usize].push_back(Message {
+                let message_address = computer.pop_output().unwrap() as usize;
+                let message = Message {
                     x: computer.pop_output().unwrap(),
                     y: computer.pop_output().unwrap(),
-                });
+                };
+
+                if message_address == 255 {
+                    // "Boot up all 50 computers and attach them to your network.
+                    // What is the Y value of the first packet sent to address 255?"
+                    final_message = Some(message);
+                    break;
+                } else {
+                    mailbox[message_address].push_back(message);
+                }
             }
         }
     }
 
-    // "Boot up all 50 computers and attach them to your network.
-    // What is the Y value of the first packet sent to address 255?"
-    mailbox[255][0].y
+    final_message.unwrap().y
 }
 
 #[cfg(test)]
