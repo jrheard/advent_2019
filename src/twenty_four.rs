@@ -108,6 +108,17 @@ impl Grid {
     }
 }
 
+fn biodiversity_rating(grid: &Grid) -> u64 {
+    grid.cells
+        .iter()
+        .enumerate()
+        .map(|(i, cell)| match cell {
+            Cell::Alive => 1 << i,
+            Cell::Dead => 0,
+        })
+        .sum()
+}
+
 pub fn twenty_four_a() -> u32 {
     5
 }
@@ -121,5 +132,11 @@ mod tests {
         let grid = Grid::new("src/inputs/24.txt");
         assert_eq!(grid.num_alive_neighbors(Position { x: 2, y: 0 }), 1);
         assert_eq!(grid.num_alive_neighbors(Position { x: 2, y: 1 }), 3);
+    }
+
+    #[test]
+    fn test_biodiversity_rating() {
+        let grid = Grid::new("src/inputs/24_sample_1.txt");
+        assert_eq!(biodiversity_rating(&grid), 2129920);
     }
 }
