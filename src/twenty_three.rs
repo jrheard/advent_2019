@@ -7,27 +7,35 @@ struct Message {
     y: i64,
 }
 
-pub fn twenty_three_a() -> i64 {
-    let memory = load_program("src/inputs/23.txt");
+struct Network {
+    computers: Vec<Computer>,
+    mailbox: Vec<VecDeque<Message>>,
+    last_nat_message: Option<Message>,
+    // TODO also a nat_history? should this instead just be a single vec?
+}
 
-    let mut computers = Vec::new();
-    for i in 0..50 {
-        let mut computer = Computer::new(memory.clone());
-        computer.push_input(i);
-        computers.push(computer);
-    }
-
-    let mut mailbox: Vec<VecDeque<Message>> = vec![VecDeque::new(); 50];
-    let mut final_message = None;
-
-    loop {
-        if final_message.is_some() {
-            break;
+impl Network {
+    pub fn new(memory: &[i64]) -> Self {
+        let mut computers = Vec::new();
+        for i in 0..50 {
+            let mut computer = Computer::new(memory.to_vec());
+            computer.push_input(i);
+            computers.push(computer);
         }
 
-        for (i, computer) in computers.iter_mut().enumerate() {
+        let mailbox: Vec<VecDeque<Message>> = vec![VecDeque::new(); 50];
+
+        Network {
+            computers,
+            mailbox,
+            last_nat_message: None,
+        }
+    }
+
+    pub fn tick(&mut self) {
+        for (i, computer) in self.computers.iter_mut().enumerate() {
             // Check our own mail to see if we have any messages.
-            if let Some(message) = mailbox[i as usize].pop_front() {
+            if let Some(message) = self.mailbox[i as usize].pop_front() {
                 computer.push_input(message.x);
                 computer.push_input(message.y);
             }
@@ -46,18 +54,25 @@ pub fn twenty_three_a() -> i64 {
                 };
 
                 if message_address == 255 {
-                    // "Boot up all 50 computers and attach them to your network.
-                    // What is the Y value of the first packet sent to address 255?"
-                    final_message = Some(message);
-                    break;
+                    // TODO revisit
+                    self.last_nat_message = Some(message);
                 } else {
-                    mailbox[message_address].push_back(message);
+                    self.mailbox[message_address].push_back(message);
                 }
             }
         }
     }
+}
 
-    final_message.unwrap().y
+pub fn twenty_three_a() -> i64 {
+    let memory = load_program("src/inputs/23.txt");
+    let mut network = Network::new(&memory);
+
+    while network.last_nat_message.is_none() {
+        network.tick();
+    }
+
+    network.last_nat_message.unwrap().y
 }
 
 #[cfg(test)]
