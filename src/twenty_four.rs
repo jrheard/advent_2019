@@ -75,6 +75,37 @@ impl Grid {
         .filter(|&&pos| self.get(pos) == Cell::Alive)
         .count()
     }
+
+    fn tick(&self) -> Grid {
+        let mut new_cells = Vec::with_capacity(self.cells.len());
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                let position = Position {
+                    x: x as i32,
+                    y: y as i32,
+                };
+                let cell = self.get(position);
+                let alive_neighbors = self.num_alive_neighbors(position);
+
+                if cell == Cell::Alive && alive_neighbors != 1 {
+                    // "A bug dies (becoming an empty space) unless there is exactly one bug adjacent to it."
+                    new_cells.push(Cell::Dead);
+                } else if cell == Cell::Dead && (alive_neighbors == 1 || alive_neighbors == 2) {
+                    // "An empty space becomes infested with a bug if exactly one or two bugs are adjacent to it."
+                    new_cells.push(Cell::Alive);
+                } else {
+                    new_cells.push(cell);
+                }
+            }
+        }
+
+        Grid {
+            width: self.width,
+            height: self.height,
+            cells: new_cells,
+        }
+    }
 }
 
 pub fn twenty_four_a() -> u32 {

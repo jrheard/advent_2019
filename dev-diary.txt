@@ -2856,3 +2856,7 @@ ok we did NOT need threads :)
 individual/individual   time:   [2.1499 ms 2.2040 ms 2.2697 ms]
                         change: [-97.607% -95.749% -84.545%] (p = 0.01 < 0.05)
                         Performance has improved.
+
+little refactor was fun
+23b was ez
+working on 24a
