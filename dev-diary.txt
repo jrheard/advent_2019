@@ -2844,4 +2844,15 @@ no man i don't like that
 i feel like it'll make me touch all the old computer code to turn it into using syncstate
 
 one thing i'm seeing in the solutions thread is adding a NeedsInput halt level
-TODO that's def the way to go
+that's def the way to go
+
+ok cool done rad
+
+individual/individual   time:   [23.927 ms 74.199 ms 110.02 ms]
+i wonder if we even need threads for this
+
+ok we did NOT need threads :)
+
+individual/individual   time:   [2.1499 ms 2.2040 ms 2.2697 ms]
+                        change: [-97.607% -95.749% -84.545%] (p = 0.01 < 0.05)
+                        Performance has improved.
