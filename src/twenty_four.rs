@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::fs;
 
 #[derive(Debug, Copy, Clone, PartialEq)]
@@ -18,8 +18,6 @@ struct Grid {
     levels: Vec<Level>,
     width: usize,
     height: usize,
-    min_depth: i32,
-    max_depth: i32,
 }
 
 #[derive(Debug)]
@@ -36,7 +34,6 @@ impl Level {
 
     fn num_alive_cells_in_row(&self, y: usize) -> usize {
         (0..self.width)
-            .into_iter()
             .map(|x| {
                 self.get(Position {
                     x: x as i32,
@@ -49,7 +46,6 @@ impl Level {
 
     fn num_alive_cells_in_column(&self, x: usize) -> usize {
         (0..self.height)
-            .into_iter()
             .map(|y| {
                 self.get(Position {
                     x: x as i32,
@@ -114,6 +110,42 @@ impl Level {
 
         num_alive
     }
+    fn tick(&self, outer: &Level, inner: &Level) -> Level {
+        let mut new_cells = Vec::with_capacity(self.cells.len());
+
+        for y in 0..self.height {
+            for x in 0..self.width {
+                if x == 2 && y == 2 {
+                    // Skip the middle cell; it contains another level inside of it.
+                    new_cells.push(Cell::Dead);
+                    continue;
+                }
+
+                let position = Position {
+                    x: x as i32,
+                    y: y as i32,
+                };
+                let cell = self.get(position);
+                let alive_neighbors = self.num_alive_neighbors(position, outer, inner);
+
+                if cell == Cell::Alive && alive_neighbors != 1 {
+                    // "A bug dies (becoming an empty space) unless there is exactly one bug adjacent to it."
+                    new_cells.push(Cell::Dead);
+                } else if cell == Cell::Dead && (alive_neighbors == 1 || alive_neighbors == 2) {
+                    // "An empty space becomes infested with a bug if exactly one or two bugs are adjacent to it."
+                    new_cells.push(Cell::Alive);
+                } else {
+                    new_cells.push(cell);
+                }
+            }
+        }
+
+        Level {
+            cells: new_cells,
+            width: self.width,
+            height: self.height,
+        }
+    }
 }
 
 impl Grid {
@@ -136,7 +168,7 @@ impl Grid {
         Grid {
             levels: vec![
                 Level {
-                    cells: vec![Cell::Dead; cells.len()],
+                    cells: vec![Cell::Dead; 25],
                     width,
                     height,
                 },
@@ -146,61 +178,79 @@ impl Grid {
                     height,
                 },
                 Level {
-                    cells: vec![Cell::Dead; cells.len()],
+                    cells: vec![Cell::Dead; 25],
                     width,
                     height,
                 },
             ],
             width,
             height,
-            min_depth: 0,
-            max_depth: 0,
         }
     }
 
-    fn position_is_in_bounds(&self, Position { x, y, .. }: Position) -> bool {
-        x >= 0 && (x as usize) < self.width && y >= 0 && (y as usize) < self.height
-    }
-
+    // TODO consider making levels a vecdeque
     fn tick(&self) -> Grid {
-        let mut new_cells = Vec::with_capacity(self.cells.len());
+        let mut new_levels = Vec::with_capacity(self.levels.len() + 2);
 
-        // TODO tick_level fn/method?
-        // TODO argh
+        // Iterate over overlapping windows of three levels at a time.
+        for i in 0..self.levels.len() {
+            // If we're on the innermost or outermost level, treat it as its own inner or outer level,
+            // because innermost and outermost levels are guaranteed to be empty.
+            let window_indexes = if i == 0 {
+                (0, 0, 1)
+            } else if i == self.levels.len() - 1 {
+                (
+                    self.levels.len() - 2,
+                    self.levels.len() - 1,
+                    self.levels.len() - 1,
+                )
+            } else {
+                (i - 1, i, i + 1)
+            };
 
-        for y in 0..self.height {
-            for x in 0..self.width {
-                // TODO skip (2, 2)
+            // Make a new Level by calling middle_level.tick().
+            new_levels.push(self.levels[window_indexes.1].tick(
+                &self.levels[window_indexes.0],
+                &self.levels[window_indexes.2],
+            ));
+        }
 
-                let position = Position {
-                    x: x as i32,
-                    y: y as i32,
-                };
-                let cell = self.get(position);
-                let alive_neighbors = self.num_alive_neighbors(position);
+        // If the leftmost level now has any alive cells, push a new level on the far left side.
+        if new_levels[0].cells.iter().any(|cell| *cell == Cell::Alive) {
+            new_levels.insert(
+                0,
+                Level {
+                    cells: vec![Cell::Dead; 25],
+                    width: self.width,
+                    height: self.height,
+                },
+            );
+        }
 
-                if cell == Cell::Alive && alive_neighbors != 1 {
-                    // "A bug dies (becoming an empty space) unless there is exactly one bug adjacent to it."
-                    new_cells.push(Cell::Dead);
-                } else if cell == Cell::Dead && (alive_neighbors == 1 || alive_neighbors == 2) {
-                    // "An empty space becomes infested with a bug if exactly one or two bugs are adjacent to it."
-                    new_cells.push(Cell::Alive);
-                } else {
-                    new_cells.push(cell);
-                }
-            }
+        // If the rightmost level now has any alive cells, push a new level on the far right side.
+        if new_levels[new_levels.len() - 1]
+            .cells
+            .iter()
+            .any(|cell| *cell == Cell::Alive)
+        {
+            new_levels.push(Level {
+                cells: vec![Cell::Dead; 25],
+                width: self.width,
+                height: self.height,
+            });
         }
 
         Grid {
             width: self.width,
             height: self.height,
-            cells: new_cells,
+            levels: new_levels,
         }
     }
 }
 
 fn biodiversity_rating(grid: &Grid) -> u64 {
-    grid.cells
+    grid.levels[1]
+        .cells
         .iter()
         .enumerate()
         .map(|(i, cell)| match cell {
@@ -229,13 +279,6 @@ pub fn twenty_four_a() -> u64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn test_num_alive_neighbors() {
-        let grid = Grid::new("src/inputs/24.txt");
-        assert_eq!(grid.num_alive_neighbors(Position { x: 2, y: 0 }), 1);
-        assert_eq!(grid.num_alive_neighbors(Position { x: 2, y: 1 }), 3);
-    }
 
     #[test]
     fn test_biodiversity_rating() {
