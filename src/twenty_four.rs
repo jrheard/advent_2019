@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
+// TODO lazy_static hashset?
 static OUTER_BORDER_POSITIONS: [(i32, i32); 16] = [
     (0, 0),
     (1, 0),
@@ -92,8 +93,8 @@ impl Grid {
         x >= 0 && (x as usize) < self.width && y >= 0 && (y as usize) < self.height
     }
 
-    fn num_alive_neighbors(&self, position: Position) -> usize {
-        let neighbors = [
+    fn neighbor_positions(&self, position: Position) -> impl Iterator<Item = Position> {
+        let cardinal_direction_neighbors = [
             Position {
                 x: position.x - 1,
                 y: position.y,
@@ -114,13 +115,82 @@ impl Grid {
                 y: position.y + 1,
                 depth: position.depth,
             },
-        ]
-        .iter()
-        // TODO mapcat to expand positions?
-        .filter(|&&pos| self.position_is_in_bounds(pos));
+        ];
 
-        neighbors
-            .filter(|&&pos| self.get(pos) == Cell::Alive)
+        // TODO first a map that handles one level up
+
+        cardinal_direction_neighbors
+            .iter()
+            .map(|neighbor| {
+                // 1: Handle positions that are off of the grid, i.e. one level "up", i.e. one level negative.
+                // TODO see if this looks better as a match
+                if neighbor.x < 0 {
+                    Position {
+                        x: 1,
+                        y: 2,
+                        depth: neighbor.depth - 1,
+                    }
+                } else if neighbor.x > 4 {
+                    Position {
+                        x: 3,
+                        y: 2,
+                        depth: neighbor.depth - 1,
+                    }
+                } else if neighbor.y < 0 {
+                    Position {
+                        x: 2,
+                        y: 1,
+                        depth: neighbor.depth - 1,
+                    }
+                } else if neighbor.y > 4 {
+                    Position {
+                        x: 2,
+                        y: 3,
+                        depth: neighbor.depth - 1,
+                    }
+                } else {
+                    *neighbor
+                }
+            })
+            .flat_map(|neighbor| {
+                if neighbor.x == 2 && neighbor.y == 2 {
+                    // 2: Handle the center position, i.e. positions that are one level "down", i.e. one level positive
+                    match (position.x, position.y) {
+                        (1, 2) => (0..self.height)
+                            .into_iter()
+                            .map(|y| Position {
+                                x: 0,
+                                y: y as i32,
+                                depth: neighbor.depth + 1,
+                            })
+                            .collect::<Vec<_>>(),
+
+                        (3, 2) => (0..self.height)
+                            .into_iter()
+                            .map(|y| Position {
+                                x: 4,
+                                y: y as i32,
+                                depth: neighbor.depth + 1,
+                            })
+                            .collect::<Vec<_>>(),
+                        _ => unreachable!(),
+                    }
+                } else {
+                    [neighbor].iter()
+                }
+            })
+    }
+
+    fn num_alive_neighbors(&self, position: Position) -> usize {
+        // one or more helper functions that return impl Iterator?
+        //(0..self.width).into_iter().map(|x| Position {
+        //x,
+        //y: 0,
+        //depth: neighbor.depth - 1,
+        //})
+
+        self.neighbor_positions(position)
+            .filter(|&pos| self.get(pos) == Cell::Alive)
             .count()
     }
 
@@ -132,6 +202,8 @@ impl Grid {
 
         for y in 0..self.height {
             for x in 0..self.width {
+                // TODO skip (2, 2)
+
                 let position = Position {
                     x: x as i32,
                     y: y as i32,
