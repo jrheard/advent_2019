@@ -1,5 +1,35 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
+
+static OUTER_BORDER_POSITIONS: [(i32, i32); 16] = [
+    (0, 0),
+    (1, 0),
+    (2, 0),
+    (3, 0),
+    (4, 0),
+    (0, 1),
+    (0, 2),
+    (0, 3),
+    (4, 1),
+    (4, 2),
+    (4, 3),
+    (0, 4),
+    (1, 4),
+    (2, 4),
+    (3, 4),
+    (4, 4),
+];
+
+static INNER_BORDER_POSITIONS: [(i32, i32); 8] = [
+    (1, 1),
+    (2, 1),
+    (3, 1),
+    (1, 2),
+    (3, 2),
+    (1, 3),
+    (2, 3),
+    (3, 3),
+];
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 enum Cell {
@@ -11,13 +41,16 @@ enum Cell {
 struct Position {
     x: i32,
     y: i32,
+    depth: i32,
 }
 
 #[derive(Debug)]
 struct Grid {
-    cells: Vec<Cell>,
+    levels: HashMap<i32, Vec<Cell>>,
     width: usize,
     height: usize,
+    min_depth: i32,
+    max_depth: i32,
 }
 
 impl Grid {
@@ -37,50 +70,65 @@ impl Grid {
             }
         }
 
+        let mut levels = HashMap::new();
+        levels.insert(0, cells);
+
         Grid {
-            cells,
+            levels,
             width,
             height,
+            min_depth: 0,
+            max_depth: 0,
         }
     }
 
     fn get(&self, position: Position) -> Cell {
-        self.cells[(position.x + self.width as i32 * position.y) as usize]
+        let cells = self.levels[&position.depth];
+
+        cells[(position.x + self.width as i32 * position.y) as usize]
     }
 
-    fn position_is_in_bounds(&self, Position { x, y }: Position) -> bool {
+    fn position_is_in_bounds(&self, Position { x, y, .. }: Position) -> bool {
         x >= 0 && (x as usize) < self.width && y >= 0 && (y as usize) < self.height
     }
 
     fn num_alive_neighbors(&self, position: Position) -> usize {
-        [
+        let neighbors = [
             Position {
                 x: position.x - 1,
                 y: position.y,
+                depth: position.depth,
             },
             Position {
                 x: position.x + 1,
                 y: position.y,
+                depth: position.depth,
             },
             Position {
                 x: position.x,
                 y: position.y - 1,
+                depth: position.depth,
             },
             Position {
                 x: position.x,
                 y: position.y + 1,
+                depth: position.depth,
             },
         ]
         .iter()
-        .filter(|&&pos| self.position_is_in_bounds(pos))
-        .filter(|&&pos| self.get(pos) == Cell::Alive)
-        .count()
+        // TODO mapcat to expand positions?
+        .filter(|&&pos| self.position_is_in_bounds(pos));
+
+        neighbors
+            .filter(|&&pos| self.get(pos) == Cell::Alive)
+            .count()
     }
 
     fn tick(&self) -> Grid {
-        // TODO can i make an iterator and end up not having to allocate?
-
         let mut new_cells = Vec::with_capacity(self.cells.len());
+
+        // TODO tick_level fn/method?
+        // TODO argh
 
         for y in 0..self.height {
             for x in 0..self.width {

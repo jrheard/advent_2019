@@ -2860,3 +2860,46 @@ individual/individual   time:   [2.1499 ms 2.2040 ms 2.2697 ms]
 little refactor was fun
 23b was ez
 working on 24a
+
+ok done :)
+
+24b is hard to understand
+
+so right now i have
+
+struct Grid {
+    cells: Vec<Cell>,
+    width: usize,
+    height: usize,
+}
+
+i think this is going to change to
+
+struct Grid {
+    levels: VecDeque<Level>,
+    width: usize,
+    height: usize,
+}
+
+struct Level {
+    depth: i32,
+    cells: Vec<Cell>
+}
+
+so like one main question is
+
+how do i know when to add a new level, either above or below one of my current ones?
+
+i think i'll keep my outermost levels - with negative depths - on the front of `level`s, and the inner ones on the back
+just bc it's like the number line
+
+ok but so right so
+when do i add a new level?
+
+if i'm on an outermost (farthest-negative) level and i have any alive cells on my border,
+or if i'm on an innermost (farthest-postive) level and i have any alive cells bordering my center cell
+
+ok so what are the main changes that need to happen for 24b
+1. num_alive_neighbors() needs to take levels into account
+2. when we tick, we need to make a new `levels` vec based on the old `levels` vec
+3. during ticking, we need to make new levels as needed
