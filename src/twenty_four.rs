@@ -388,6 +388,16 @@ pub fn twenty_four_a() -> u64 {
     }
 }
 
+pub fn twenty_four_b() -> usize {
+    let mut grid = infinite_grid::Grid::new("src/inputs/24.txt");
+
+    for _ in 0..200 {
+        grid = grid.tick();
+    }
+
+    infinite_grid::num_alive_cells_in_grid(&grid)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -400,7 +410,8 @@ mod tests {
 
     #[test]
     fn test_solutions() {
-        assert_eq!(twenty_four_a(), 18375063)
+        assert_eq!(twenty_four_a(), 18375063);
+        assert_eq!(twenty_four_b(), 1959);
     }
 
     #[test]
@@ -412,6 +423,4 @@ mod tests {
 
         assert_eq!(infinite_grid::num_alive_cells_in_grid(&grid), 99);
     }
-
-    // TODO implement actual 24b code and test it
 }
