@@ -129,7 +129,7 @@ mod infinite_grid {
     use std::fs;
 
     #[derive(Debug)]
-    struct Grid {
+    pub struct Grid {
         levels: Vec<Level>,
         width: usize,
         height: usize,
@@ -242,6 +242,7 @@ mod infinite_grid {
                     };
                     let cell = self.get(position);
                     let alive_neighbors = self.num_alive_neighbors(position, outer, inner);
+                    println!("num alive newighbors for {}, {}: {}", x, y, alive_neighbors);
 
                     if cell == Cell::Alive && alive_neighbors != 1 {
                         // "A bug dies (becoming an empty space) unless there is exactly one bug adjacent to it."
@@ -264,7 +265,7 @@ mod infinite_grid {
     }
 
     impl Grid {
-        fn new(filename: &str) -> Self {
+        pub fn new(filename: &str) -> Self {
             let contents = fs::read_to_string(filename).unwrap();
             let width = contents.lines().next().unwrap().len();
             let height = contents.lines().count();
@@ -304,8 +305,9 @@ mod infinite_grid {
         }
 
         // TODO consider making levels a vecdeque
-        fn tick(&self) -> Grid {
+        pub fn tick(&self) -> Grid {
             let mut new_levels = Vec::with_capacity(self.levels.len() + 2);
+            println!("tick");
 
             // Iterate over overlapping windows of three levels at a time.
             for i in 0..self.levels.len() {
@@ -322,6 +324,8 @@ mod infinite_grid {
                 } else {
                     (i - 1, i, i + 1)
                 };
+
+                dbg!(window_indexes);
 
                 // Make a new Level by calling middle_level.tick().
                 new_levels.push(self.levels[window_indexes.1].tick(
@@ -362,6 +366,14 @@ mod infinite_grid {
             }
         }
     }
+
+    pub fn num_alive_cells_in_grid(grid: &Grid) -> usize {
+        grid.levels
+            .iter()
+            .flat_map(|level| &level.cells)
+            .filter(|cell| **cell == Cell::Alive)
+            .count()
+    }
 }
 
 pub fn twenty_four_a() -> u64 {
@@ -394,4 +406,19 @@ mod tests {
     fn test_solutions() {
         assert_eq!(twenty_four_a(), 18375063)
     }
+
+    #[test]
+    fn test_sample_infinite_grid() {
+        let mut grid = infinite_grid::Grid::new("src/inputs/24_sample_2.txt");
+        for _ in 0..1 {
+            //dbg!(&grid);
+            grid = grid.tick();
+            dbg!(infinite_grid::num_alive_cells_in_grid(&grid));
+        }
+        dbg!(&grid);
+
+        assert_eq!(infinite_grid::num_alive_cells_in_grid(&grid), 99);
+    }
+
+    // TODO implement actual 24b code and test it
 }

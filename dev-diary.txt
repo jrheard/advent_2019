@@ -2906,3 +2906,10 @@ ok so what are the main changes that need to happen for 24b
 
 ok that did not go well
 gonna take some time off
+
+ok i spent some more time on 24b
+got some code down
+it's not working atm
+
+lol i was using the wrong sample input
+let's try again
