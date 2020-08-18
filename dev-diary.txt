@@ -2916,3 +2916,8 @@ let's try again
 
 ok it's still failing but different this time
 let's poke at it
+
+done :)
+
+ok 25a looks fun
+it's not running the way i'd expect tho, it prints out a newline and then halts waiting for input
