@@ -12,7 +12,8 @@ fn run_computer_until_ready_to_take_input(computer: &mut Computer) -> String {
     output_chars.into_iter().map(|x| x as u8 as char).collect()
 }
 
-fn play_game_interactively(mut computer: Computer) {
+#[cfg(not(tarpaulin_include))]
+fn _play_game_interactively(mut computer: Computer) {
     loop {
         let output = run_computer_until_ready_to_take_input(&mut computer);
         println!("{}", output);
@@ -36,34 +37,6 @@ fn input_command(computer: &mut Computer, command: &str) {
     }
 
     computer.push_input(10);
-}
-
-fn bfs_door_with_items(computer: &mut Computer, items: Vec<&str>) -> bool {
-    for item in &items {
-        //println!("{}, {:?}", item, items);
-
-        // Pick up the item.
-        input_command(computer, &format!("take {}", item));
-        run_computer_until_ready_to_take_input(computer);
-
-        // Attempt to walk east.
-        input_command(computer, "east");
-        let output = run_computer_until_ready_to_take_input(computer);
-
-        if !output.contains("ejected")
-            || bfs_door_with_items(
-                computer,
-                items.iter().cloned().filter(|x| x != item).collect(),
-            )
-        {
-            // We made it!
-            return true;
-        }
-        input_command(computer, &format!("drop {}", item));
-        run_computer_until_ready_to_take_input(computer);
-    }
-
-    false
 }
 
 pub fn twenty_five_a() -> u32 {
@@ -112,26 +85,14 @@ pub fn twenty_five_a() -> u32 {
         input_command(&mut computer, command);
     }
 
-    let items = [
-        "monolith",
-        "antenna",
-        "astronaut ice cream",
-        "hologram",
-        "ornament",
-        "asterisk",
-        "fixed point",
-        "dark matter",
-    ];
+    let items_to_drop = ["monolith", "antenna", "hologram", "dark matter"];
 
-    for item in items.iter() {
+    for item in items_to_drop.iter() {
         run_computer_until_ready_to_take_input(&mut computer);
         input_command(&mut computer, &format!("drop {}", item));
     }
 
-    run_computer_until_ready_to_take_input(&mut computer);
-    bfs_door_with_items(&mut computer, items.to_vec());
-
-    play_game_interactively(computer);
+    //play_game_interactively(computer);
 
     todo!();
 }
