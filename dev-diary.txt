@@ -2921,3 +2921,30 @@ done :)
 
 ok 25a looks fun
 it's not running the way i'd expect tho, it prints out a newline and then halts waiting for input
+
+ok i wasn't checking the halt code
+
+===
+
+8/19/20
+
+Items here:
+- monolith
+- antenna
+- ornament
+- asterisk
+- fixed point
+- dark matter
+
+
+monolith - heavier
+asterisk - lighter
+
+screw it i'll just write a program to do this
+found a bunch of other items while doing it, whoops+neat
+
+A loud, robotic voice says "Alert! Droids on this ship are lighter than the
+detected value!" and you are ejected back to the checkpoint.
+
+ok so now i'm at the point where i want to bfs
+how do i do that?
