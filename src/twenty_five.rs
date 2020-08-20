@@ -92,9 +92,24 @@ pub fn twenty_five_a() -> u32 {
         input_command(&mut computer, &format!("drop {}", item));
     }
 
-    //play_game_interactively(computer);
+    run_computer_until_ready_to_take_input(&mut computer);
+    input_command(&mut computer, "east");
 
-    todo!();
+    let mut output = String::new();
+
+    while !output.contains("main airlock") {
+        computer.run(HaltReason::Output);
+        let c = computer.pop_output().unwrap() as u8 as char;
+        output.push(c);
+    }
+
+    let output_chars: Vec<char> = output.chars().collect();
+
+    output_chars[335..344]
+        .iter()
+        .collect::<String>()
+        .parse::<u32>()
+        .unwrap()
 }
 
 #[cfg(test)]
@@ -102,7 +117,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_foo() {
-        twenty_five_a();
+    fn test_solutions() {
+        assert_eq!(twenty_five_a(), 134227456);
     }
 }
